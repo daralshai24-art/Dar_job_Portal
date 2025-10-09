@@ -1,0 +1,10 @@
+green #1D3D1E
+
+golde : 
+:root {
+  --forestgreen: #1D3D1E;
+  --gold: #B38025;
+  --gold-light: #F1DD8C;
+  --gold-medium: #D6B666;
+  
+}
