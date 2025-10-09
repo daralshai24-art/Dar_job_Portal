@@ -1,0 +1,86 @@
+Step 1: Clone the Repository on Your Personal Laptop
+bash
+# Open terminal/git bash on your personal laptop
+git clone https://github.com/daralshai24-art/Dar_job_Portal.git
+This will download the entire project to your personal laptop.
+
+Step 2: Navigate to the Project
+bash
+cd Dar_job_Portal
+Step 3: Verify Everything is There
+bash
+git status
+git log --oneline
+You should see the same commit history as your office PC.
+
+Step 4: Install Dependencies (Important for Next.js)
+bash
+npm install
+# or if you use yarn
+yarn install
+Your Workflow Between Two Computers:
+When Leaving Office:
+bash
+# Make sure all changes are committed and pushed
+git add .
+git commit -m "End of day: describe your changes"
+git push
+When Starting on Personal Laptop:
+bash
+# Get latest changes from GitHub
+git pull
+
+# Work on your changes...
+# Then commit and push when done
+git add .
+git commit -m "Evening work: describe changes"
+git push
+When Returning to Office PC:
+bash
+# Get the changes you made from home
+git pull
+Important Setup on Personal Laptop:
+Configure Git Identity (if not done):
+bash
+git config --global user.name "daralshai24-art"
+git config --global user.email "your-email@example.com"
+Authentication:
+You'll need to authenticate on your personal laptop:
+
+Either use browser authentication
+
+Or create a Personal Access Token on your personal laptop
+
+Complete Flow Example:
+Office PC:
+
+bash
+git add .
+git commit -m "feat: add new job filters"
+git push
+Personal Laptop:
+
+bash
+git pull
+# Now you have the latest code
+# Make changes...
+git add .
+git commit -m "feat: enhance mobile responsiveness"
+git push
+Back to Office PC:
+
+bash
+git pull
+# Now you have both office and home changes!
+Key Points:
+✅ Always git push before leaving a computer
+
+✅ Always git pull when starting on a computer
+
+✅ Keep the same Git identity on both machines
+
+✅ Both computers will stay perfectly in sync
+
+This way, you can seamlessly work between office and home! 🏢 ↔️ 🏠
+
+Want me to explain any part in more detail?
