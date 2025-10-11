@@ -11,5 +11,4 @@ const FormHeader = ({ mode }) => (
     </p>
   </div>
 );
-
 export default FormHeader;
