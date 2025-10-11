@@ -5,7 +5,6 @@ const jobSchema = new mongoose.Schema(
     title: { type: String, required: true },
     description: { type: String, required: true },
     location: { type: String, required: true },
-    salary: { type: String },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     status: { 
       type: String, 
@@ -25,7 +24,7 @@ const jobSchema = new mongoose.Schema(
     },
     requirements: { type: String, default: "" },
     
-    //  Applications tracking
+    // Applications tracking
     applicationsCount: { type: Number, default: 0 },
     lastApplicationDate: { type: Date }
   },
