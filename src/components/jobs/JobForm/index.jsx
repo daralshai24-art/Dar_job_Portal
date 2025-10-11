@@ -1,219 +1,224 @@
-// components/jobs/JobForm/index.jsx
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
+import dynamic from 'next/dynamic';
+import { useRef } from 'react';
+
+// Dynamically import React Select with SSR disabled
+const Select = dynamic(() => import('react-select'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full border border-gray-300 rounded-xl px-3 py-2 md:px-4 md:py-3 bg-gray-100 animate-pulse">
+      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+    </div>
+  )
+});
 
 // Shared UI Components
 import Button from "@/components/shared/ui/Button";
-import Input from "@/components/shared/ui/Input";
-import Select from "@/components/shared/ui/Select";
 import Textarea from "@/components/shared/ui/Textarea";
-import LoadingSpinner from "@/components/shared/ui/LoadingSpinner";
-import ErrorMessage from "@/components/shared/ui/ErrorMessage";
+
+// Custom Hooks and Components
+import { useJobForm } from "./hooks/useJobForm";
+import DynamicSelectWithAdd from "./components/DynamicSelectWithAdd";
+import FormHeader from "./components/FormHeader";
+import FormActions from "./components/FormActions";
 
 // Form configuration
-import { 
-  validateJobForm, 
-  jobFormInitialData 
-} from "./validation";
-import { 
-  formFields, 
-  getStatusExplanation 
-} from "./FormFields";
+import { formFields, getStatusExplanation } from "./config/formConfig";
 
-/**
- * Reusable Job Form Component
- * Handles both create and edit modes
- * 
- * @param {Object} props
- * @param {Object} props.initialData - Initial form data for edit mode
- * @param {string} props.mode - 'create' | 'edit'
- * @param {function} props.onSuccess - Success callback
- */
-const JobForm = ({ 
-  initialData = null, 
-  mode = "create",
-  onSuccess 
-}) => {
-  const router = useRouter();
-  
-  const [formData, setFormData] = useState(jobFormInitialData);
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-
-  // Initialize form with initialData for edit mode
-  useEffect(() => {
-    if (initialData && mode === "edit") {
-      setFormData({
-        title: initialData.title || "",
-        description: initialData.description || "",
-        location: initialData.location || "",
-        salary: initialData.salary || "",
-        category: initialData.category || "",
-        jobType: initialData.jobType || "Full-time",
-        experience: initialData.experience || "Entry Level",
-        requirements: initialData.requirements || "",
-        status: initialData.status || "draft",
-      });
+// Custom styles for React Select
+const selectStyles = {
+  control: (base, state) => ({
+    ...base,
+    borderColor: state.isFocused ? '#D6B666' : '#d1d5db',
+    borderRadius: '12px',
+    padding: '2px 4px',
+    textAlign: 'right',
+    minHeight: '44px', // Reduced for mobile
+    fontSize: '14px', // Added for mobile
+    boxShadow: state.isFocused ? '0 0 0 2px rgba(214, 182, 102, 0.2)' : 'none',
+    '&:hover': {
+      borderColor: state.isFocused ? '#D6B666' : '#9ca3af'
+    },
+    '@media (min-width: 768px)': {
+      minHeight: '52px', // Original height for desktop
     }
-  }, [initialData, mode]);
-
-  const handleChange = (field, value) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      [field]: value 
-    }));
-    
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: ""
-      }));
+  }),
+  menu: (base) => ({
+    ...base,
+    textAlign: 'right',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    fontSize: '14px', // Added for mobile
+  }),
+  option: (base, state) => ({
+    ...base,
+    textAlign: 'right',
+    fontSize: '14px', // Added for mobile
+    padding: '8px 12px', // Adjusted for mobile
+    backgroundColor: state.isSelected ? '#D6B666' : state.isFocused ? '#fef6e6' : 'white',
+    color: state.isSelected ? 'white' : '#374151',
+    '&:hover': {
+      backgroundColor: state.isSelected ? '#D6B666' : '#fef6e6'
     }
-  };
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  
-  // Validate form
-  const formErrors = validateJobForm(formData);
-  if (Object.keys(formErrors).length > 0) {
-    setErrors(formErrors);
-    toast.error("يرجى ملء جميع الحقول المطلوبة");
-    return;
-  }
-
-  setLoading(true);
-  setErrors({});
-
-  try {
-    const url = mode === "create" ? "/api/jobs" : `/api/jobs/${initialData._id}`;
-    const method = mode === "create" ? "POST" : "PUT";
-
-    const res = await fetch(url, {
-      method,
-      headers: { 
-        "Content-Type": "application/json" 
-      },
-      body: JSON.stringify(formData),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || `فشل في ${mode === "create" ? "إنشاء" : "تحديث"} الوظيفة`);
-    }
-
-    const successMessage = mode === "create" 
-      ? "تم إنشاء الوظيفة بنجاح!" 
-      : "تم تحديث الوظيفة بنجاح!";
-
-    toast.success(successMessage);
-
-    //  Use router.replace() instead of router.push()
-    
-    router.replace("/admin/jobs");
-
-  } catch (err) {
-    console.error("Error saving job:", err);
-    toast.error(err.message);
-  } finally {
-    setLoading(false);
-  }
+  }),
+  placeholder: (base) => ({
+    ...base,
+    textAlign: 'right',
+    color: '#9ca3af',
+    fontSize: '14px', // Added for mobile
+  }),
+  singleValue: (base) => ({
+    ...base,
+    textAlign: 'right',
+    color: '#374151',
+    fontSize: '14px', // Added for mobile
+  })
 };
+
+const JobForm = ({ initialData = null, mode = "create" }) => {
+  const router = useRouter();
+  // Create the ref in the main component
+  const formActionsRef = useRef(null);
+  
+  const {
+    formData,
+    loading,
+    errors,
+    dynamicOptions,
+    newOptions,
+    handleChange,
+    handleNewOptionChange,
+    addNewOption,
+    handleSubmit,
+    handleCancel
+  } = useJobForm(initialData, mode,  formActionsRef); // Pass the ref to the hook
+
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 space-y-6 max-w-4xl mx-auto"
+      className="bg-white p-4 sm:p-6 md:p-8 rounded-xl md:rounded-2xl shadow-lg border border-gray-100 space-y-4 md:space-y-6 max-w-4xl mx-auto transition-all duration-300"
       dir="rtl"
     >
-      {/* Header */}
-      <div className="text-center mb-2">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">
-          {mode === "create" ? "إضافة وظيفة جديدة" : "تعديل الوظيفة"}
-        </h2>
-        <p className="text-gray-600 text-sm">
-          {mode === "create" 
-            ? "املأ البيانات التالية لنشر الوظيفة" 
-            : "قم بتعديل بيانات الوظيفة ثم احفظ التغييرات"
-          }
-        </p>
-      </div>
+      <FormHeader mode={mode} />
+
+      {/* Loading Overlay */}
+      {loading && (
+        <div className="fixed inset-0 bg-white bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-4 sm:p-6 flex flex-col items-center gap-3 sm:gap-4 shadow-lg border border-gray-200 max-w-xs sm:max-w-sm mx-4">
+            <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-[#D6B666]"></div>
+            <div className="text-center">
+              <p className="text-gray-700 font-medium mb-1 text-sm sm:text-base">
+                {mode === "create" ? "جاري إنشاء الوظيفة..." : "جاري تحديث الوظيفة..."}
+              </p>
+              <p className="text-xs sm:text-sm text-gray-500">
+                الرجاء الانتظار
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Title Field */}
-      <Input
+      <DynamicSelectWithAdd
         label={formFields.title.label}
-        placeholder={formFields.title.placeholder}
-        icon={formFields.title.icon}
         value={formData.title}
-        onChange={(e) => handleChange("title", e.target.value)}
+        onChange={(value) => handleChange("title", value)}
+        options={dynamicOptions.titles}
+        newValue={newOptions.title}
+        onNewValueChange={(value) => handleNewOptionChange("title", value)}
+        onAddNew={() => addNewOption("titles")}
         error={errors.title}
         required={formFields.title.required}
+        placeholder="اختر المسمى الوظيفي"
+        addPlaceholder="مسمى وظيفي جديد"
       />
 
       {/* Grid Layout for Multiple Fields */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Location */}
-        <Input
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        {/* Location Field */}
+        <DynamicSelectWithAdd
           label={formFields.location.label}
-          placeholder={formFields.location.placeholder}
-          icon={formFields.location.icon}
           value={formData.location}
-          onChange={(e) => handleChange("location", e.target.value)}
+          onChange={(value) => handleChange("location", value)}
+          options={dynamicOptions.locations}
+          newValue={newOptions.location}
+          onNewValueChange={(value) => handleNewOptionChange("location", value)}
+          onAddNew={() => addNewOption("locations")}
           error={errors.location}
           required={formFields.location.required}
+          placeholder="اختر الموقع"
+          addPlaceholder="موقع جديد"
         />
 
-        {/* Category */}
-        <Select
+        {/* Category Field */}
+        <DynamicSelectWithAdd
           label={formFields.category.label}
-          icon={formFields.category.icon}
           value={formData.category}
-          onChange={(e) => handleChange("category", e.target.value)}
-          options={[{ value: "", label: "اختر التصنيف" }, ...formFields.category.options]}
+          onChange={(value) => handleChange("category", value)}
+          options={dynamicOptions.categories}
+          newValue={newOptions.category}
+          onNewValueChange={(value) => handleNewOptionChange("category", value)}
+          onAddNew={() => addNewOption("categories")}
+          error={errors.category}
+          required={formFields.category.required}
+          placeholder="اختر التصنيف"
+          addPlaceholder="تصنيف جديد"
         />
 
         {/* Job Type */}
-        <Select
-          label={formFields.jobType.label}
-          icon={formFields.jobType.icon}
-          value={formData.jobType}
-          onChange={(e) => handleChange("jobType", e.target.value)}
-          options={formFields.jobType.options}
-        />
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            {formFields.jobType.label}
+          </label>
+          <Select
+            value={formFields.jobType.options.find(opt => opt.value === formData.jobType)}
+            onChange={(selected) => handleChange("jobType", selected?.value || '')}
+            options={formFields.jobType.options}
+            placeholder="اختر نوع الوظيفة"
+            styles={selectStyles}
+            isSearchable={false}
+            isClearable={false}
+            className="text-right"
+          />
+        </div>
 
         {/* Experience Level */}
-        <Select
-          label={formFields.experience.label}
-          icon={formFields.experience.icon}
-          value={formData.experience}
-          onChange={(e) => handleChange("experience", e.target.value)}
-          options={formFields.experience.options}
-        />
-
-        {/* Salary */}
-        <Input
-          label={formFields.salary.label}
-          placeholder={formFields.salary.placeholder}
-          icon={formFields.salary.icon}
-          value={formData.salary}
-          onChange={(e) => handleChange("salary", e.target.value)}
-        />
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            {formFields.experience.label}
+          </label>
+          <Select
+            value={formFields.experience.options.find(opt => opt.value === formData.experience)}
+            onChange={(selected) => handleChange("experience", selected?.value || '')}
+            options={formFields.experience.options}
+            placeholder="اختر مستوى الخبرة"
+            styles={selectStyles}
+            isSearchable={false}
+            isClearable={false}
+            className="text-right"
+          />
+        </div>
 
         {/* Status with Explanation */}
-        <div className="space-y-2">
+        <div className="space-y-2 md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700">
+            {formFields.status.label}
+          </label>
           <Select
-            label={formFields.status.label}
-            icon={formFields.status.icon}
-            value={formData.status}
-            onChange={(e) => handleChange("status", e.target.value)}
+            value={formFields.status.options.find(opt => opt.value === formData.status)}
+            onChange={(selected) => handleChange("status", selected?.value || '')}
             options={formFields.status.options}
+            placeholder="اختر الحالة"
+            styles={selectStyles}
+            isSearchable={false}
+            isClearable={false}
+            className="text-right"
           />
           
-          {/* Status Explanation */}
-          <div className="text-xs text-gray-500 mt-2">
+          <div className="text-xs text-gray-500 mt-2 px-1">
             {getStatusExplanation(formData.status)}
           </div>
         </div>
@@ -228,7 +233,8 @@ const handleSubmit = async (e) => {
         onChange={(e) => handleChange("description", e.target.value)}
         error={errors.description}
         required={formFields.description.required}
-        rows={5}
+        rows={4} // Reduced for mobile
+        className="text-sm md:text-base" // Responsive text size
       />
 
       {/* Requirements Field */}
@@ -238,32 +244,17 @@ const handleSubmit = async (e) => {
         icon={formFields.requirements.icon}
         value={formData.requirements}
         onChange={(e) => handleChange("requirements", e.target.value)}
-        rows={3}
+        rows={3} // Reduced for mobile
+        className="text-sm md:text-base" // Responsive text size
       />
 
-      {/* Form Actions */}
-      <div className="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.push("/admin/jobs")}
-          disabled={loading}
-        >
-          إلغاء
-        </Button>
-        
-    <Button
-  type="submit"
-  loading={loading}
-  disabled={loading}
-  className="w-full md:w-auto"
->
-  {mode === "create" 
-    ? (formData.status === "draft" ? "حفظ كمسودة" : "نشر الوظيفة")
-    : "حفظ التغييرات"
-  }
-</Button>
-      </div>
+      <FormActions 
+        loading={loading} 
+        mode={mode} 
+        formData={formData} 
+        onCancel={handleCancel}
+        ref={formActionsRef}
+      />
     </form>
   );
 };
