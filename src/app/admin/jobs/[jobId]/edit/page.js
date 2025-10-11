@@ -1,49 +1,47 @@
-// app/admin/jobs/[jobId]/edit/page.jsx
 "use client";
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowRight,Loader } from 'lucide-react';
+import { ArrowRight, Loader } from 'lucide-react';
 
+// Components
 import JobForm from '@/components/jobs/JobForm';
 import LoadingSpinner from '@/components/shared/ui/LoadingSpinner';
 import ErrorMessage from '@/components/shared/ui/ErrorMessage';
 import Button from '@/components/shared/ui/Button';
 
+/**
+ * Edit Job Page Component
+ * Handles loading, editing, and error states for job editing
+ */
 export default function EditJobPage() {
+  // Hooks
   const params = useParams();
   const router = useRouter();
   
-  // ✅ CORRECT: Use params.jobId (not params.id)
-  const jobId = params.jobId;
-  
+  // State
   const [loading, setLoading] = useState(true);
   const [job, setJob] = useState(null);
   const [error, setError] = useState(null);
 
-  // Add debug logging
-  useEffect(() => {
-    console.log('🔍 Edit page mounted');
-    console.log('🔍 Full params object:', params);
-    console.log('🔍 jobId from params.jobId:', jobId);
-    console.log('🔍 Current path:', window.location.pathname);
-  }, [params, jobId]);
+  // Derived values
+  const jobId = params.jobId;
 
   // Fetch job data
   useEffect(() => {
     const fetchJob = async () => {
-      try {
-        console.log('🔄 Starting to fetch job with ID:', jobId);
-        
-        if (!jobId) {
-          throw new Error('معرف الوظيفة غير متوفر');
-        }
+      // Validation
+      if (!jobId) {
+        setError('معرف الوظيفة غير متوفر');
+        setLoading(false);
+        return;
+      }
 
+      try {
         setLoading(true);
         setError(null);
         
         const response = await fetch(`/api/jobs/${jobId}`);
-        console.log('📨 API Response status:', response.status);
         
         if (!response.ok) {
           const errorData = await response.json();
@@ -51,36 +49,29 @@ export default function EditJobPage() {
         }
         
         const jobData = await response.json();
-        console.log('✅ Job data received:', jobData);
         setJob(jobData);
         
       } catch (error) {
-        console.error('❌ Error fetching job:', error);
         setError(error.message);
       } finally {
-        console.log('🏁 Fetch completed, setting loading to false');
         setLoading(false);
       }
     };
 
-    // Only fetch if jobId is available
-    if (jobId) {
-      fetchJob();
-    } else {
-      console.log('⏳ Waiting for jobId...');
-    }
+    fetchJob();
   }, [jobId]);
 
-  const handleSuccess = (updatedJob) => {
-    console.log('Job updated successfully:', updatedJob);
+  // Handlers
+  const handleBackToJobs = () => {
+    router.push('/admin/jobs');
   };
 
-  // Show loading if still waiting for jobId or fetching data
-  if (!jobId || loading) {
+  // Render loading state
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-         <Loader className="animate-spin h-8 w-8 text-[#B38025] mx-auto mb-4" />
+          <Loader className="animate-spin h-8 w-8 text-[#B38025] mx-auto mb-4" />
           <p className="text-gray-600 mt-4">
             {!jobId ? 'جاري تحميل الصفحة...' : 'جاري تحميل بيانات الوظيفة...'}
           </p>
@@ -89,6 +80,7 @@ export default function EditJobPage() {
     );
   }
 
+  // Render error state
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -101,7 +93,7 @@ export default function EditJobPage() {
           </h3>
           <ErrorMessage message={error} className="mb-4" />
           <Button
-            onClick={() => router.push('/admin/jobs')}
+            onClick={handleBackToJobs}
             variant="secondary"
           >
             العودة للوظائف
@@ -111,31 +103,43 @@ export default function EditJobPage() {
     );
   }
 
+  // Render main content
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
+      {/* Page Header */}
       <div className="mb-8">
         <Button
-          onClick={() => router.push('/admin/jobs')}
+          onClick={handleBackToJobs}
           variant="outline"
           className="mb-4"
         >
           <ArrowRight className="ml-1 h-4 w-4" />
           العودة للوظائف
         </Button>
-{/*            */}
+        
+        
       </div>
 
       {/* Job Form */}
-      {job ? (
-        <JobForm 
-          initialData={job}
-          mode="edit"
-          onSuccess={handleSuccess}
-        />
-      ) : (
-        <ErrorMessage message="لم يتم العثور على بيانات الوظيفة" />
-      )}
+      <div>
+        {job ? (
+          <JobForm 
+            initialData={job}
+            mode="edit"
+          />
+        ) : (
+          <div className="p-8 text-center">
+            <ErrorMessage message="لم يتم العثور على بيانات الوظيفة" />
+            <Button
+              onClick={handleBackToJobs}
+              variant="secondary"
+              className="mt-4"
+            >
+              العودة للوظائف
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
