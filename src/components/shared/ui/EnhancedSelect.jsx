@@ -89,8 +89,7 @@ const EnhancedSelect = ({
     setHighlightedIndex(-1);
   };
 
-  const clearSelection = (e) => {
-    e.stopPropagation(); // Prevent triggering the main button
+  const clearSelection = () => {
     onChange("");
     setSearchTerm("");
   };
@@ -106,52 +105,36 @@ const EnhancedSelect = ({
       )}
       
       <div className="relative">
-        {/* Main select trigger - Using div instead of button to avoid nesting issues */}
-        <div
+        {/* Main select trigger */}
+        <button
+          type="button"
           className={`
             w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#D6B666] focus:border-transparent outline-none appearance-none bg-white cursor-pointer transition-all duration-200 text-right flex items-center justify-between
             ${error ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 hover:border-gray-400'}
-            ${isOpen ? 'ring-2 ring-[#D6B666] border-transparent' : ''}
             ${className}
           `.trim()}
           onClick={() => setIsOpen(!isOpen)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              setIsOpen(!isOpen);
-            }
-          }}
-          tabIndex={0}
-          role="button"
-          aria-haspopup="listbox"
-          aria-expanded={isOpen}
-          aria-labelledby={label ? undefined : 'select-label'}
           dir="rtl"
         >
           <div className="flex items-center gap-2 flex-1 min-w-0">
             {Icon && <Icon className="h-5 w-5 text-gray-400 flex-shrink-0" />}
-            <span className="flex-1 truncate" id="select-label">
+            <span className="flex-1 truncate">
               {selectedOption?.label || placeholder}
             </span>
           </div>
           
           <div className="flex items-center gap-2 flex-shrink-0">
             {value && (
-              <div
-                onClick={clearSelection}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    clearSelection(e);
-                  }
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearSelection();
                 }}
-                className="p-1 hover:bg-gray-100 rounded cursor-pointer"
-                tabIndex={0}
-                role="button"
-                aria-label="مسح الاختيار"
+                className="p-1 hover:bg-gray-100 rounded"
               >
                 <X className="h-3 w-3 text-gray-400" />
-              </div>
+              </button>
             )}
             <ChevronDown 
               className={`h-4 w-4 text-gray-400 transition-transform ${
@@ -159,15 +142,11 @@ const EnhancedSelect = ({
               }`} 
             />
           </div>
-        </div>
+        </button>
 
         {/* Dropdown */}
         {isOpen && (
-          <div 
-            className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-xl shadow-lg max-h-60 overflow-hidden"
-            role="listbox"
-            aria-labelledby="select-label"
-          >
+          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-xl shadow-lg max-h-60 overflow-hidden">
             {/* Search input */}
             {searchable && (
               <div className="p-2 border-b border-gray-200">
@@ -190,6 +169,7 @@ const EnhancedSelect = ({
             <div 
               ref={listboxRef}
               className="max-h-48 overflow-y-auto"
+              role="listbox"
             >
               {filteredOptions.length === 0 ? (
                 <div className="px-4 py-3 text-sm text-gray-500 text-center">
@@ -197,26 +177,20 @@ const EnhancedSelect = ({
                 </div>
               ) : (
                 filteredOptions.map((option, index) => (
-                  <div
+                  <button
                     key={option.value}
+                    type="button"
                     className={`
-                      w-full px-4 py-3 text-right text-sm transition-colors border-b border-gray-100 last:border-b-0 cursor-pointer
+                      w-full px-4 py-3 text-right text-sm transition-colors border-b border-gray-100 last:border-b-0
                       ${option.value === value ? 'bg-[#D6B666] bg-opacity-10 text-[#D6B666] font-medium' : ''}
                       ${index === highlightedIndex ? 'bg-gray-100' : 'hover:bg-gray-50'}
                     `.trim()}
                     onClick={() => handleSelect(option.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleSelect(option.value);
-                      }
-                    }}
                     role="option"
                     aria-selected={option.value === value}
-                    tabIndex={0}
                   >
                     {option.label}
-                  </div>
+                  </button>
                 ))
               )}
             </div>
