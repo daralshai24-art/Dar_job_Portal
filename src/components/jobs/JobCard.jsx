@@ -2,127 +2,85 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FiMapPin, FiDollarSign, FiClock, FiBriefcase } from "react-icons/fi";
+import { FiMapPin, FiClock, FiBriefcase, FiArrowLeft } from "react-icons/fi";
+import { formatArabicDate } from "@/utils/dateFormatter";
 
-/**
- * JobCard Component
- * Displays a job in card format with clickable navigation
- *
- * Props:
- * - job: Object containing job details from database
- */
 export default function JobCard({ job }) {
   const router = useRouter();
 
-  /**
-   * Handle card click - navigate to job details page
-   */
-  const handleClick = () => {
-    router.push(`/jobs/${job._id}`);
-  };
+  const handleClick = () => router.push(`/jobs/${job._id}`);
 
-  /**
-   * Format date to Arabic locale
-   */
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("ar-SA", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  /**
-   * Truncate text to specified length
-   */
-  const truncateText = (text, maxLength = 100) => {
-    if (!text) return "";
-    return text.length > maxLength
-      ? text.substring(0, maxLength) + "..."
-      : text;
-  };
+  const DetailItem = ({ icon: Icon, label, value, color = "gray" }) => (
+    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+      <div className={`flex items-center justify-center w-8 h-8 bg-${color}-100 rounded-lg`}>
+        <Icon size={16} className={`text-${color}-600`} />
+      </div>
+      <div>
+        <p className="text-xs text-gray-500">{label}</p>
+        <p className="text-sm font-medium text-gray-800 truncate">{value}</p>
+      </div>
+    </div>
+  );
 
   return (
     <div
       onClick={handleClick}
-      className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border border-gray-100 group"
+      className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer border border-gray-200 group relative overflow-hidden"
     >
-      {/* Job Title and Status */}
-      <div className="flex justify-between items-start mb-3">
-        <h2 className="text-xl font-semibold mb-2 text-gray-800 group-hover:text-[#B38025] transition-colors"
-        >
-          {job.title}
-        </h2>
+      {/* Top Accent */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#B38025] to-[#D6B666]"></div>
+
+      {/* Header */}
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex-1">
+          <h2 className="text-xl font-bold text-gray-900 group-hover:text-[#B38025] transition-colors line-clamp-2">
+            {job.title}
+          </h2>
+          {job.category && (
+            <span className="inline-block mt-2 bg-[#B38025]/10 text-[#B38025] text-sm font-medium px-3 py-1 rounded-full">
+              {job.category}
+            </span>
+          )}
+        </div>
+
         {job.status && (
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${
-              job.status === "active"
-                ? "bg-green-100 text-green-700"
-                : "bg-gray-100 text-gray-700"
-            }`}
-          >
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold ml-4 ${
+            job.status === "active" 
+              ? "bg-green-100 text-green-800 border border-green-200" 
+              : "bg-gray-100 text-gray-600 border border-gray-200"
+          }`}>
             {job.status === "active" ? "متاحة" : "غير متاحة"}
           </span>
         )}
       </div>
 
-      {/* Job Description */}
-      <p className="text-gray-600 mb-4 leading-relaxed">
-        {truncateText(job.description, 120)}
+      {/* Description */}
+      <p className="text-gray-600 mb-6 leading-relaxed line-clamp-3 text-sm">
+        {job.description?.substring(0, 150)}{job.description?.length > 150 && "..."}
       </p>
 
-      {/* Job Details Grid */}
-      <div className="grid grid-cols-2 gap-3 mb-4 text-sm text-gray-500">
-        {/* Location */}
-        {job.location && (
-          <div className="flex items-center gap-2">
-            <FiMapPin size={16} className="text-red-500 flex-shrink-0" />
-            <span className="truncate">{job.location}</span>
-          </div>
-        )}
-
-        {/* Salary */}
-        {job.salary && (
-          <div className="flex items-center gap-2">
-            <FiDollarSign size={16} className="text-green-500 flex-shrink-0" />
-            <span className="truncate">{job.salary}</span>
-          </div>
-        )}
-
-        {/* Job Type */}
-        {job.jobType && (
-          <div className="flex items-center gap-2">
-            <FiBriefcase size={16} className="text-blue-500 flex-shrink-0" />
-            <span className="truncate">{job.jobType}</span>
-          </div>
-        )}
-
-        {/* Posted Date */}
-        <div className="flex items-center gap-2">
-          <FiClock size={16} className="text-purple-500 flex-shrink-0" />
-          <span className="truncate">{formatDate(job.createdAt)}</span>
-        </div>
+      {/* Details Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        {job.location && <DetailItem icon={FiMapPin} label="الموقع" value={job.location} color="red" />}
+        {job.jobType && <DetailItem icon={FiBriefcase} label="نوع الوظيفة" value={job.jobType} color="blue" />}
+        <DetailItem icon={FiClock} label="تاريخ النشر" value={formatArabicDate(job.createdAt)} color="purple" />
+        {job.salary && <DetailItem icon={() => <span className="font-bold">$</span>} label="الراتب" value={job.salary} color="green" />}
       </div>
 
-      {/* Category Badge */}
-      {job.category && (
-        <div className="mb-4">
-          <span className="inline-block bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full">
-            {job.category}
-          </span>
+      {/* Footer */}
+      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <span>عرض التفاصيل</span>
+          <FiArrowLeft size={14} className="group-hover:translate-x-1 transition-transform" />
         </div>
-      )}
-
-      {/* Apply Button */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation(); // Prevent card click when button is clicked
-          handleClick();
-        }}
-        className="w-full bg-[#B38025] text-white py-3 rounded-lg hover:bg-[#D6B666] transition-all duration-300 hover:text-[#ffff] font-medium group-hover:shadow-md cursor-pointer "
-      >
-        قدم الآن
-      </button>
+        
+        <button
+          onClick={(e) => e.stopPropagation() || handleClick()}
+          className="bg-gradient-to-r from-[#B38025] to-[#D6B666] text-white px-6 py-3 rounded-xl hover:from-[#D6B666] hover:to-[#B38025] transition-all font-semibold min-w-[120px]"
+        >
+          قدم الآن
+        </button>
+      </div>
     </div>
   );
 }
