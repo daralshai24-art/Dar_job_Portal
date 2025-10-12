@@ -1,9 +1,10 @@
+//src\app\api\applications\route.js
 import { NextResponse } from "next/server";
+import { writeFile, mkdir } from "fs/promises";
+import { connectDB } from "@/lib/db"; 
 import Application from "@/models/Application";
 import Job from "@/models/Job";
-import { writeFile, mkdir } from "fs/promises";
 import path from "path";
-import { connectDB } from "@/lib/db"; 
 
 export async function POST(request) {
   try {

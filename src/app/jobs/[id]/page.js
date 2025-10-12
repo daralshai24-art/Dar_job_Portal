@@ -11,7 +11,7 @@ import Header from "@/components/shared/Header";
 import Footer from "@/components/shared/Footer";
 import PublicJobHeader from "@/components/public/PublicJobHeader";
 import JobContentSection from "@/components/public/JobContentSection";
-import JobApplicationForm from "@/components/public/JobApplicationForm";
+import JobApplicationForm from "@/components/public/ApplicationForm/JobApplicationForm";
 import Breadcrumb from "@/components/shared/Breadcrumb";
 
 // Utils
