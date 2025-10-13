@@ -1,12 +1,12 @@
+// components/admin/jobs/validation.js
 /**
  * Initial form data
  */
- 
 export const jobFormInitialData = {
   title: "",
   description: "",
   location: "",
-  category: "",
+  category: "", // Now stores category ID
   jobType: "Full-time",
   experience: "Entry Level",
   requirements: "",
@@ -57,7 +57,7 @@ export const prepareJobData = (formData, userId) => {
     title: formData.title?.trim() || "",
     description: formData.description?.trim() || "",
     location: formData.location?.trim() || "",
-    category: formData.category?.trim() || "",
+    category: formData.category, // This is now the category ID
     jobType: formData.jobType || "Full-time",
     experience: formData.experience || "Entry Level",
     requirements: formData.requirements?.trim() || "",

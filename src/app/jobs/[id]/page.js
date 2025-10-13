@@ -1,4 +1,4 @@
-// app/(public)/jobs/[id]/page.jsx
+// app/jobs/[id]/page.jsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -16,6 +16,13 @@ import Breadcrumb from "@/components/shared/Breadcrumb";
 
 // Utils
 import { formatArabicDate } from "@/utils/dateFormatter";
+
+// Helper function to get category name
+const getCategoryName = (category) => {
+  if (!category) return "غير محدد";
+  if (typeof category === 'string') return category;
+  return category.name || "غير محدد";
+};
 
 export default function JobDetailsPage() {
   const [job, setJob] = useState(null);
@@ -45,23 +52,12 @@ export default function JobDetailsPage() {
     }
   };
 
-  const handleApplicationSubmit = async (formData) => {
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      toast.success("تم إرسال طلب التوظيف بنجاح! سيتم التواصل معك قريباً");
-      
-      // Reset form in parent if needed
-      const fileInput = document.querySelector('input[type="file"]');
-      if (fileInput) fileInput.value = "";
-    } catch (error) {
-      toast.error("حدث خطأ في إرسال الطلب. يرجى المحاولة مرة أخرى");
-      throw error;
-    }
-  };
 
   if (loading) return <LoadingState />;
   if (!job) return <ErrorState router={router} />;
+
+  // Get category name using helper function
+  const categoryName = getCategoryName(job.category);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -98,7 +94,7 @@ export default function JobDetailsPage() {
                   )}
 
                   {job.benefits && <JobBenefits benefits={job.benefits} />}
-                  <AdditionalInfo job={job} />
+                  <AdditionalInfo job={job} categoryName={categoryName} />
                 </div>
               </div>
             </div>
@@ -106,7 +102,7 @@ export default function JobDetailsPage() {
             {/* Application Form */}
             <JobApplicationForm 
               job={job} 
-              onSubmit={handleApplicationSubmit}
+            
             />
           </div>
         </div>
@@ -130,14 +126,16 @@ const JobBenefits = ({ benefits }) => (
   </JobContentSection>
 );
 
-const AdditionalInfo = ({ job }) => (
+// Updated AdditionalInfo to accept categoryName prop
+const AdditionalInfo = ({ job, categoryName }) => (
   <section className="bg-gray-50 rounded-lg p-6">
     <h3 className="text-lg font-semibold text-gray-800 mb-4">معلومات إضافية</h3>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
       <InfoItem icon={Users} label="مستوى الخبرة" value={job.experience} />
       <InfoItem icon={Calendar} label="تاريخ النشر" value={formatArabicDate(job.createdAt)} />
-      <InfoItem icon={FileText} label="عدد المتقدمين" value={`${job.applicationsCount} متقدم`} />
       <InfoItem icon={Briefcase} label="نوع الوظيفة" value={job.jobType} />
+      {/* Add category info */}
+      <InfoItem icon={Users} label="التصنيف" value={categoryName} />
     </div>
   </section>
 );
@@ -175,7 +173,7 @@ const ErrorState = ({ router }) => (
         <p className="text-gray-600 mb-6">الوظيفة التي تبحث عنها غير متاحة أو تم حذفها</p>
         <button
           onClick={() => router.push("/jobs")}
-          className="bg-[#B38025] text-white px-6 py-3 rounded-lg hover:bg-[#D6B666] hover:text-[#1D3D1E] transition-all duration-300 cursor-pointer  "
+          className="bg-[#B38025] text-white px-6 py-3 rounded-lg hover:bg-[#D6B666] hover:text-[#1D3D1E] transition-all duration-300 cursor-pointer"
         >
           العودة إلى صفحة الوظائف
         </button>

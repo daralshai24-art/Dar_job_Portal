@@ -2,27 +2,21 @@
 import { connectDB } from "@/lib/db";
 import { NextResponse } from "next/server";
 import Job from "../../../models/Job";
+import Category from "@/models/Category";
 
 /**
  * GET /api/jobs
  * Retrieves all jobs with optional filtering
- * Query parameters:
- * - status: filter by job status
- * - category: filter by category
- * - search: search in title and description
  */
 export async function GET(request) {
   try {
-    // Connect to database
     await connectDB();
 
-    // Get URL search parameters
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
     const category = searchParams.get("category");
     const search = searchParams.get("search");
 
-    // Build query object
     let query = {};
 
     // Add status filter if provided
@@ -30,9 +24,9 @@ export async function GET(request) {
       query.status = status;
     }
 
-    // Add category filter if provided
+    // Add category filter if provided - NOW USING CATEGORY ID
     if (category && category !== "all") {
-      query.category = { $regex: category, $options: "i" }; // Case-insensitive search
+      query.category = category; // Now expects category ID
     }
 
     // Add search functionality
@@ -43,11 +37,10 @@ export async function GET(request) {
       ];
     }
 
-    // Execute query with sorting (newest first)
-    const jobs = await Job.find(query).sort({ createdAt: -1 });
-
-    // Convert to plain object to include all fields
-    const jobsData = jobs.map(job => job.toObject ? job.toObject() : job);
+    // Execute query with category population
+    const jobs = await Job.find(query)
+      .populate('category', 'name  _id') // Populate category data
+      .sort({ createdAt: -1 });
     
     return NextResponse.json(jobs, { status: 200 });
   } catch (error) {
@@ -62,7 +55,6 @@ export async function GET(request) {
 /**
  * POST /api/jobs
  * Creates a new job posting
- * Expects JSON body with job data
  */
 const validateJobInput = (body) => {
   const errors = [];
@@ -71,6 +63,7 @@ const validateJobInput = (body) => {
   if (!body.title?.trim()) errors.push("Title is required");
   if (!body.description?.trim()) errors.push("Description is required");
   if (!body.location?.trim()) errors.push("Location is required");
+  if (!body.category) errors.push("Category is required"); // Now required
 
   // Field length validation
   if (body.title?.length > 100) errors.push("Title must be less than 100 characters");
@@ -95,15 +88,14 @@ const validateJobInput = (body) => {
   return errors;
 };
 
-// Sanitize and prepare job data
 const prepareJobData = (body) => {
   return {
     title: body.title?.trim(),
     description: body.description?.trim(),
     location: body.location?.trim(),
-    salary: body.salary?.trim() || "", // Keep as string for flexibility
+    salary: body.salary?.trim() || "",
     status: body.status || "draft",
-    category: body.category?.trim() || "",
+    category: body.category, // Now expects category ID
     jobType: body.jobType || "Full-time",
     experience: body.experience || "Entry Level",
     requirements: body.requirements?.trim() || "",
@@ -112,10 +104,8 @@ const prepareJobData = (body) => {
 
 export async function POST(request) {
   try {
-    // Connect to database
     await connectDB();
 
-    // Parse and validate request
     let body;
     try {
       body = await request.json();
@@ -140,6 +130,15 @@ export async function POST(request) {
       );
     }
 
+    // Verify category exists
+    const categoryExists = await Category.findById(body.category);
+    if (!categoryExists) {
+      return NextResponse.json(
+        { error: "Invalid category" },
+        { status: 400 }
+      );
+    }
+
     // Prepare job data
     const jobData = prepareJobData(body);
 
@@ -148,12 +147,14 @@ export async function POST(request) {
 
     console.log('Job created successfully:', job._id);
 
-    // Return success response (exclude sensitive fields if any)
+    // Return populated job data
+    const populatedJob = await Job.findById(job._id).populate('category', 'name  _id');
+
     return NextResponse.json(
       { 
         success: true,
         message: "Job created successfully",
-        data: job 
+        data: populatedJob 
       },
       { status: 201 }
     );
@@ -161,7 +162,6 @@ export async function POST(request) {
   } catch (error) {
     console.error("POST /api/jobs error:", error);
 
-    // Handle Mongoose validation errors
     if (error.name === "ValidationError") {
       const validationErrors = Object.values(error.errors).map(
         (err) => err.message
@@ -175,7 +175,6 @@ export async function POST(request) {
       );
     }
 
-    // Handle duplicate key errors
     if (error.code === 11000) {
       return NextResponse.json(
         { error: "Job with similar details already exists" },
@@ -183,7 +182,6 @@ export async function POST(request) {
       );
     }
 
-    // Handle other errors
     return NextResponse.json(
       { 
         error: "Internal server error",

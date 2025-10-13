@@ -1,4 +1,4 @@
-//src\components\admin\applications\JobInfoCard.jsx
+//src/components/admin/applications/JobInfoCard.jsx
 import { Briefcase, MapPin, Users } from "lucide-react";
 import { Card, CardHeader, CardContent } from "@/components/shared/ui/Card";
 
@@ -13,6 +13,9 @@ const InfoItem = ({ icon: Icon, label, value }) => (
 );
 
 export const JobInfoCard = ({ application }) => {
+  // Use categoryName from the application object (provided by your API)
+  const categoryName = application?.categoryName || "غير محدد";
+
   return (
     <Card>
       <CardHeader icon={Briefcase} title="معلومات الوظيفة" />
@@ -27,11 +30,11 @@ export const JobInfoCard = ({ application }) => {
           />
         )}
         
-        {application.jobId?.category && (
+        {categoryName && categoryName !== "غير محدد" && (
           <InfoItem 
             icon={Users} 
             label="التصنيف" 
-            value={application.jobId.category} 
+            value={categoryName} 
           />
         )}
       </CardContent>

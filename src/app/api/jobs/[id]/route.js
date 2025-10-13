@@ -13,8 +13,10 @@ export async function GET(request, { params }) {
     
     const { id } = await params;
 
-    // Find job by ID
-    const job = await Job.findById(id);
+    // Find job by ID and populate category
+    const job = await Job.findById(id)
+      .populate('category', 'name _id') // Add this line to populate category
+      .exec();
 
     if (!job) {
       return NextResponse.json(
@@ -23,9 +25,6 @@ export async function GET(request, { params }) {
       );
     }
   
-  // Convert to plain object to include all fields
-   const jobData = job.toObject ? job.toObject() : job;
-    
     return NextResponse.json(job, { status: 200 });
   } catch (error) {
     console.error("GET /api/jobs/[id] error:", error);
@@ -44,7 +43,6 @@ export async function PUT(request, { params }) {
   try {
     await connectDB();
     
-  
     const { id } = await params;
     
     // Parse request body
@@ -71,7 +69,7 @@ export async function PUT(request, { params }) {
         new: true, // Return the updated document
         runValidators: true // Run schema validators
       }
-    );
+    ).populate('category', 'name _id'); // Populate category after update
 
     if (!updatedJob) {
       return NextResponse.json(

@@ -1,3 +1,4 @@
+// models/Job.js
 import mongoose from "mongoose";
 
 const jobSchema = new mongoose.Schema(
@@ -11,7 +12,11 @@ const jobSchema = new mongoose.Schema(
       enum: ["draft", "active", "inactive", "closed"], 
       default: "draft" 
     },
-    category: { type: String, default: "" },
+    category: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "Category",
+      required: true 
+    },
     jobType: { 
       type: String, 
       enum: ["Full-time", "Part-time", "Contract", "Freelance", "Internship"],

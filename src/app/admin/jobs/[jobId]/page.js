@@ -10,6 +10,13 @@ import LoadingSpinner from '@/components/shared/ui/LoadingSpinner';
 import ErrorMessage from '@/components/shared/ui/ErrorMessage';
 import Button from '@/components/shared/ui/Button';
 
+// Helper function to get category name
+const getCategoryName = (category) => {
+  if (!category) return "غير محدد";
+  if (typeof category === 'string') return category;
+  return category.name || "غير محدد";
+};
+
 export default function JobDetailsPage() {
   const params = useParams();
   const router = useRouter();
@@ -110,6 +117,9 @@ export default function JobDetailsPage() {
     );
   }
 
+  // Get category name using the helper function
+  const categoryName = getCategoryName(job?.category);
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
@@ -206,13 +216,13 @@ export default function JobDetailsPage() {
                 </div>
               )}
 
-              {/* Category */}
-              {job?.category && (
+              {/* Category - FIXED: Use categoryName instead of job.category */}
+              {categoryName && categoryName !== "غير محدد" && (
                 <div className="flex items-center text-gray-700">
                   <Users className="ml-2 h-5 w-5 text-purple-600 flex-shrink-0" />
                   <div>
                     <div className="text-sm text-gray-500">التصنيف</div>
-                    <div className="font-medium">{job?.category}</div>
+                    <div className="font-medium">{categoryName}</div>
                   </div>
                 </div>
               )}

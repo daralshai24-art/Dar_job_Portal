@@ -6,78 +6,49 @@ import { CheckCircle, XCircle, Loader } from "lucide-react";
 
 const ToastProvider = () => {
   return (
-    <>
-      <Toaster
-        position="top-center"
-        reverseOrder={false}
-        gutter={12}
-        // Remove containerStyle to avoid hydration issues
-        toastOptions={{
-          duration: 2000,
-          className: 'custom-toast',
+    <Toaster
+      position="top-center"
+      toastOptions={{
+        duration: 4000,
+        style: {
+          background: '#ffffff',
+          color: '#1f2937',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          fontSize: '14px',
+          fontFamily: 'var(--font-cairo), system-ui, sans-serif',
+          padding: '12px 16px',
+          textAlign: 'right',
+          direction: 'rtl',
+        },
+        success: {
+          duration: 6000,
+          icon: <CheckCircle className="w-4 h-4 text-green-500" />,
           style: {
-            background: '#ffffff',
-            color: '#1f2937',
-            borderRadius: '12px',
-            border: '1px solid #e5e7eb',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-            fontSize: '14px',
-            fontWeight: '500',
-            fontFamily: 'var(--font-cairo)',
-            padding: '16px 20px',
-            textAlign: 'right',
-            direction: 'rtl',
-            maxWidth: '400px',
-            minWidth: '300px',
+            background: '#f0fdf4',
+            color: '#166534',
+            borderLeft: '4px solid #22c55e',
           },
-          success: {
-            className: 'custom-toast-success',
-            icon: <CheckCircle className="w-5 h-5" />,
+        },
+        error: {
+          duration: 5000,
+          icon: <XCircle className="w-4 h-4 text-red-500" />,
+          style: {
+            background: '#fef2f2',
+            color: '#991b1b',
+            borderLeft: '4px solid #ef4444',
           },
-          error: {
-            className: 'custom-toast-error',
-            icon: <XCircle className="w-5 h-5" />,
+        },
+        loading: {
+          icon: <Loader className="w-4 h-4 text-amber-500 animate-spin" />,
+          style: {
+            background: '#fffbeb',
+            color: '#92400e',
+            borderLeft: '4px solid #f59e0b',
           },
-          loading: {
-            className: 'custom-toast-loading',
-            icon: <Loader className="w-5 h-5 animate-spin" />,
-          },
-        }}
-      />
-      
-      {/* Add global CSS for toast positioning */}
-      <style jsx global>{`
-        [data-rht-toaster] {
-          position: fixed !important;
-          top: 20px !important;
-          left: 50% !important;
-          transform: translateX(-50%) !important;
-          z-index: 9999 !important;
-          pointer-events: none !important;
-        }
-        
-        .custom-toast-success {
-          background: #f0fdf4 !important;
-          color: #166534 !important;
-          border: 1px solid #dcfce7 !important;
-          border-right: 4px solid #16a34a !important;
-        }
-        
-        .custom-toast-error {
-          background: #fef2f2 !important;
-          color: #991b1b !important;
-          border: 1px solid #fecaca !important;
-          border-right: 4px solid #dc2626 !important;
-        }
-        
-        .custom-toast-loading {
-          background: #fffbeb !important;
-          color: #92400e !important;
-          border: 1px solid #fef3c7 !important;
-          border-right: 4px solid #f59e0b !important;
-        }
-      `}</style>
-    </>
+        },
+      }}
+    />
   );
 };
 

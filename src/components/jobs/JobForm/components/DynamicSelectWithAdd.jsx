@@ -1,3 +1,4 @@
+// components/admin/jobs/components/DynamicSelectWithAdd.jsx
 import dynamic from 'next/dynamic';
 import { Plus } from 'lucide-react';
 
@@ -19,14 +20,14 @@ const selectStyles = {
     borderRadius: '12px',
     padding: '2px 4px',
     textAlign: 'right',
-    minHeight: '44px', // Smaller for mobile
-    fontSize: '14px', // Better for mobile
+    minHeight: '44px',
+    fontSize: '14px',
     boxShadow: state.isFocused ? '0 0 0 2px rgba(214, 182, 102, 0.2)' : 'none',
     '&:hover': {
       borderColor: state.isFocused ? '#D6B666' : '#9ca3af'
     },
     '@media (min-width: 768px)': {
-      minHeight: '52px', // Original height for desktop
+      minHeight: '52px',
     }
   }),
   menu: (base) => ({
@@ -34,13 +35,13 @@ const selectStyles = {
     textAlign: 'right',
     borderRadius: '12px',
     overflow: 'hidden',
-    fontSize: '14px', // Better for mobile
+    fontSize: '14px',
   }),
   option: (base, state) => ({
     ...base,
     textAlign: 'right',
-    fontSize: '14px', // Better for mobile
-    padding: '8px 12px', // Better touch targets
+    fontSize: '14px',
+    padding: '8px 12px',
     backgroundColor: state.isSelected ? '#D6B666' : state.isFocused ? '#fef6e6' : 'white',
     color: state.isSelected ? 'white' : '#374151',
     '&:hover': {
@@ -51,13 +52,13 @@ const selectStyles = {
     ...base,
     textAlign: 'right',
     color: '#9ca3af',
-    fontSize: '14px', // Better for mobile
+    fontSize: '14px',
   }),
   singleValue: (base) => ({
     ...base,
     textAlign: 'right',
     color: '#374151',
-    fontSize: '14px', // Better for mobile
+    fontSize: '14px',
   })
 };
 
@@ -72,12 +73,31 @@ const DynamicSelectWithAdd = ({
   error,
   required,
   placeholder = "اختر...",
-  addPlaceholder = "إضافة جديد"
+  addPlaceholder = "إضافة جديد",
+  type = "text"
 }) => {
-  const selectOptions = options.map(option => ({
-    value: option,
-    label: option
-  }));
+  // Handle different option types (strings for titles/locations, objects for categories)
+  const selectOptions = options.map(option => {
+    if (typeof option === 'string') {
+      return { value: option, label: option };
+    } else {
+      // For category objects
+      return { value: option._id, label: option.name };
+    }
+  });
+
+  // Find the current value's label for display
+  const currentValue = selectOptions.find(opt => opt.value === value);
+
+  // Determine which field to update in newOptions
+  const getFieldName = () => {
+    if (type === 'category') return 'category';
+    if (label.includes('المسمى')) return 'title';
+    if (label.includes('الموقع')) return 'location';
+    return 'value';
+  };
+
+  const fieldName = getFieldName();
 
   return (
     <div className="space-y-3">
@@ -85,12 +105,12 @@ const DynamicSelectWithAdd = ({
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       
-      {/* Mobile: Stack vertically, Desktop: Flex row */}
+      {/* Main input area */}
       <div className="flex flex-col sm:flex-row gap-3 items-start">
         {/* React Select - Full width on mobile */}
         <div className="w-full sm:flex-1">
           <Select
-            value={value ? { value, label: value } : null}
+            value={currentValue}
             onChange={(selected) => onChange(selected?.value || '')}
             options={selectOptions}
             placeholder={placeholder}
@@ -107,12 +127,12 @@ const DynamicSelectWithAdd = ({
           )}
         </div>
 
-        {/* Add New Section - Full width on mobile, auto on desktop */}
+        {/* Add New Section */}
         <div className="flex gap-2 w-full sm:w-auto sm:mt-1">
           <input
             placeholder={addPlaceholder}
             value={newValue}
-            onChange={(e) => onNewValueChange(e.target.value)}
+            onChange={(e) => onNewValueChange(fieldName, e.target.value)}
             className="w-full sm:min-w-[140px] text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#D6B666] focus:border-transparent"
             onKeyPress={(e) => {
               if (e.key === 'Enter') {
@@ -126,7 +146,7 @@ const DynamicSelectWithAdd = ({
             type="button"
             onClick={onAddNew}
             disabled={!newValue?.trim()}
-            className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center min-w-[44px]" // Minimum touch target
+            className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center min-w-[44px]"
             title="إضافة جديد"
           >
             <Plus className="w-4 h-4" />

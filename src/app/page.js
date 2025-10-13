@@ -1,3 +1,4 @@
+// src/app/page.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,26 +7,16 @@ import Header from "@/components/shared/Header";
 import Footer from "@/components/shared/Footer";
 import HeroSection from "@/components/home/HeroSection";
 import JobsSection from "@/components/home/JobsSection";
-import { TrendingUp, Users, Award } from "lucide-react";
+import LoadingSpinner from "@/components/shared/UI/LoadingSpinner";
 import toast from "react-hot-toast";
 
 export default function HomePage() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("الكل");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const router = useRouter();
 
-  // Stats for hero section
-  const stats = [
-    { icon: TrendingUp, label: "وظيفة متاحة", value: jobs.length },
-    { icon: Users, label: "موظف", value: "500+" },
-    { icon: Award, label: "معدل النجاح", value: "95%" },
-  ];
-
-  /**
-   * Fetch jobs from API on component mount
-   */
   useEffect(() => {
     const fetchJobs = async () => {
       try {
@@ -49,26 +40,18 @@ export default function HomePage() {
     fetchJobs();
   }, []);
 
-  /**
-   * Filter jobs based on search term and selected category
-   */
   const filteredJobs = jobs.filter((job) => {
-    const matchesSearch =
-      !searchTerm ||
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = !searchTerm ||
+      job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesCategory =
-      selectedCategory === "الكل" ||
-      job.category === selectedCategory ||
-      job.title.toLowerCase().includes(selectedCategory.toLowerCase());
+    const matchesCategory = selectedCategory === "all" ||
+      job.category?._id === selectedCategory ||
+      job.category === selectedCategory;
 
     return matchesSearch && matchesCategory;
   });
 
-  /**
-   * Handle search form submission
-   */
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
@@ -76,56 +59,84 @@ export default function HomePage() {
     }
   };
 
-  /**
-   * Navigate to jobs page
-   */
   const handleViewAllJobs = () => {
     router.push("/jobs");
   };
 
-  /**
-   * Handle category selection
-   */
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
-    // Scroll to jobs section
     document.getElementById("jobs-section")?.scrollIntoView({
       behavior: "smooth",
     });
   };
 
-  /**
-   * Clear search and category filters
-   */
   const handleClearFilters = () => {
     setSearchTerm("");
-    setSelectedCategory("الكل");
+    setSelectedCategory("all");
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
 
+      {/* Hero Section - Always visible */}
       <HeroSection
         searchTerm={searchTerm}
         onSearchChange={(e) => setSearchTerm(e.target.value)}
         onSearchSubmit={handleSearch}
         onViewAllJobs={handleViewAllJobs}
-        // stats={stats}
       />
 
-      <JobsSection
-        jobs={jobs}
-        loading={loading}
-        filteredJobs={filteredJobs}
-        selectedCategory={selectedCategory}
-        onCategorySelect={handleCategorySelect}
-        onViewAllJobs={handleViewAllJobs}
-        searchTerm={searchTerm}
-        onClearFilters={handleClearFilters}
-      />
+      {/* Jobs Section with proper loading container */}
+      {loading ? (
+        <JobsSectionLoading />
+      ) : (
+        <JobsSection
+          jobs={jobs}
+          loading={false}
+          filteredJobs={filteredJobs}
+          selectedCategory={selectedCategory}
+          onCategorySelect={handleCategorySelect}
+          onViewAllJobs={handleViewAllJobs}
+          searchTerm={searchTerm}
+          onClearFilters={handleClearFilters}
+        />
+      )}
 
       <Footer />
     </div>
   );
 }
+
+// Loading state that takes the same space as the actual JobsSection
+const JobsSectionLoading = () => (
+  <section className="flex-1 bg-gray-50 py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Section Header Skeleton */}
+      <div className="text-center mb-12">
+        <div className="h-8 bg-gray-300 rounded-lg w-64 mx-auto mb-4 animate-pulse"></div>
+        <div className="h-4 bg-gray-200 rounded w-96 mx-auto animate-pulse"></div>
+      </div>
+
+      {/* Categories Loading */}
+      <div className="mb-8 flex justify-center">
+        <div className="flex flex-wrap justify-center gap-3">
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="h-10 bg-gray-300 rounded-full w-24 animate-pulse"
+            ></div>
+          ))}
+        </div>
+      </div>
+
+      {/* Jobs Grid Loading */}
+      <div className="min-h-[600px] flex items-center justify-center">
+        <div className="text-center">
+          <LoadingSpinner size="xl" className="mx-auto mb-4" />
+          <p className="text-gray-600 text-lg">جاري تحميل الوظائف...</p>
+        </div>
+      </div>
+    </div>
+  </section>
+);

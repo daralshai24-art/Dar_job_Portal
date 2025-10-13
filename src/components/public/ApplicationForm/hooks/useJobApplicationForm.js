@@ -146,7 +146,7 @@ export const useJobApplication = (job) => {
     }
   }, [validateFile, updateFormField, validatePhone]);
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) return;
@@ -159,7 +159,6 @@ export const useJobApplication = (job) => {
       formDataToSend.append('name', formData.name.trim());
       formDataToSend.append('email', formData.email.trim().toLowerCase());
       
-      // Format phone number before sending (remove any non-numeric chars and store as string)
       const formattedPhone = formatPhoneNumber(formData.phone);
       formDataToSend.append('phone', formattedPhone);
       
@@ -172,7 +171,6 @@ export const useJobApplication = (job) => {
         body: formDataToSend,
       });
 
-      // Handle response
       const contentType = response.headers.get('content-type');
       let result;
       
@@ -187,7 +185,10 @@ export const useJobApplication = (job) => {
         throw new Error(result.error || ERROR_MESSAGES.SUBMISSION_FAILED);
       }
       
-      toast.success(result.message || "تم إرسال طلب التوظيف بنجاح! سيتم التواصل معك قريباً");
+      // ✅ UPDATED: Add duration to success toast
+      toast.success(result.message || "تم إرسال طلب التوظيف بنجاح! سيتم التواصل معك قريباً", {
+        duration: 6000,
+      });
       resetForm();
       
     } catch (error) {

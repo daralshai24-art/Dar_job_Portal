@@ -1,3 +1,4 @@
+// src/lib/constants.js
 // Theme colors
 export const COLORS = {
   primary: {
@@ -14,17 +15,11 @@ export const COLORS = {
   }
 };
 
-// Job categories
-export const JOB_CATEGORIES = [
-  "الكل",
-  "مبيعات",
-  "مشتريات",
-  "التقنيه",
-  "المحاسبة",
-  "الموارد البشرية", 
-  "التسويق",
-  "خدمة العملاء",
-];
+// Default category (for "All" option)
+export const DEFAULT_CATEGORY = {
+  _id: "all",
+  name: "الكل",
+};
 
 // Job status
 export const JOB_STATUS = {
@@ -59,5 +54,35 @@ export const ANIMATIONS = {
     primary: "bg-[#B38025] text-white border-[#B38025] hover:bg-[#D6B666] hover:text-[#1D3D1E]",
     secondary: "bg-transparent border-2 border-[#F1DD8C] text-[#F1DD8C] hover:bg-[#F1DD8C] hover:text-[#1D3D1E]",
     outline: "bg-white text-[#1D3D1E] border-gray-300 hover:border-[#B38025] hover:text-[#B38025]"
+  }
+};
+
+// Client-side function to fetch categories from API
+export const fetchCategories = async () => {
+  try {
+    const response = await fetch('/api/categories', {
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    if (!response.ok) {
+      console.error('Categories API response not OK:', response.status);
+      throw new Error(`Failed to fetch categories: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      return [DEFAULT_CATEGORY, ...result.data];
+    } else {
+      console.error('Categories API returned error:', result.error);
+      throw new Error(result.error || 'Failed to fetch categories');
+    }
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    // Return default category instead of throwing to prevent app crash
+    return [DEFAULT_CATEGORY];
   }
 };

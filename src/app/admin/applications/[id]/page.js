@@ -1,3 +1,4 @@
+//src\app\admin\applications\[id]\page.js
 "use client";
 
 import { useParams, useRouter } from "next/navigation";

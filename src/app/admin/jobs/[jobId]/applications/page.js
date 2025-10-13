@@ -1,3 +1,4 @@
+//src/app/admin/jobs/[jobId]/applications/page.js
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,6 +11,13 @@ import { ApplicationsTable } from "@/components/admin/applications/ApplicationsT
 import { ApplicationsFilters } from "@/components/admin/applications/ApplicationsFilters";
 import { JobIcon } from "@/components/shared/ui/JobIcons";
 import Button from "@/components/shared/ui/Button";
+
+// Helper function to get category name
+const getCategoryName = (category) => {
+  if (!category) return "غير محدد";
+  if (typeof category === 'string') return category;
+  return category.name || "غير محدد";
+};
 
 export default function JobApplicationsPage() {
   const params = useParams();
@@ -45,20 +53,21 @@ export default function JobApplicationsPage() {
       setLoading(false);
     }
   };
-const fetchJobDetails = async () => {
-  try {
-    const response = await fetch(`/api/jobs/${jobId}`);
-    if (response.ok) {
-      const jobData = await response.json();
-      console.log('Fetched job data:', jobData); // Debug log
-      setJob(jobData);
-    } else {
-      console.error('Failed to fetch job:', await response.text());
+
+  const fetchJobDetails = async () => {
+    try {
+      const response = await fetch(`/api/jobs/${jobId}`);
+      if (response.ok) {
+        const jobData = await response.json();
+        console.log('Fetched job data:', jobData); // Debug log
+        setJob(jobData);
+      } else {
+        console.error('Failed to fetch job:', await response.text());
+      }
+    } catch (error) {
+      console.error('Error fetching job details:', error);
     }
-  } catch (error) {
-    console.error('Error fetching job details:', error);
-  }
-};
+  };
 
   const filteredApplications = applications.filter((application) => {
     const matchesSearch =
@@ -82,6 +91,9 @@ const fetchJobDetails = async () => {
       toast.error("لا يوجد ملف مرفق");
     }
   };
+
+  // Get category name using helper function
+  const categoryName = getCategoryName(job?.category);
 
   return (
     <div className="p-6 space-y-6">
@@ -119,41 +131,41 @@ const fetchJobDetails = async () => {
       {/* Job Info Card */}
       {job && (
         <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-[#B38025]">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-800">{job.title}</h2>
-            <div className="flex items-center space-x-4 space-x-reverse mt-2   text-sm text-gray-600">
-              {job.location && (
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-800">{job.title}</h2>
+              <div className="flex items-center space-x-4 space-x-reverse mt-2 text-sm text-gray-600">
+                {job.location && (
+                  <div className="flex items-center">
+                    <JobIcon type="location" className="ml-1 text-gray-500" />
+                    <span>{job.location}</span>
+                  </div>
+                )}
+                {categoryName && categoryName !== "غير محدد" && (
+                  <div className="flex items-center">
+                    <JobIcon type="category" className="ml-1 text-gray-500" />
+                    <span>{categoryName}</span>
+                  </div>
+                )}
                 <div className="flex items-center">
-                  <JobIcon type="location" className="ml-1 text-gray-500" />
-                  <span>{job.location}</span>
+                  <JobIcon type="applications" className="ml-1 text-gray-500" />
+                  <span>{job.applicationsCount || 0} متقدم</span>
                 </div>
-              )}
-              {job.category && (
-                <div className="flex items-center">
-                  <JobIcon type="category" className="ml-1 text-gray-500" />
-                  <span>{job.category}</span>
-                </div>
-              )}
-              <div className="flex items-center">
-                <JobIcon type="applications" className="ml-1 text-gray-500" />
-                <span>{job.applicationsCount || 0} متقدم</span>
+                {job.jobType && (
+                  <div className="flex items-center">
+                    <JobIcon type="type" className="ml-1 text-gray-500" />
+                    <span>{job.jobType}</span>
+                  </div>
+                )}
               </div>
-              {job.jobType && (
-                <div className="flex items-center">
-                  <JobIcon type="type" className="ml-1 text-gray-500" />
-                  <span>{job.jobType}</span>
-                </div>
-              )}
+            </div>
+            <div className="flex items-center text-sm text-gray-500">
+              <JobIcon type="date" className="ml-1 text-gray-500" />
+              آخر تحديث: {new Date(job.updatedAt).toLocaleDateString('ar-EG')}
             </div>
           </div>
-          <div className="flex items-center text-sm text-gray-500">
-            <JobIcon type="date" className="ml-1 text-gray-500" />
-            آخر تحديث: {new Date(job.updatedAt).toLocaleDateString('ar-EG')}
-          </div>
         </div>
-      </div>
-    )}
+      )}
 
       {/* Filters */}
       <ApplicationsFilters

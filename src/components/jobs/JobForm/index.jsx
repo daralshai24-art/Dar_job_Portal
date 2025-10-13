@@ -1,3 +1,4 @@
+// components/admin/jobs/JobForm.jsx
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -36,14 +37,14 @@ const selectStyles = {
     borderRadius: '12px',
     padding: '2px 4px',
     textAlign: 'right',
-    minHeight: '44px', // Reduced for mobile
-    fontSize: '14px', // Added for mobile
+    minHeight: '44px',
+    fontSize: '14px',
     boxShadow: state.isFocused ? '0 0 0 2px rgba(214, 182, 102, 0.2)' : 'none',
     '&:hover': {
       borderColor: state.isFocused ? '#D6B666' : '#9ca3af'
     },
     '@media (min-width: 768px)': {
-      minHeight: '52px', // Original height for desktop
+      minHeight: '52px',
     }
   }),
   menu: (base) => ({
@@ -51,13 +52,13 @@ const selectStyles = {
     textAlign: 'right',
     borderRadius: '12px',
     overflow: 'hidden',
-    fontSize: '14px', // Added for mobile
+    fontSize: '14px',
   }),
   option: (base, state) => ({
     ...base,
     textAlign: 'right',
-    fontSize: '14px', // Added for mobile
-    padding: '8px 12px', // Adjusted for mobile
+    fontSize: '14px',
+    padding: '8px 12px',
     backgroundColor: state.isSelected ? '#D6B666' : state.isFocused ? '#fef6e6' : 'white',
     color: state.isSelected ? 'white' : '#374151',
     '&:hover': {
@@ -68,19 +69,18 @@ const selectStyles = {
     ...base,
     textAlign: 'right',
     color: '#9ca3af',
-    fontSize: '14px', // Added for mobile
+    fontSize: '14px',
   }),
   singleValue: (base) => ({
     ...base,
     textAlign: 'right',
     color: '#374151',
-    fontSize: '14px', // Added for mobile
+    fontSize: '14px',
   })
 };
 
 const JobForm = ({ initialData = null, mode = "create" }) => {
   const router = useRouter();
-  // Create the ref in the main component
   const formActionsRef = useRef(null);
   
   const {
@@ -94,7 +94,7 @@ const JobForm = ({ initialData = null, mode = "create" }) => {
     addNewOption,
     handleSubmit,
     handleCancel
-  } = useJobForm(initialData, mode,  formActionsRef); // Pass the ref to the hook
+  } = useJobForm(initialData, mode, formActionsRef);
 
   return (
     <form
@@ -128,12 +128,13 @@ const JobForm = ({ initialData = null, mode = "create" }) => {
         onChange={(value) => handleChange("title", value)}
         options={dynamicOptions.titles}
         newValue={newOptions.title}
-        onNewValueChange={(value) => handleNewOptionChange("title", value)}
+        onNewValueChange={handleNewOptionChange}
         onAddNew={() => addNewOption("titles")}
         error={errors.title}
         required={formFields.title.required}
         placeholder="اختر المسمى الوظيفي"
         addPlaceholder="مسمى وظيفي جديد"
+        type="text"
       />
 
       {/* Grid Layout for Multiple Fields */}
@@ -145,27 +146,29 @@ const JobForm = ({ initialData = null, mode = "create" }) => {
           onChange={(value) => handleChange("location", value)}
           options={dynamicOptions.locations}
           newValue={newOptions.location}
-          onNewValueChange={(value) => handleNewOptionChange("location", value)}
+          onNewValueChange={handleNewOptionChange}
           onAddNew={() => addNewOption("locations")}
           error={errors.location}
           required={formFields.location.required}
           placeholder="اختر الموقع"
           addPlaceholder="موقع جديد"
+          type="text"
         />
 
-        {/* Category Field */}
+        {/* Category Field - UPDATED FOR CATEGORY MODEL */}
         <DynamicSelectWithAdd
           label={formFields.category.label}
           value={formData.category}
           onChange={(value) => handleChange("category", value)}
           options={dynamicOptions.categories}
           newValue={newOptions.category}
-          onNewValueChange={(value) => handleNewOptionChange("category", value)}
+          onNewValueChange={handleNewOptionChange}
           onAddNew={() => addNewOption("categories")}
           error={errors.category}
           required={formFields.category.required}
           placeholder="اختر التصنيف"
           addPlaceholder="تصنيف جديد"
+          type="category"
         />
 
         {/* Job Type */}
@@ -233,8 +236,8 @@ const JobForm = ({ initialData = null, mode = "create" }) => {
         onChange={(e) => handleChange("description", e.target.value)}
         error={errors.description}
         required={formFields.description.required}
-        rows={4} // Reduced for mobile
-        className="text-sm md:text-base" // Responsive text size
+        rows={4}
+        className="text-sm md:text-base"
       />
 
       {/* Requirements Field */}
@@ -244,8 +247,8 @@ const JobForm = ({ initialData = null, mode = "create" }) => {
         icon={formFields.requirements.icon}
         value={formData.requirements}
         onChange={(e) => handleChange("requirements", e.target.value)}
-        rows={3} // Reduced for mobile
-        className="text-sm md:text-base" // Responsive text size
+        rows={3}
+        className="text-sm md:text-base"
       />
 
       <FormActions 

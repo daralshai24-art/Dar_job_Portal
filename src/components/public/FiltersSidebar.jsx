@@ -1,8 +1,10 @@
-// components/jobs/public/FiltersSidebar.jsx
+// src/components/jobs/public/FiltersSidebar.jsx
 "use client";
 
 import { Filter, Search, Briefcase, MapPin, Clock } from "lucide-react";
 import { memo } from "react";
+import { useCategories } from "@/hooks/useCategories";
+import LoadingSpinner from "@/components/shared/UI/LoadingSpinner";
 
 const FiltersSidebar = ({
   searchTerm,
@@ -14,11 +16,20 @@ const FiltersSidebar = ({
   selectedJobType,
   onJobTypeChange,
   onResetFilters,
-  categories,
   locations,
   jobTypes
 }) => {
-  const hasActiveFilters = searchTerm || selectedCategory !== "الكل" || selectedLocation !== "الكل";
+  const { categories, loading } = useCategories();
+  
+  const hasActiveFilters = searchTerm || selectedCategory !== "all" || selectedLocation !== "الكل";
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <LoadingSpinner message="جاري تحميل التصنيفات..." size="small" />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-md p-4 lg:p-6 lg:sticky lg:top-8">
@@ -26,7 +37,7 @@ const FiltersSidebar = ({
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-800 flex items-center">
           <Filter size={20} className="ml-2" />
-           خيارات البحث
+          خيارات البحث
         </h3>
         <button
           onClick={onResetFilters}
@@ -39,17 +50,36 @@ const FiltersSidebar = ({
       {/* Filter Content */}
       <div className="space-y-4 lg:space-y-6">
         <SearchFilter searchTerm={searchTerm} onSearchChange={onSearchChange} />
-        <SelectFilter label="التصنيف" icon={Briefcase} value={selectedCategory} onChange={onCategoryChange} options={categories} />
-        <SelectFilter label="الموقع" icon={MapPin} value={selectedLocation} onChange={onLocationChange} options={locations} />
-        <SelectFilter label="نوع الوظيفة" icon={Clock} value={selectedJobType} onChange={onJobTypeChange} options={jobTypes} />
+        <SelectFilter 
+          label="التصنيف" 
+          icon={Briefcase} 
+          value={selectedCategory} 
+          onChange={onCategoryChange} 
+          options={categories.map(cat => ({ value: cat._id, label: cat.name }))} 
+        />
+        <SelectFilter 
+          label="الموقع" 
+          icon={MapPin} 
+          value={selectedLocation} 
+          onChange={onLocationChange} 
+          options={locations.map(loc => ({ value: loc, label: loc }))} 
+        />
+        <SelectFilter 
+          label="نوع الوظيفة" 
+          icon={Clock} 
+          value={selectedJobType} 
+          onChange={onJobTypeChange} 
+          options={jobTypes.map(type => ({ value: type, label: type }))} 
+        />
         
         {hasActiveFilters && (
           <ActiveFilters 
+            categories={categories}
             searchTerm={searchTerm} 
             selectedCategory={selectedCategory} 
             selectedLocation={selectedLocation} 
             onClearSearch={() => onSearchChange("")} 
-            onClearCategory={() => onCategoryChange("الكل")} 
+            onClearCategory={() => onCategoryChange("all")} 
             onClearLocation={() => onLocationChange("الكل")} 
           />
         )}
@@ -92,42 +122,50 @@ const SelectFilter = memo(({ label, icon: Icon, value, onChange, options }) => (
       className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B38025] focus:border-transparent transition-colors"
     >
       {options.map((option) => (
-        <option key={option} value={option}>
-          {option}
+        <option key={option.value} value={option.value}>
+          {option.label}
         </option>
       ))}
     </select>
   </div>
 ));
 
-const ActiveFilters = memo(({ searchTerm, selectedCategory, selectedLocation, onClearSearch, onClearCategory, onClearLocation }) => (
-  <div className="border-t pt-4">
-    <h4 className="text-sm font-medium text-gray-700 mb-2">خيارات البحث النشطة :</h4>
-    <div className="space-y-2">
-      {searchTerm && (
-        <FilterTag 
-          label={`البحث: ${searchTerm}`}
-          onClear={onClearSearch}
-          color="blue"
-        />
-      )}
-      {selectedCategory !== "الكل" && (
-        <FilterTag 
-          label={`التصنيف: ${selectedCategory}`}
-          onClear={onClearCategory}
-          color="green"
-        />
-      )}
-      {selectedLocation !== "الكل" && (
-        <FilterTag 
-          label={`الموقع: ${selectedLocation}`}
-          onClear={onClearLocation}
-          color="purple"
-        />
-      )}
+const ActiveFilters = memo(({ categories, searchTerm, selectedCategory, selectedLocation, onClearSearch, onClearCategory, onClearLocation }) => {
+  const getCategoryName = (categoryId) => {
+    if (categoryId === "all") return "الكل";
+    const category = categories.find(cat => cat._id === categoryId);
+    return category ? category.name : categoryId;
+  };
+
+  return (
+    <div className="border-t pt-4">
+      <h4 className="text-sm font-medium text-gray-700 mb-2">خيارات البحث النشطة:</h4>
+      <div className="space-y-2">
+        {searchTerm && (
+          <FilterTag 
+            label={`البحث: ${searchTerm}`}
+            onClear={onClearSearch}
+            color="blue"
+          />
+        )}
+        {selectedCategory !== "all" && (
+          <FilterTag 
+            label={`التصنيف: ${getCategoryName(selectedCategory)}`}
+            onClear={onClearCategory}
+            color="green"
+          />
+        )}
+        {selectedLocation !== "الكل" && (
+          <FilterTag 
+            label={`الموقع: ${selectedLocation}`}
+            onClear={onClearLocation}
+            color="purple"
+          />
+        )}
+      </div>
     </div>
-  </div>
-));
+  );
+});
 
 const FilterTag = memo(({ label, onClear, color = "blue" }) => {
   const colorClasses = {

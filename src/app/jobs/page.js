@@ -1,4 +1,4 @@
-// app/(public)/jobs/page.jsx
+// app/jobs/page.js
 "use client";
 
 import { useSearchParams } from "next/navigation";
@@ -14,7 +14,7 @@ import { useJobsData } from "@/hooks/useJobsData";
 import { useJobFilters } from "@/hooks/useJobFilters";
 
 // Constants
-import { CATEGORIES, LOCATIONS, JOB_TYPES } from "@/constants/filterOptions";
+import { LOCATIONS, JOB_TYPES } from "@/constants/filterOptions";
 
 export default function JobsPage() {
   const searchParams = useSearchParams();
@@ -55,7 +55,6 @@ export default function JobsPage() {
                 selectedJobType={selectedJobType}
                 onJobTypeChange={setSelectedJobType}
                 onResetFilters={resetFilters}
-                categories={CATEGORIES}
                 locations={LOCATIONS}
                 jobTypes={JOB_TYPES}
               />

@@ -22,6 +22,13 @@ const StatusButton = ({ status, onClick, disabled }) => {
   );
 };
 
+// Helper function to get category name (handles both string and object)
+const getCategoryName = (category) => {
+  if (!category) return "غير محدد";
+  if (typeof category === 'string') return category;
+  return category.name || "غير محدد";
+};
+
 const JobDetails = ({ job }) => (
   <div className="flex flex-col">
     <div className="text-xl font-medium text-gray-900 mb-1">
@@ -38,7 +45,7 @@ const JobDetails = ({ job }) => (
       )}
       {job.category && (
         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
-          {job.category}
+          {getCategoryName(job.category)}
         </span>
       )}
       {job.jobType && (
@@ -157,4 +164,4 @@ export const JobsTable = ({
       )}
     </>
   );
-};
+};  

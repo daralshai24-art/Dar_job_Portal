@@ -5,8 +5,18 @@ import { useRouter } from "next/navigation";
 import { FiMapPin, FiClock, FiBriefcase, FiArrowLeft } from "react-icons/fi";
 import { formatArabicDate } from "@/utils/dateFormatter";
 
+// Helper function to get category name (handles both string and object)
+const getCategoryName = (category) => {
+  if (!category) return "غير محدد";
+  if (typeof category === 'string') return category;
+  return category.name || "غير محدد";
+};
+
 export default function JobCard({ job }) {
   const router = useRouter();
+  
+  // Get the category name using the helper function
+  const categoryName = getCategoryName(job.category);
 
   const handleClick = () => router.push(`/jobs/${job._id}`);
 
@@ -36,9 +46,9 @@ export default function JobCard({ job }) {
           <h2 className="text-xl font-bold text-gray-900 group-hover:text-[#B38025] transition-colors line-clamp-2">
             {job.title}
           </h2>
-          {job.category && (
+          {categoryName && categoryName !== "غير محدد" && (
             <span className="inline-block mt-2 bg-[#B38025]/10 text-[#B38025] text-sm font-medium px-3 py-1 rounded-full">
-              {job.category}
+              {categoryName}
             </span>
           )}
         </div>
@@ -75,7 +85,10 @@ export default function JobCard({ job }) {
         </div>
         
         <button
-          onClick={(e) => e.stopPropagation() || handleClick()}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClick();
+          }}
           className="bg-gradient-to-r from-[#B38025] to-[#D6B666] text-white px-6 py-3 rounded-xl hover:from-[#D6B666] hover:to-[#B38025] transition-all font-semibold min-w-[120px]"
         >
           قدم الآن

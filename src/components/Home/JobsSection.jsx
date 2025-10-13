@@ -1,3 +1,6 @@
+// src/components/home/JobsSection.jsx
+"use client";
+
 import JobCard from "@/components/jobs/JobCard";
 import CategoryFilters from "./CategoryFilters";
 import LoadingSpinner from "@/components/shared/UI/LoadingSpinner";
@@ -14,8 +17,8 @@ const JobsSection = ({
   onClearFilters
 }) => {
   return (
-    <main id="jobs-section" className="flex-1 p-8 bg-gray-50">
-      <div className="max-w-7xl mx-auto">
+    <section className="flex-1 bg-gray-50 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeader />
         
         <CategoryFilters
@@ -23,19 +26,27 @@ const JobsSection = ({
           onCategorySelect={onCategorySelect}
         />
 
-        {loading ? (
-          <LoadingSpinner message="جاري تحميل الوظائف..." />
-        ) : (
-          <JobsContent
-            filteredJobs={filteredJobs}
-            searchTerm={searchTerm}
-            selectedCategory={selectedCategory}
-            onClearFilters={onClearFilters}
-            onViewAllJobs={onViewAllJobs}
-          />
-        )}
+        {/* Content Area - Takes consistent space */}
+        <div className="min-h-[400px]">
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center">
+                <LoadingSpinner size="xl" className="mx-auto mb-4" />
+                <p className="text-gray-600">جاري تحميل المحتوى...</p>
+              </div>
+            </div>
+          ) : (
+            <JobsContent
+              filteredJobs={filteredJobs}
+              searchTerm={searchTerm}
+              selectedCategory={selectedCategory}
+              onClearFilters={onClearFilters}
+              onViewAllJobs={onViewAllJobs}
+            />
+          )}
+        </div>
       </div>
-    </main>
+    </section>
   );
 };
 
@@ -59,26 +70,28 @@ const JobsContent = ({
 }) => {
   if (filteredJobs.length === 0) {
     return (
-      <NoResults 
-        hasFilters={searchTerm || selectedCategory !== "الكل"}
-        onClearFilters={onClearFilters}
-      />
+      <div className="py-16">
+        <NoResults 
+          hasFilters={searchTerm || selectedCategory !== "all"}
+          onClearFilters={onClearFilters}
+        />
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="space-y-12">
       <JobsGrid jobs={filteredJobs.slice(0, 6)} />
       <ViewMoreSection 
         filteredJobs={filteredJobs}
         onViewAllJobs={onViewAllJobs}
       />
-    </>
+    </div>
   );
 };
 
 const JobsGrid = ({ jobs }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {jobs.map((job) => (
       <JobCard key={job._id} job={job} />
     ))}
@@ -89,7 +102,7 @@ const ViewMoreSection = ({ filteredJobs, onViewAllJobs }) => {
   if (filteredJobs.length <= 6) return null;
 
   return (
-    <div className="text-center">
+    <div className="text-center pt-8">
       <button
         onClick={onViewAllJobs}
         className="bg-[#B38025] text-white px-8 py-4 rounded-lg hover:bg-[#D6B666] hover:text-[#1D3D1E] transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-1 cursor-pointer"

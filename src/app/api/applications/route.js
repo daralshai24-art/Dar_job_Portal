@@ -138,12 +138,12 @@ export async function POST(request) {
     await application.populate('jobId', 'title');
 
     return NextResponse.json(
-      { 
-        message: "تم تقديم الطلب بنجاح", 
-        application 
-      }, 
-      { status: 201 }
-    );
+  { 
+    message: "تم إرسال طلب التوظيف بنجاح! سيتم التواصل معك قريباً", 
+    application 
+  }, 
+  { status: 201 }
+  );
     
   } catch (error) {
     console.error("Application submission error:", error);
