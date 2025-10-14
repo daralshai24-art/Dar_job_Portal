@@ -1,12 +1,11 @@
-
-// ==================== FEEDBACK SECTION ====================
-// src/components/admin/applications/FeedbackSection.jsx (Updated)
+// ==================== NOTES SECTION ====================
+// src/components/admin/applications/NotesSection.jsx
 import { Card, CardHeader, CardContent } from "@/components/shared/ui/Card";
 import Textarea from "@/components/shared/ui/Textarea";
 import Button from "@/components/shared/ui/Button";
-import { MessageSquare } from "lucide-react";
+import { FileText } from "lucide-react";
 
-const FeedbackField = ({ label, value, editing, applicationValue, onChange, fieldKey }) => {
+const NoteField = ({ label, value, editing, applicationValue, onChange, fieldKey }) => {
   if (editing) {
     return (
       <Textarea
@@ -14,7 +13,7 @@ const FeedbackField = ({ label, value, editing, applicationValue, onChange, fiel
         value={value}
         onChange={(e) => onChange(fieldKey, e.target.value)}
         placeholder={`اكتب ${label}...`}
-        rows={4}
+        rows={3}
       />
     );
   }
@@ -24,14 +23,14 @@ const FeedbackField = ({ label, value, editing, applicationValue, onChange, fiel
       <label className="block text-sm font-medium text-gray-700 mb-2">
         {label}
       </label>
-      <div className="bg-gray-50 rounded-lg p-3 min-h-[100px]">
-        {applicationValue || "لا يوجد تقييم"}
+      <div className="bg-gray-50 rounded-lg p-3 min-h-[80px]">
+        {applicationValue || "لا توجد ملاحظات"}
       </div>
     </div>
   );
 };
 
-export const FeedbackSection = ({
+export const NotesSection = ({
   application,
   formData,
   editing,
@@ -39,20 +38,21 @@ export const FeedbackSection = ({
   onSave,
   saving
 }) => {
-  const feedbackFields = [
-    { key: 'interviewFeedback', label: 'تقييم المقابلة' },
-    { key: 'finalFeedback', label: 'التقييم النهائي' }
+  const noteFields = [
+    { key: 'hrNotes', label: 'ملاحظات HR' },
+    { key: 'technicalNotes', label: 'ملاحظات تقنية' },
+    { key: 'interviewNotes', label: 'ملاحظات المقابلة' }
   ];
 
   return (
     <Card>
       <CardHeader 
-        title="التقييمات" 
-        icon={MessageSquare}
+        title="الملاحظات" 
+        icon={FileText}
       />
       <CardContent className="space-y-4">
-        {feedbackFields.map((field) => (
-          <FeedbackField
+        {noteFields.map((field) => (
+          <NoteField
             key={field.key}
             label={field.label}
             value={formData[field.key]}
@@ -69,7 +69,7 @@ export const FeedbackSection = ({
             loading={saving}
             className="w-full"
           >
-            حفظ التقييم
+            حفظ الملاحظات
           </Button>
         )}
       </CardContent>
