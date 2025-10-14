@@ -1,3 +1,4 @@
+// ==================== UPDATED APPLICATION MODEL ====================
 import mongoose from "mongoose";
 
 const applicationSchema = new mongoose.Schema(
@@ -24,17 +25,31 @@ const applicationSchema = new mongoose.Schema(
       path: String,
       size: Number
     },
+
+    // ==================== STATUS & REJECTION ====================
     status: {
       type: String,
-      enum: ["pending", "reviewed", "interview_scheduled", "interview_completed", "rejected", "hired"],
+      enum: [
+        "pending",
+        "reviewed",
+        "interview_scheduled",
+        "interview_completed",
+        "rejected",
+        "hired"
+      ],
       default: "pending"
     },
-    // HR Notes & Feedback
+    rejectionReason: {
+      type: String,
+      trim: true
+    },
+
+    // ==================== FEEDBACK & NOTES ====================
     hrNotes: String,
     technicalNotes: String,
     finalFeedback: String,
-    
-    // Interview Scheduling
+
+    // ==================== INTERVIEW INFO ====================
     interviewDate: Date,
     interviewTime: String,
     interviewType: {
@@ -42,24 +57,24 @@ const applicationSchema = new mongoose.Schema(
       enum: ["in_person", "online", "phone"],
       default: "in_person"
     },
-    interviewLocation: String, // For online: meeting link, for in-person: address
-    interviewNotes: String, // Notes before interview
-    interviewFeedback: String, // Notes after interview
-    
-    // Interview Results
-    interviewScore: Number, // 1-10 scale
+    interviewLocation: String,
+    interviewNotes: String,
+    interviewFeedback: String,
+
+    // ==================== INTERVIEW RESULTS ====================
+    interviewScore: Number,
     strengths: [String],
     weaknesses: [String],
-    
-    // Timeline
+
+    // ==================== TIMELINE ====================
     timeline: [{
       action: String,
       status: String,
       notes: String,
       date: { type: Date, default: Date.now },
-      performedBy: String // HR person name
+      performedBy: String
     }],
-    
+
     createdAt: { 
       type: Date, 
       default: Date.now 
@@ -68,25 +83,16 @@ const applicationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-//  THIS PRE-SAVE MIDDLEWARE FOR DATA NORMALIZATION (AFTER SCHEMA, BEFORE INDEXES)
-applicationSchema.pre('save', function(next) {
-  // Normalize email: lowercase and trim
-  if (this.email) {
-    this.email = this.email.toLowerCase().trim();
-  }
-  
-  // Normalize phone: remove all non-digit characters
-  if (this.phone) {
-    this.phone = this.phone.replace(/\D/g, '');
-  }
-  
+// Normalize before saving
+applicationSchema.pre("save", function(next) {
+  if (this.email) this.email = this.email.toLowerCase().trim();
+  if (this.phone) this.phone = this.phone.replace(/\D/g, "");
   next();
 });
 
+// Indexes
 applicationSchema.index({ jobId: 1, email: 1 });
 applicationSchema.index({ jobId: 1, phone: 1 });
-
-// Create index for better performance
 applicationSchema.index({ jobId: 1, createdAt: -1 });
 applicationSchema.index({ status: 1 });
 applicationSchema.index({ interviewDate: 1 });
