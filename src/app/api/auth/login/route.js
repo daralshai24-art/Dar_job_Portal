@@ -1,41 +1,41 @@
-import { connectDB } from "@/lib/db";
-import User from "@/models/user";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+// ==================== BONUS: app/api/auth/login/route.js ====================
+// Example of how to use the service for login
+import { NextResponse } from "next/server";
+import { connectDB } from "@/lib/db"; 
+import { UserBusinessService } from "@/services/user/userBusinessService";
 
-export async function POST(req) {
-  await connectDB();
-  
+export async function POST(request) {
   try {
-    const { email, password } = await req.json();
+    await connectDB();
 
-    const user = await User.findOne({ email });
-    if (!user)
-      return new Response(
-        JSON.stringify({ error: "Invalid email or password" }),
+    const { email, password } = await request.json();
+
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: "البريد الإلكتروني وكلمة المرور مطلوبان" },
         { status: 400 }
       );
+    }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return new Response(
-        JSON.stringify({ error: "Invalid email or password" }),
-        { status: 400 }
-      );
+    // Delegate to business service - handles all login logic
+    const user = await UserBusinessService.handleLoginAttempt(email, password);
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    // TODO: Create session/JWT token here
+    // const token = createToken(user._id);
 
-    return new Response(
-      JSON.stringify({ message: "Login successful", token }),
-      { status: 200 }
-    );
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
+    return NextResponse.json({
+      message: "تم تسجيل الدخول بنجاح",
+      user,
+      // token
     });
+  } catch (error) {
+    console.error("Login error:", error);
+    
+    const status = error.message.includes("مقفل") ? 423 : 401;
+    
+    return NextResponse.json(
+      { error: error.message || "فشل تسجيل الدخول" },
+      { status }
+    );
   }
 }
