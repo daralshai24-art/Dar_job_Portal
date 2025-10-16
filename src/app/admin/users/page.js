@@ -12,7 +12,7 @@ import { useConfirmationModal } from "@/hooks/useConfirmationModal";
 import Button from "@/components/shared/ui/Button";
 import { ConfirmationModal } from "@/components/shared/modals/ConfirmationModal";
 import { UsersStats } from "@/components/admin/users/UsersStats";
-import  UsersFilters  from "@/components/admin/users/UsersFilters";
+import  {UsersFilters}  from "@/components/admin/users/UsersFilters";
 import { UsersTable } from "@/components/admin/users/UsersTable";
 import  {UserFormModal}  from "@/components/admin/users/UserFormModal";
 

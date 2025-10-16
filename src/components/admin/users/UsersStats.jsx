@@ -1,4 +1,3 @@
-// components/admin/users/UsersStats.jsx
 import { Users, UserCheck, UserX, UserCog } from "lucide-react";
 
 export function UsersStats({ stats }) {

@@ -90,8 +90,7 @@ export const validateUserData = (userData, isUpdate = false) => {
     errors.push("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
   }
 
-  // REMOVED: confirmPassword validation - not needed here
-  // The modal handles this validation client-side
+
 
   if (!userData.role) {
     errors.push("الدور الوظيفي مطلوب");

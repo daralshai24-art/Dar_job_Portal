@@ -1,5 +1,5 @@
 import { SearchInput } from "@/components/shared/ui/SearchInput";
-import { FilterSelect } from "@/components/shared/ui/FilterSelect";
+import { FilterSelect } from "@/components/common/Select"; // Updated import path
 import { FiltersContainer } from "@/components/shared/FiltersContainer";
 import Button from "@/components/shared/ui/Button";
 import { RefreshCw } from "lucide-react";
@@ -27,6 +27,7 @@ export const JobsFilters = ({
       title="تصفية الوظائف"
       totalCount={totalCount}
       filteredCount={filteredCount}
+      className="relative overflow-visible" // Add this to prevent clipping
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <SearchInput
@@ -35,10 +36,13 @@ export const JobsFilters = ({
           onChange={onSearchChange}
         />
 
+        {/* Updated FilterSelect with proper props */}
         <FilterSelect
           value={statusFilter}
           onChange={onStatusFilterChange}
           options={statusOptions}
+          placeholder="حالة الوظيفة"
+          isSearchable={false}
         />
 
         <Button
