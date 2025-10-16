@@ -35,11 +35,13 @@ export async function PUT(request, { params }) {
   try {
     await connectDB();
 
+    const { id } = await params;
+
     const body = await request.json();
     const { name, email, password, role, department, phone, position, bio, status, permissions } = body;
 
     // Find user
-    const user = await User.findById(params.id);
+    const user = await User.findById(id);
     if (!user) {
       return NextResponse.json(
         { message: "المستخدم غير موجود" },
@@ -102,8 +104,11 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     await connectDB();
+    
+    const { id } = await params;
 
-    const user = await User.findById(params.id);
+    
+    const user = await User.findById(id);
     if (!user) {
       return NextResponse.json(
         { message: "المستخدم غير موجود" },

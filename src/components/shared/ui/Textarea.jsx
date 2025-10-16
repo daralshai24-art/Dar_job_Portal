@@ -2,11 +2,7 @@
 /**
  * Reusable Textarea Component
  * 
- * @param {Object} props
- * @param {string} props.label - Textarea label
- * @param {string} props.error - Error message
- * @param {string} props.icon - Lucide icon component
- * @param {string} props.className - Additional classes
+
  */
 const Textarea = ({
   label,

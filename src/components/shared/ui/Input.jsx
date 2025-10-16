@@ -1,11 +1,7 @@
+//src\components\shared\ui\Input.jsx
 /**
  * Reusable Input Component
- * 
- * @param {Object} props
- * @param {string} props.label - Input label
- * @param {string} props.error - Error message
- * @param {string} props.icon - Lucide icon component
- * @param {string} props.className - Additional classes
+
  */
 const Input = ({
   label,
