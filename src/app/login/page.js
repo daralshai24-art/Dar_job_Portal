@@ -1,155 +1,158 @@
-// app/(auth)/login/page.jsx
+// app/login/page.jsx
 "use client";
 
-import { useState } from "react";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
-import AuthLayout from "@/components/layout/AuthLayout";
-import AuthInput from "@/components/auth/AuthInput";
-import AuthButton from "@/components/auth/AuthButton";
-import { toast } from "react-hot-toast";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Mail, Lock, AlertCircle, Eye, EyeOff } from "lucide-react";
+import Input from "@/components/shared/ui/Input"
 
 export default function LoginPage() {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  const { login, isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/admin");
+    }
+  }, [isAuthenticated, router]);
+
+  // Check for error messages from URL
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam === "account_inactive") {
+      setError("الحساب غير نشط. تواصل مع المسؤول");
+    } else if (errorParam === "unauthorized") {
+      setError("غير مصرح لك بالوصول إلى هذه الصفحة");
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validation
-    if (!formData.email.trim() || !formData.password.trim()) {
-      toast.error("يرجى ملء جميع الحقول المطلوبة");
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      toast.error("يرجى إدخال بريد إلكتروني صحيح");
-      return;
-    }
-
+    setError("");
     setLoading(true);
 
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Success
-      toast.success("تم تسجيل الدخول بنجاح!");
-      
-      // Redirect to admin dashboard
-      window.location.href = "/admin";
-      
-    } catch (error) {
-      console.error("Login error:", error);
-      toast.error("البريد الإلكتروني أو كلمة المرور غير صحيحة");
-    } finally {
+    // Validation
+    if (!email || !password) {
+      setError("البريد الإلكتروني وكلمة المرور مطلوبان");
       setLoading(false);
+      return;
     }
+
+    const result = await login({ email, password });
+
+    if (!result.success) {
+      setError(result.error || "فشل تسجيل الدخول");
+    }
+
+    setLoading(false);
   };
 
+  // Show loading spinner while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-900"></div>
+      </div>
+    );
+  }
+
   return (
-    <AuthLayout 
-      title="تسجيل الدخول"
-      subtitle="مرحباً بعودتك! يرجى إدخال بيانات حسابك"
-    >
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Email Input */}
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700 text-right">
-            البريد الإلكتروني
-          </label>
-          <AuthInput
-            icon={Mail}
-            type="email"
-            placeholder="example@email.com"
-            value={formData.email}
-            onChange={(e) => handleInputChange("email", e.target.value)}
-            required
-          />
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100 px-4" dir="rtl">
+      <div className="max-w-md w-full">
+        {/* Card */}
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-900 rounded-full mb-4">
+              <Lock className="w-8 h-8 text-[#F1DD8C]" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              تسجيل الدخول
+            </h1>
+            <p className="text-gray-600">
+              ادخل إلى لوحة الإدارة
+            </p>
+          </div>
 
-        {/* Password Input */}
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700 text-right">
-            كلمة المرور
-          </label>
-          <div className="relative">
-            <AuthInput
-              icon={Lock}
-              type={showPassword ? "text" : "password"}
-              placeholder="أدخل كلمة المرور"
-              value={formData.password}
-              onChange={(e) => handleInputChange("password", e.target.value)}
-              required
-            />
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <div className="relative">
+                <Input
+                  label="البريد الالكتروني"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  icon={Mail}
+                  placeholder="example@company.com"
+                  disabled={loading}
+                  autoComplete="email"
+                />
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div className="relative">
+              <Input
+                label="كلمة المرور"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                disabled={loading}
+                autoComplete="current-password"
+                icon={Lock} 
+              />
+
+              {/* Eye Toggle Button (absolute on the left) */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute left-4 top-6/9 -translate-y-1/2 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                style={{ height: '100%' }}
+                disabled={loading}
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+           </div>
+            {/* Submit Button */}
             <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#B38025] transition-colors cursor-pointer"
+              type="submit"
+              disabled={loading}
+              className="w-full bg-green-900 text-white py-3 rounded-lg font-medium hover:bg-green-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  جاري تسجيل الدخول...
+                </span>
+              ) : (
+                "تسجيل الدخول"
+              )}
             </button>
-          </div>
-          
-          {/* Forgot Password Link */}
-          <div className="text-left">
-            <a 
-              href="/forgot-password" 
-              className="text-sm text-[#B38025] hover:text-green-800 transition-colors"
-            >
-              نسيت كلمة المرور؟
-            </a>
-          </div>
-        </div>
+          </form>
 
-        {/* Submit Button */}
-        <AuthButton 
-          type="submit" 
-          loading={loading}
-        >
-          تسجيل الدخول
-        </AuthButton>
-      </form>
-
-      {/* Footer Links */}
-      <div className="mt-8 space-y-4 text-center">
-        <p className="text-gray-600">
-          ليس لديك حساب؟{" "}
-          <a 
-            href="/register" 
-            className="text-[#B38025] font-semibold hover:text-green-800 transition-colors"
-          >
-            إنشاء حساب جديد
-          </a>
-        </p>
-        
-        {/* Divider */}
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">أو</span>
-          </div>
-        </div>
-
-        {/* Demo Accounts */}
-        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-          <p className="text-sm text-gray-600 mb-2 font-medium">حسابات تجريبية:</p>
-          <div className="text-xs text-gray-500 space-y-1 text-right">
-            <p>المدير: admin@example.com / password</p>
-            <p>المستخدم: user@example.com / password</p>
+          {/* Footer */}
+          <div className="mt-6 text-center text-sm text-gray-600">
+            <p>نسيت كلمة المرور؟ تواصل مع المسؤول</p>
           </div>
         </div>
       </div>
-    </AuthLayout>
+    </div>
   );
 }

@@ -2,20 +2,21 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
+import { withAuth } from "@/lib/apiAuth";
+import { UserBusinessService } from "@/services/user/userBusinessService";
 
-// ==================== GET SINGLE USER ====================
-export async function GET(request, { params }) {
+/**
+ * GET /api/users/[id] - Fetch single user
+ */
+async function getUserHandler(req, { params }) {
   try {
     await connectDB();
 
-    const user = await User.findById(params.id)
-      .select("-password")
-      .populate("createdBy", "name email")
-      .populate("updatedBy", "name email");
+    const user = await User.findById(params.id).select("-password");
 
     if (!user) {
       return NextResponse.json(
-        { message: "المستخدم غير موجود" },
+        { error: "المستخدم غير موجود" },
         { status: 404 }
       );
     }
@@ -24,116 +25,118 @@ export async function GET(request, { params }) {
   } catch (error) {
     console.error("Error fetching user:", error);
     return NextResponse.json(
-      { message: "فشل في تحميل بيانات المستخدم", error: error.message },
+      { error: "فشل في تحميل بيانات المستخدم" },
       { status: 500 }
     );
   }
 }
 
-// ==================== UPDATE USER ====================
-export async function PUT(request, { params }) {
+/**
+ * PUT /api/users/[id] - Update user
+ */
+async function updateUserHandler(req, { params }) {
   try {
     await connectDB();
 
-    const { id } = await params;
+    const updateData = await req.json();
+    const currentUser = req.user; // From auth middleware
 
-    const body = await request.json();
-    const { name, email, password, role, department, phone, position, bio, status, permissions } = body;
-
-    // Find user
-    const user = await User.findById(id);
-    if (!user) {
+    // Check if user can manage target user
+    const targetUser = await User.findById(params.id);
+    if (!targetUser) {
       return NextResponse.json(
-        { message: "المستخدم غير موجود" },
+        { error: "المستخدم غير موجود" },
         { status: 404 }
       );
     }
 
-    // Check if email is being changed and if it's already taken
-    if (email && email.toLowerCase() !== user.email) {
-      const existingUser = await User.findOne({ email: email.toLowerCase() });
-      if (existingUser) {
+    // Super admin can edit everyone, admin can edit everyone except super admin
+    if (currentUser.role !== "super_admin") {
+      if (targetUser.role === "super_admin") {
         return NextResponse.json(
-          { message: "البريد الإلكتروني مستخدم بالفعل" },
-          { status: 400 }
+          { error: "لا يمكنك تعديل حساب المدير العام" },
+          { status: 403 }
+        );
+      }
+      if (currentUser.role !== "admin") {
+        return NextResponse.json(
+          { error: "غير مصرح لك بهذا الإجراء" },
+          { status: 403 }
         );
       }
     }
 
-    // Update fields
-    if (name) user.name = name;
-    if (email) user.email = email.toLowerCase();
-    if (password) user.password = password; // Will be hashed by middleware
-    if (role) user.role = role;
-    if (department) user.department = department;
-    if (phone !== undefined) user.phone = phone;
-    if (position !== undefined) user.position = position;
-    if (bio !== undefined) user.bio = bio;
-    if (status) user.status = status;
-    if (permissions) user.permissions = permissions;
-
-    // user.updatedBy = currentUser._id; // TODO: Get from session
-
-    await user.save();
-
-    // Return updated user without password
-    const updatedUser = await User.findById(user._id).select("-password");
+    // Update user using business service
+    const user = await UserBusinessService.updateUser(params.id, updateData);
 
     return NextResponse.json({
       message: "تم تحديث المستخدم بنجاح",
-      user: updatedUser,
+      user,
     });
   } catch (error) {
     console.error("Error updating user:", error);
-    
-    if (error.code === 11000) {
-      return NextResponse.json(
-        { message: "البريد الإلكتروني مستخدم بالفعل" },
-        { status: 400 }
-      );
-    }
-    
     return NextResponse.json(
-      { message: "فشل في تحديث المستخدم", error: error.message },
-      { status: 500 }
+      { error: error.message || "فشل في تحديث المستخدم" },
+      { status: 400 }
     );
   }
 }
 
-// ==================== DELETE USER ====================
-export async function DELETE(request, { params }) {
+/**
+ * DELETE /api/users/[id] - Delete user
+ */
+async function deleteUserHandler(req, { params }) {
   try {
     await connectDB();
-    
-    const { id } = await params;
 
-    
-    const user = await User.findById(id);
-    if (!user) {
+    const currentUser = req.user;
+
+    // Check if user can manage target user
+    const targetUser = await User.findById(params.id);
+    if (!targetUser) {
       return NextResponse.json(
-        { message: "المستخدم غير موجود" },
+        { error: "المستخدم غير موجود" },
         { status: 404 }
       );
     }
 
-    // Prevent deleting super admin
-    if (user.role === "super_admin") {
+    // Only super admin and admin can delete, but cannot delete super admin
+    if (targetUser.role === "super_admin") {
       return NextResponse.json(
-        { message: "لا يمكن حذف المدير العام" },
+        { error: "لا يمكن حذف المدير العام" },
         { status: 403 }
       );
     }
 
-    await User.findByIdAndDelete(params.id);
+    // Cannot delete yourself
+    if (params.id === currentUser.id) {
+      return NextResponse.json(
+        { error: "لا يمكنك حذف حسابك الخاص" },
+        { status: 403 }
+      );
+    }
 
-    return NextResponse.json({
-      message: "تم حذف المستخدم بنجاح",
-    });
+    await UserBusinessService.deleteUser(params.id);
+
+    return NextResponse.json({ message: "تم حذف المستخدم بنجاح" });
   } catch (error) {
     console.error("Error deleting user:", error);
     return NextResponse.json(
-      { message: "فشل في حذف المستخدم", error: error.message },
-      { status: 500 }
+      { error: error.message || "فشل في حذف المستخدم" },
+      { status: 400 }
     );
   }
 }
+
+// Export protected routes
+export const GET = withAuth(getUserHandler, {
+  permission: { module: "users", action: "view" },
+});
+
+export const PUT = withAuth(updateUserHandler, {
+  permission: { module: "users", action: "edit" },
+});
+
+export const DELETE = withAuth(deleteUserHandler, {
+  permission: { module: "users", action: "delete" },
+});

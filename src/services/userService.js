@@ -1,6 +1,7 @@
 // src/services/userService.js
-// ==================== SERVICE LAYER - USER MANAGEMENT ====================
+import { getSession } from "next-auth/react";
 
+// ==================== CONSTANTS ====================
 export const USER_ROLES = {
   SUPER_ADMIN: "super_admin",
   ADMIN: "admin",
@@ -27,7 +28,7 @@ export const DEPARTMENTS = {
   OTHER: "Other",
 };
 
-// ==================== ROLE LABELS (Arabic) ====================
+// ==================== LABELS ====================
 export const ROLE_LABELS = {
   super_admin: "مدير عام",
   admin: "مشرف",
@@ -54,158 +55,150 @@ export const DEPARTMENT_LABELS = {
   Other: "أخرى",
 };
 
-// ==================== UTILITIES ====================
-
+// ==================== UTILS ====================
 export const getRoleLabel = (role) => ROLE_LABELS[role] || role;
 export const getStatusLabel = (status) => STATUS_LABELS[status] || status;
 export const getDepartmentLabel = (dept) => DEPARTMENT_LABELS[dept] || dept;
 
-export const getCurrentUser = () => {
-  // TODO: Get from auth context/session
-  return {
-    id: "current_user_id",
-    name: "المستخدم الحالي",
-    role: "admin"
-  };
-};
-
-// ==================== VALIDATION ====================
-
-export const validateUserData = (userData, isUpdate = false) => {
-  const errors = [];
-
-  if (!isUpdate && !userData.name?.trim()) {
-    errors.push("الاسم مطلوب");
-  }
-
-  if (!isUpdate && !userData.email?.trim()) {
-    errors.push("البريد الإلكتروني مطلوب");
-  } else if (userData.email && !isValidEmail(userData.email)) {
-    errors.push("البريد الإلكتروني غير صالح");
-  }
-
-  if (!isUpdate && !userData.password) {
-    errors.push("كلمة المرور مطلوبة");
-  } else if (userData.password && userData.password.length < 6) {
-    errors.push("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
-  }
-
-
-
-  if (!userData.role) {
-    errors.push("الدور الوظيفي مطلوب");
-  }
+// ==================== AUTH HELPERS ====================
+const getAuthHeaders = async () => {
+  // Include session cookie
+  const session = await getSession();
+  if (!session) throw new Error("يجب تسجيل الدخول أولاً");
 
   return {
-    isValid: errors.length === 0,
-    errors,
+    "Content-Type": "application/json",
+    // credentials are sent automatically with fetch if `credentials: "include"` is set
   };
-};
-
-export const isValidEmail = (email) => {
-  return /^\S+@\S+\.\S+$/.test(email);
-};
-
-// ==================== PERMISSION CHECKS ====================
-
-export const canPerformAction = (user, module, action) => {
-  if (!user) return false;
-  if (user.role === USER_ROLES.SUPER_ADMIN) return true;
-  return user.permissions?.[module]?.[action] === true;
-};
-
-export const hasAnyPermission = (user, module, actions) => {
-  return actions.some(action => canPerformAction(user, module, action));
 };
 
 // ==================== API CALLS ====================
-
 export const fetchUsers = async (filters = {}) => {
   const queryParams = new URLSearchParams();
-  
   if (filters.search) queryParams.append("search", filters.search);
   if (filters.role && filters.role !== "all") queryParams.append("role", filters.role);
   if (filters.status && filters.status !== "all") queryParams.append("status", filters.status);
   if (filters.department && filters.department !== "all") queryParams.append("department", filters.department);
 
   const url = `/api/users${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
-  const response = await fetch(url);
-  
-  if (!response.ok) throw new Error("فشل في تحميل المستخدمين");
-  return await response.json();
+  const headers = await getAuthHeaders();
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers,
+    credentials: "include", // ✅ ensures NextAuth session cookie is sent
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error?.error || "فشل في تحميل المستخدمين");
+  }
+
+  return response.json();
 };
 
 export const fetchUser = async (userId) => {
-  const response = await fetch(`/api/users/${userId}`);
-  if (!response.ok) throw new Error("فشل في تحميل بيانات المستخدم");
-  return await response.json();
+  const headers = await getAuthHeaders();
+  const response = await fetch(`/api/users/${userId}`, {
+    method: "GET",
+    headers,
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error?.error || "فشل في تحميل بيانات المستخدم");
+  }
+  return response.json();
 };
 
 export const createUser = async (userData) => {
+  const headers = await getAuthHeaders();
   const response = await fetch("/api/users", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
+    credentials: "include",
     body: JSON.stringify(userData),
   });
-  
+
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message || "فشل في إنشاء المستخدم");
+    throw new Error(error?.error || "فشل في إنشاء المستخدم");
   }
-  
-  return await response.json();
+
+  return response.json();
 };
 
 export const updateUser = async (userId, userData) => {
+  const headers = await getAuthHeaders();
   const response = await fetch(`/api/users/${userId}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers,
+    credentials: "include",
     body: JSON.stringify(userData),
   });
-  
+
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message || "فشل في تحديث المستخدم");
+    throw new Error(error?.error || "فشل في تحديث المستخدم");
   }
-  
-  return await response.json();
+
+  return response.json();
 };
 
 export const deleteUser = async (userId) => {
+  const headers = await getAuthHeaders();
   const response = await fetch(`/api/users/${userId}`, {
     method: "DELETE",
+    headers,
+    credentials: "include",
   });
-  
+
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message || "فشل في حذف المستخدم");
+    throw new Error(error?.error || "فشل في حذف المستخدم");
   }
-  
-  return await response.json();
+
+  return response.json();
 };
 
 export const updateUserStatus = async (userId, status) => {
   return await updateUser(userId, { status });
 };
 
-export const updateUserPermissions = async (userId, permissions) => {
-  return await updateUser(userId, { permissions });
-};
-
 export const resetUserPassword = async (userId, newPassword) => {
+  const headers = await getAuthHeaders();
   const response = await fetch(`/api/users/${userId}/reset-password`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
+    credentials: "include",
     body: JSON.stringify({ newPassword }),
   });
-  
+
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message || "فشل في إعادة تعيين كلمة المرور");
+    throw new Error(error?.error || "فشل في إعادة تعيين كلمة المرور");
   }
-  
-  return await response.json();
+
+  return response.json();
 };
+
+// ==================== OTHER HELPERS ====================
+export const isValidEmail = (email) => /^\S+@\S+\.\S+$/.test(email);
+
+export const validateUserData = (userData, isUpdate = false) => {
+  const errors = [];
+
+  if (!isUpdate && !userData.name?.trim()) errors.push("الاسم مطلوب");
+  if (!isUpdate && !userData.email?.trim()) errors.push("البريد الإلكتروني مطلوب");
+  if (userData.email && !isValidEmail(userData.email)) errors.push("البريد الإلكتروني غير صالح");
+  if (!isUpdate && !userData.password) errors.push("كلمة المرور مطلوبة");
+  if (userData.password && userData.password.length < 6) errors.push("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+  if (!userData.role) errors.push("الدور الوظيفي مطلوب");
+
+  return { isValid: errors.length === 0, errors };
+};
+
 
 // ==================== STATISTICS ====================
 

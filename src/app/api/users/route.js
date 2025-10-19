@@ -1,21 +1,26 @@
 // app/api/users/route.js
 import { NextResponse } from "next/server";
-import {connectDB} from "@/lib/db";
+import { connectDB } from "@/lib/db";
 import User from "@/models/User";
+import { withAuth } from "@/lib/apiAuth";
+import { UserBusinessService } from "@/services/user/userBusinessService";
 
-// ==================== GET ALL USERS ====================
-export async function GET(request) {
+/**
+ * GET /api/users - Fetch all users
+ * Permission: users.view
+ */
+async function getUsersHandler(req) {
   try {
     await connectDB();
 
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(req.url);
     const search = searchParams.get("search");
     const role = searchParams.get("role");
     const status = searchParams.get("status");
     const department = searchParams.get("department");
 
     // Build query
-    let query = {};
+    const query = {};
 
     if (search) {
       query.$or = [
@@ -39,93 +44,49 @@ export async function GET(request) {
     // Fetch users (exclude password)
     const users = await User.find(query)
       .select("-password")
-      .populate("createdBy", "name email")
       .sort({ createdAt: -1 });
 
     return NextResponse.json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
     return NextResponse.json(
-      { message: "فشل في تحميل المستخدمين", error: error.message },
+      { error: "فشل في تحميل المستخدمين" },
       { status: 500 }
     );
   }
 }
 
-// ==================== CREATE USER ====================
-export async function POST(request) {
+/**
+ * POST /api/users - Create new user
+ * Permission: users.create
+ */
+async function createUserHandler(req) {
   try {
     await connectDB();
 
-    const body = await request.json();
-    
-    console.log("Received user data:", body);
+    const userData = await req.json();
 
-    const { name, email, password, role, department, phone, position, bio, status } = body;
-
-    // Validation
-    if (!name || !email || !password || !role) {
-      return NextResponse.json(
-        { message: "الاسم والبريد الإلكتروني وكلمة المرور والدور مطلوبة" },
-        { status: 400 }
-      );
-    }
-
-    if (password.length < 6) {
-      return NextResponse.json(
-        { message: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" },
-        { status: 400 }
-      );
-    }
-
-    // Check if email already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
-    if (existingUser) {
-      return NextResponse.json(
-        { message: "البريد الإلكتروني مستخدم بالفعل" },
-        { status: 400 }
-      );
-    }
-
-    // Create user
-    const user = await User.create({
-      name,
-      email: email.toLowerCase(),
-      password,
-      role,
-      department: department || "HR",
-      phone,
-      position,
-      bio,
-      status: status || "active",
-      isEmailVerified: false,
-      // createdBy: currentUser._id, // TODO: Get from session
-    });
-
-    // Return user without password
-    const userWithoutPassword = await User.findById(user._id).select("-password");
+    // Create user using business service
+    const user = await UserBusinessService.createUser(userData);
 
     return NextResponse.json(
-      {
-        message: "تم إنشاء المستخدم بنجاح",
-        user: userWithoutPassword,
-      },
+      { message: "تم إنشاء المستخدم بنجاح", user },
       { status: 201 }
     );
   } catch (error) {
     console.error("Error creating user:", error);
-    
-    // Handle specific MongoDB errors
-    if (error.code === 11000) {
-      return NextResponse.json(
-        { message: "البريد الإلكتروني مستخدم بالفعل" },
-        { status: 400 }
-      );
-    }
-
     return NextResponse.json(
-      { message: "فشل في إنشاء المستخدم", error: error.message },
-      { status: 500 }
+      { error: error.message || "فشل في إنشاء المستخدم" },
+      { status: 400 }
     );
   }
 }
+
+// Export protected routes
+export const GET = withAuth(getUsersHandler, {
+  permission: { module: "users", action: "view" },
+});
+
+export const POST = withAuth(createUserHandler, {
+  permission: { module: "users", action: "create" },
+});
