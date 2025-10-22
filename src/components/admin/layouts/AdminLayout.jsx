@@ -1,3 +1,4 @@
+//src\components\admin\layouts\AdminLayout.jsx
 "use client";
 
 import { useState, useEffect } from "react";

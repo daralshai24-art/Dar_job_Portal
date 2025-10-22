@@ -1,5 +1,5 @@
 // models/User.js
-// ==================== LEAN MODEL - DATABASE SCHEMA ONLY ====================
+// ====================  ====================
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
@@ -110,7 +110,7 @@ userSchema.methods.isLocked = function () {
 };
 
 // ==================== VIRTUAL FIELDS ====================
-userSchema.virtual("isActive").get(function () {
+userSchema.virtual("isActive").get(function () { 
   return this.status === "active" && !this.isLocked();
 });
 

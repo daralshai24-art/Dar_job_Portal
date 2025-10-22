@@ -1,6 +1,7 @@
-import React from 'react'
+//src\app\admin\settings\page.js
 
-function settings() {
+
+const settings = () => {
   return (
     <div>settings</div>
   )
