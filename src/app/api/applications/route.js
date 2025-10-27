@@ -1,25 +1,25 @@
-//src\app\api\applications\route.js
+// src/app/api/applications/route.js
 import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
-import { connectDB } from "@/lib/db"; 
+import { connectDB } from "@/lib/db";
 import Application from "@/models/Application";
 import Job from "@/models/Job";
 import path from "path";
 
 export async function POST(request) {
   try {
-    await connectDB(); 
+    await connectDB();
 
     const formData = await request.formData();
-    
+
     const applicationData = {
-      jobId: formData.get('jobId'),
-      name: formData.get('name'),
-      email: formData.get('email'),
-      phone: formData.get('phone'),
+      jobId: formData.get("jobId"),
+      name: formData.get("name"),
+      email: formData.get("email"),
+      phone: formData.get("phone"),
     };
 
-    // Validate required fields
+    // ✅ Basic validation
     if (!applicationData.jobId || !applicationData.name || !applicationData.email) {
       return NextResponse.json(
         { error: "جميع الحقول المطلوبة يجب ملؤها" },
@@ -27,13 +27,10 @@ export async function POST(request) {
       );
     }
 
-    // Check if job exists and is active
+    // ✅ Ensure job exists and is active
     const job = await Job.findById(applicationData.jobId);
     if (!job) {
-      return NextResponse.json(
-        { error: "الوظيفة غير موجودة" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "الوظيفة غير موجودة" }, { status: 404 });
     }
 
     if (job.status !== "active") {
@@ -43,70 +40,53 @@ export async function POST(request) {
       );
     }
 
-    // ✅ CORRECTED DUPLICATE PREVENTION CHECK 
-    // Only check for duplicates for the SAME JOB, not all jobs
+    // ✅ Duplicate prevention (same job)
     const normalizedEmail = applicationData.email.toLowerCase().trim();
-    const normalizedPhone = applicationData.phone ? applicationData.phone.replace(/\D/g, '') : '';
+    const normalizedPhone = applicationData.phone
+      ? applicationData.phone.replace(/\D/g, "")
+      : "";
 
-    // Build query for duplicate check - ONLY FOR THIS SPECIFIC JOB
     const duplicateQuery = {
-      jobId: applicationData.jobId, // This is the key - only check same job
-      $or: []
+      jobId: applicationData.jobId,
+      $or: [],
     };
 
-    if (normalizedEmail) {
-      duplicateQuery.$or.push({ email: normalizedEmail });
-    }
-    if (normalizedPhone) {
-      duplicateQuery.$or.push({ phone: normalizedPhone });
-    }
+    if (normalizedEmail) duplicateQuery.$or.push({ email: normalizedEmail });
+    if (normalizedPhone) duplicateQuery.$or.push({ phone: normalizedPhone });
 
-    // Only check if we have at least one condition
     if (duplicateQuery.$or.length > 0) {
       const existingApplication = await Application.findOne(duplicateQuery);
 
       if (existingApplication) {
-        // Provide specific error message
         let errorMessage = "لقد تقدمت لهذه الوظيفة مسبقاً";
-        
-        if (existingApplication.email === normalizedEmail) {
+        if (existingApplication.email === normalizedEmail)
           errorMessage = "لقد تقدمت لهذه الوظيفة مسبقاً باستخدام هذا البريد الإلكتروني";
-        } else if (existingApplication.phone === normalizedPhone) {
+        else if (existingApplication.phone === normalizedPhone)
           errorMessage = "لقد تقدمت لهذه الوظيفة مسبقاً باستخدام هذا رقم الهاتف";
-        }
-        
-        return NextResponse.json(
-          { error: errorMessage },
-          { status: 400 }
-        );
+
+        return NextResponse.json({ error: errorMessage }, { status: 400 });
       }
     }
-    // ✅ END CORRECTED DUPLICATE PREVENTION CHECK
 
-    // Handle file upload
-    const cvFile = formData.get('cv');
+    // ✅ Handle CV upload
+    const cvFile = formData.get("cv");
     if (cvFile && cvFile.size > 0) {
       const bytes = await cvFile.arrayBuffer();
       const buffer = Buffer.from(bytes);
-      
-      // Create uploads directory if it doesn't exist
-      const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-      try {
-        await mkdir(uploadsDir, { recursive: true });
-      } catch (error) {
-        // Directory already exists
-      }
-      
+
+      const uploadsDir = path.join(process.cwd(), "public", "uploads");
+      await mkdir(uploadsDir, { recursive: true });
+
       const filename = `${Date.now()}-${cvFile.name}`;
       const uploadPath = path.join(uploadsDir, filename);
-      
+
       await writeFile(uploadPath, buffer);
-      
+
       applicationData.cv = {
         filename,
         originalName: cvFile.name,
         path: `/uploads/${filename}`,
-        size: cvFile.size
+        size: cvFile.size,
       };
     } else {
       return NextResponse.json(
@@ -115,36 +95,56 @@ export async function POST(request) {
       );
     }
 
-    // THE APPLICATION CREATION WITH TIMELINE HERE
+    // ✅ Detect current logged-in user (if any)
+    // NOTE: Adjust this depending on your auth setup (e.g., JWT, session, NextAuth)
+    let performedByUserId = null;
+
+    try {
+      // Example: if you store user info in headers or cookies (JWT, etc.)
+      const authHeader = request.headers.get("authorization");
+      if (authHeader) {
+        const token = authHeader.replace("Bearer ", "");
+        // Decode token here if applicable (pseudo example):
+        // const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        // performedByUserId = decoded.userId;
+      }
+    } catch (err) {
+      console.warn("Could not identify user from request:", err.message);
+    }
+
+    // ✅ Create application with real user link (if available)
     const application = await Application.create({
       ...applicationData,
-      // Add initial timeline event
-      timeline: [{
-        action: "created",
-        status: "pending", 
-        notes: "تم تقديم الطلب بنجاح",
-        performedBy: "System",
-        date: new Date()
-      }]
+      timeline: [
+        {
+          action: "created",
+          status: "pending",
+          notes: "تم تقديم الطلب بنجاح",
+          performedBy: performedByUserId || null, // link if user exists, null otherwise
+          date: new Date(),
+        },
+      ],
     });
 
-    // Update job applications count
+    // ✅ Update job stats
     await Job.findByIdAndUpdate(applicationData.jobId, {
       $inc: { applicationsCount: 1 },
-      lastApplicationDate: new Date()
+      lastApplicationDate: new Date(),
     });
 
-    // Populate job details for response
-    await application.populate('jobId', 'title');
+    // ✅ Populate job details and timeline user for response
+    await application.populate([
+      { path: "jobId", select: "title" },
+      { path: "timeline.performedBy", select: "name email role" },
+    ]);
 
     return NextResponse.json(
-  { 
-    message: "تم إرسال طلب التوظيف بنجاح! سيتم التواصل معك قريباً", 
-    application 
-  }, 
-  { status: 201 }
-  );
-    
+      {
+        message: "تم إرسال طلب التوظيف بنجاح! سيتم التواصل معك قريباً",
+        application,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Application submission error:", error);
     return NextResponse.json(
@@ -153,24 +153,24 @@ export async function POST(request) {
     );
   }
 }
-// ... rest of your GET function remains the same
 
 export async function GET(request) {
   try {
-    await connectDB(); // ✅ FIXED FUNCTION CALL
+    await connectDB();
 
     const { searchParams } = new URL(request.url);
-    const jobId = searchParams.get('jobId');
-    const status = searchParams.get('status');
-    
-    let query = {};
+    const jobId = searchParams.get("jobId");
+    const status = searchParams.get("status");
+
+    const query = {};
     if (jobId) query.jobId = jobId;
     if (status) query.status = status;
-    
+
     const applications = await Application.find(query)
-      .populate('jobId', 'title category location')
+      .populate("jobId", "title category location")
+      .populate("timeline.performedBy", "name email role")
       .sort({ createdAt: -1 });
-    
+
     return NextResponse.json(applications);
   } catch (error) {
     console.error("Error fetching applications:", error);
@@ -183,12 +183,12 @@ export async function GET(request) {
 
 export async function DELETE() {
   try {
-    await connectToDatabase();
+    await connectDB();
     await Application.deleteMany({});
-    return NextResponse.json({ message: 'تم حذف جميع طلبات التوظيف' });
+    return NextResponse.json({ message: "تم حذف جميع طلبات التوظيف" });
   } catch (error) {
     return NextResponse.json(
-      { error: 'Failed to delete applications' },
+      { error: "فشل حذف الطلبات" },
       { status: 500 }
     );
   }

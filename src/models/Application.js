@@ -1,4 +1,3 @@
-// ==================== UPDATED APPLICATION MODEL ====================
 import mongoose from "mongoose";
 
 const applicationSchema = new mongoose.Schema(
@@ -71,8 +70,13 @@ const applicationSchema = new mongoose.Schema(
       action: String,
       status: String,
       notes: String,
+      score: Number,
+      details: mongoose.Schema.Types.Mixed,
       date: { type: Date, default: Date.now },
-      performedBy: String
+      performedBy: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: "User" 
+      }
     }],
 
     createdAt: { 
