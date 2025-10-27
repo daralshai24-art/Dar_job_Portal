@@ -1,7 +1,7 @@
 // src/lib/auth.config.js
 import CredentialsProvider from "next-auth/providers/credentials";
 import { connectDB } from "@/lib/db";
-import User from "@/models/User";
+import User from "@/models/user";
 import bcrypt from "bcryptjs";
 
 /**
