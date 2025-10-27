@@ -180,3 +180,16 @@ export async function GET(request) {
     );
   }
 }
+
+export async function DELETE() {
+  try {
+    await connectToDatabase();
+    await Application.deleteMany({});
+    return NextResponse.json({ message: 'تم حذف جميع طلبات التوظيف' });
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Failed to delete applications' },
+      { status: 500 }
+    );
+  }
+}
