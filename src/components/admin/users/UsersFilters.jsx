@@ -14,7 +14,7 @@ export function UsersFilters({
 }) {
   // Convert labels to options format for FilterSelect
   const roleOptions = [
-    { value: "all", label: "جميع الأدوار" },
+    { value: "all", label: "الكل" },
     ...Object.entries(ROLE_LABELS).map(([value, label]) => ({
       value,
       label,
@@ -30,7 +30,7 @@ export function UsersFilters({
   ];
 
   const departmentOptions = [
-    { value: "all", label: "جميع الأقسام" },
+    { value: "all", label: "الكل" },
     ...Object.entries(DEPARTMENT_LABELS).map(([value, label]) => ({
       value,
       label,

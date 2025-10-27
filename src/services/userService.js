@@ -31,11 +31,11 @@ export const DEPARTMENTS = {
 // ==================== LABELS ====================
 export const ROLE_LABELS = {
   super_admin: "مدير عام",
-  admin: "مشرف",
+  // admin: "مشرف",
   hr_manager: "مدير الموارد البشرية",
-  hr_specialist: "أخصائي موارد بشرية",
-  interviewer: "محاور",
-  viewer: "مشاهد",
+  // hr_specialist: "أخصائي موارد بشرية",
+  // interviewer: "محاور",
+  // viewer: "مشاهد",
 };
 
 export const STATUS_LABELS = {
@@ -48,11 +48,11 @@ export const STATUS_LABELS = {
 export const DEPARTMENT_LABELS = {
   HR: "الموارد البشرية",
   IT: "تقنية المعلومات",
-  Finance: "المالية",
-  Operations: "العمليات",
-  Marketing: "التسويق",
-  Sales: "المبيعات",
-  Other: "أخرى",
+  // Finance: "المالية",
+  // Operations: "العمليات",
+  // Marketing: "التسويق",
+  // Sales: "المبيعات",
+  // Other: "أخرى",
 };
 
 // ==================== UTILS ====================
