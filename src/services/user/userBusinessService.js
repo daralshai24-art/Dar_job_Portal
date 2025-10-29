@@ -1,7 +1,7 @@
 // src/services/user/userBusinessService.js
 // ==================== BUSINESS LOGIC - SEPARATE FROM DATABASE ====================
 
-import User from "@/models/User";
+import User from "@/models/user";
 import { getRolePermissions } from "./permissions";
 import { validateUserData } from "./validation";
 

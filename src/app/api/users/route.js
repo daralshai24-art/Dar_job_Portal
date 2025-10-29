@@ -1,7 +1,7 @@
 // app/api/users/route.js
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import User from "@/models/User";
+import User from "@/models/user";
 import { withAuth } from "@/lib/apiAuth";
 import { UserBusinessService } from "@/services/user/userBusinessService";
 
