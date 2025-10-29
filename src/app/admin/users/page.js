@@ -1,8 +1,8 @@
-// app/admin/users/page.jsx
 "use client";
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 // Hooks
 import { useUsers } from "@/hooks/useUsers";
@@ -12,9 +12,9 @@ import { useConfirmationModal } from "@/hooks/useConfirmationModal";
 import Button from "@/components/shared/ui/Button";
 import { ConfirmationModal } from "@/components/shared/modals/ConfirmationModal";
 import { UsersStats } from "@/components/admin/users/UsersStats";
-import  {UsersFilters}  from "@/components/admin/users/UsersFilters";
+import { UsersFilters } from "@/components/admin/users/UsersFilters";
 import { UsersTable } from "@/components/admin/users/UsersTable";
-import  {UserFormModal}  from "@/components/admin/users/UserFormModal";
+import { UserFormModal } from "@/components/admin/users/UserFormModal";
 
 export default function UsersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -36,7 +36,8 @@ export default function UsersPage() {
     refresh,
   } = useUsers();
 
-  const { modalState, showConfirmation, hideConfirmation } = useConfirmationModal();
+  const { modalState, showConfirmation, hideConfirmation, setModalState } =
+    useConfirmationModal();
 
   // ==================== HANDLERS ====================
 
@@ -57,7 +58,7 @@ export default function UsersPage() {
 
   const handleSaveUser = async (userData) => {
     let result;
-    
+
     if (editingUser) {
       result = await handleUpdateUser(editingUser._id, userData);
     } else {
@@ -86,10 +87,12 @@ export default function UsersPage() {
 
   const handleStatusToggle = (user) => {
     const isActivating = user.status !== "active";
-    
+
     showConfirmation({
       title: isActivating ? "تفعيل المستخدم" : "إيقاف المستخدم",
-      message: `هل أنت متأكد من ${isActivating ? "تفعيل" : "إيقاف"} المستخدم "${user.name}"؟`,
+      message: `هل أنت متأكد من ${isActivating ? "تفعيل" : "إيقاف"} المستخدم "${
+        user.name
+      }"؟`,
       confirmText: isActivating ? "تفعيل" : "إيقاف",
       cancelText: "إلغاء",
       variant: isActivating ? "success" : "warning",
@@ -101,12 +104,35 @@ export default function UsersPage() {
     });
   };
 
-  const handlePasswordReset = (user) => {
-    const newPassword = prompt(`أدخل كلمة المرور الجديدة للمستخدم "${user.name}"`);
-    
-    if (newPassword) {
-      handleResetPassword(user._id, newPassword);
-    }
+  // ======= PASSWORD RESET ======
+  const handlePasswordResetClick = (user) => {
+    showConfirmation({
+      title: "إعادة تعيين كلمة المرور",
+      message: `أدخل كلمة المرور الجديدة للمستخدم "${user.name}"`,
+      confirmText: "تأكيد",
+      cancelText: "إلغاء",
+      type: "resetPassword",
+      variant: "warning",
+      // ✅ localPassword is passed from modal
+      onConfirm: async (typedPassword) => {
+        console.log("Password from modal:", typedPassword);
+
+        if (!typedPassword || typedPassword.length < 6) {
+          toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+          return;
+        }
+
+        setModalState((prev) => ({ ...prev, loading: true }));
+
+        const res = await handleResetPassword(user._id, typedPassword);
+
+        setModalState((prev) => ({ ...prev, loading: false }));
+
+        if (res.success) {
+          hideConfirmation();
+        }
+      },
+    });
   };
 
   return (
@@ -123,6 +149,8 @@ export default function UsersPage() {
         variant={modalState.variant}
         type={modalState.type}
         loading={modalState.loading}
+        password={modalState.password}
+        setModalState={setModalState}
       />
 
       {/* User Form Modal */}
@@ -131,7 +159,9 @@ export default function UsersPage() {
         onClose={handleCloseModal}
         onSave={handleSaveUser}
         user={editingUser}
-        loading={actionLoading === "create" || actionLoading === editingUser?._id}
+        loading={
+          actionLoading === "create" || actionLoading === editingUser?._id
+        }
       />
 
       {/* Page Header */}
@@ -169,7 +199,7 @@ export default function UsersPage() {
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
         onToggleStatus={handleStatusToggle}
-        onResetPassword={handlePasswordReset}
+        onResetPassword={handlePasswordResetClick} // ✅ Use the fixed handler
         actionLoading={actionLoading}
         loading={loading}
       />

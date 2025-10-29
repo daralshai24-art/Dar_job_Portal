@@ -133,25 +133,25 @@
     };
 
     // ==================== PASSWORD OPERATIONS ====================
-    const handleResetPassword = async (userId, newPassword) => {
-      if (!newPassword || newPassword.length < 6) {
-        toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
-        return { success: false };
-      }
+   const handleResetPassword = async (userId, newPassword) => {
+  if (!newPassword || newPassword.length < 6) {
+    toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+    return { success: false };
+  }
 
-      try {
-        setActionLoading(userId);
-        await userService.resetUserPassword(userId, newPassword);
-        toast.success("تم إعادة تعيين كلمة المرور بنجاح");
-        return { success: true };
-      } catch (error) {
-        console.error("Error resetting password:", error);
-        toast.error(error.message || "فشل في إعادة تعيين كلمة المرور");
-        return { success: false, error: error.message };
-      } finally {
-        setActionLoading(null);
-      }
-    };
+  try {
+    setActionLoading(userId);
+    await userService.resetUserPassword(userId, newPassword);
+    toast.success("تم إعادة تعيين كلمة المرور بنجاح");
+    return { success: true };
+  } catch (error) {
+    console.error("Error resetting password:", error);
+    toast.error(error.message || "فشل في إعادة تعيين كلمة المرور");
+    return { success: false, error: error.message };
+  } finally {
+    setActionLoading(null);
+  }
+};
 
     // ==================== STATISTICS ====================
     const stats = userService.calculateUserStats(users);

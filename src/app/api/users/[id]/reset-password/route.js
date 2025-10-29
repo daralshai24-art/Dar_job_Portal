@@ -1,17 +1,14 @@
-// app/api/users/[id]/reset-password/route.js
+// src/app/api/users/[id]/reset-password/route.js
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { withAuth } from "@/lib/apiAuth";
 import { UserBusinessService } from "@/services/user/userBusinessService";
 
-/**
- * POST /api/users/[id]/reset-password
- * Reset user password (admin only)
- */
 async function resetPasswordHandler(req, { params }) {
   try {
     await connectDB();
 
+    const { id } = await params; // ✅ FIXED: await params
     const { newPassword } = await req.json();
 
     if (!newPassword || newPassword.length < 6) {
@@ -21,16 +18,14 @@ async function resetPasswordHandler(req, { params }) {
       );
     }
 
-  
-    const userId = params?.id;
-    if (!userId) {
+    if (!id) {
       return NextResponse.json(
         { error: "معرّف المستخدم غير موجود" },
         { status: 400 }
       );
     }
 
-    await UserBusinessService.resetPassword(userId, newPassword);
+    await UserBusinessService.resetPassword(id, newPassword);
 
     return NextResponse.json({
       message: "تم إعادة تعيين كلمة المرور بنجاح",
@@ -44,8 +39,6 @@ async function resetPasswordHandler(req, { params }) {
   }
 }
 
-
-// Only admins can reset passwords
 export const POST = withAuth(resetPasswordHandler, {
   roles: ["super_admin", "admin"],
 });

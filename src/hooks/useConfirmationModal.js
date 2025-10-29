@@ -1,5 +1,6 @@
-// hooks/useConfirmationModal.js
-import { useState } from "react";
+"use client";
+
+import { useState, useCallback } from "react";
 
 export const useConfirmationModal = () => {
   const [modalState, setModalState] = useState({
@@ -8,34 +9,36 @@ export const useConfirmationModal = () => {
     message: "",
     confirmText: "تأكيد",
     cancelText: "إلغاء",
-    variant: "warning",
-    type: "general",
+    variant: "default",
+    type: null,
     onConfirm: null,
-    loading: false
+    loading: false,
+    password: "",
   });
 
-  const showConfirmation = (options) => {
-    setModalState({
+  const showConfirmation = useCallback((options = {}) => {
+    setModalState((prev) => ({
+      ...prev,
+      ...options,
       isOpen: true,
-      variant: "warning",
-      type: "general",
+      password: options.password ?? "",
       loading: false,
-      ...options
-    });
-  };
+    }));
+  }, []);
 
-  const hideConfirmation = () => {
-    setModalState(prev => ({ ...prev, isOpen: false }));
-  };
-
-  const setLoading = (loading) => {
-    setModalState(prev => ({ ...prev, loading }));
-  };
+  const hideConfirmation = useCallback(() => {
+    setModalState((prev) => ({
+      ...prev,
+      isOpen: false,
+      password: "",
+      loading: false,
+    }));
+  }, []);
 
   return {
     modalState,
+    setModalState,
     showConfirmation,
     hideConfirmation,
-    setLoading
   };
 };
