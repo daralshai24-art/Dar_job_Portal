@@ -1,23 +1,12 @@
+// src/models/Application.js
 import mongoose from "mongoose";
 
 const applicationSchema = new mongoose.Schema(
   {
-    jobId: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: "Job", 
-      required: true 
-    },
-    name: { 
-      type: String, 
-      required: true 
-    },
-    email: { 
-      type: String, 
-      required: true 
-    },
-    phone: { 
-      type: String 
-    },
+    jobId: { type: mongoose.Schema.Types.ObjectId, ref: "Job", required: true },
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    phone: { type: String },
     cv: {
       filename: String,
       originalName: String,
@@ -25,7 +14,7 @@ const applicationSchema = new mongoose.Schema(
       size: Number
     },
 
-    // ==================== STATUS & REJECTION ====================
+    // status & rejection
     status: {
       type: String,
       enum: [
@@ -38,17 +27,14 @@ const applicationSchema = new mongoose.Schema(
       ],
       default: "pending"
     },
-    rejectionReason: {
-      type: String,
-      trim: true
-    },
+    rejectionReason: { type: String, trim: true },
 
-    // ==================== FEEDBACK & NOTES ====================
+    // feedback & notes
     hrNotes: String,
     technicalNotes: String,
     finalFeedback: String,
 
-    // ==================== INTERVIEW INFO ====================
+    // interview info
     interviewDate: Date,
     interviewTime: String,
     interviewType: {
@@ -60,29 +46,12 @@ const applicationSchema = new mongoose.Schema(
     interviewNotes: String,
     interviewFeedback: String,
 
-    // ==================== INTERVIEW RESULTS ====================
+    // interview results
     interviewScore: Number,
     strengths: [String],
     weaknesses: [String],
 
-    // ==================== TIMELINE ====================
-    timeline: [{
-      action: String,
-      status: String,
-      notes: String,
-      score: Number,
-      details: mongoose.Schema.Types.Mixed,
-      date: { type: Date, default: Date.now },
-      performedBy: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: "User" 
-      }
-    }],
-
-    createdAt: { 
-      type: Date, 
-      default: Date.now 
-    }
+    createdAt: { type: Date, default: Date.now }
   },
   { timestamps: true }
 );

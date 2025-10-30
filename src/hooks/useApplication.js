@@ -1,5 +1,4 @@
-//src/hooks/useApplication.js
-// ==================== CLEAN HOOK - ONLY UI LOGIC ====================
+// src/hooks/useApplication.js
 import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import * as applicationService from "@/services/applicationService";
@@ -28,13 +27,14 @@ export const useApplication = (applicationId) => {
   });
 
   // ==================== DATA OPERATIONS ====================
-  
   const fetchApplication = async () => {
     try {
       setLoading(true);
       const data = await applicationService.fetchApplication(applicationId);
-      setApplication(data);
-      initializeFormData(data);
+      // API returns { application, timeline } (compatibility shim). We expect application.timeline included.
+      const app = data.application || data;
+      setApplication(app);
+      initializeFormData(app);
     } catch (error) {
       toast.error("فشل في تحميل بيانات الطلب");
     } finally {
@@ -48,7 +48,7 @@ export const useApplication = (applicationId) => {
       hrNotes: data.hrNotes || "",
       technicalNotes: data.technicalNotes || "",
       finalFeedback: data.finalFeedback || "",
-      interviewDate: data.interviewDate ? new Date(data.interviewDate).toISOString().split('T')[0] : "",
+      interviewDate: data.interviewDate ? new Date(data.interviewDate).toISOString().split("T")[0] : "",
       interviewTime: data.interviewTime || "",
       interviewType: data.interviewType || "in_person",
       interviewLocation: data.interviewLocation || "",
@@ -65,35 +65,40 @@ export const useApplication = (applicationId) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // executeUpdate: buildUpdateFn(application, formData) => updateData
   const executeUpdate = async (buildUpdateFn, successMessage) => {
     try {
       setSaving(true);
       const updateData = buildUpdateFn(application, formData);
-      await applicationService.updateApplication(applicationId, updateData);
+      console.log("Sending update:", JSON.stringify(updateData, null, 2));
+
+      const result = await applicationService.updateApplication(applicationId, updateData);
+
       toast.success(successMessage);
       setEditing(false);
+
+      // refresh local data
       await fetchApplication();
+      return result;
     } catch (error) {
       console.error("Error:", error);
-      toast.error("فشل في التحديث");
+      toast.error(error.message || "فشل التحديث");
+      throw error;
     } finally {
       setSaving(false);
     }
   };
 
   // ==================== ACTION HANDLERS ====================
-
   const handleStatusChange = async (newStatus) => {
-    // Create updated form data with new status
     const updatedFormData = { ...formData, status: newStatus };
-    
+
     const validation = validationService.validateStatusChange(application, updatedFormData);
     if (!validation.isValid) {
       toast.error(validation.errors[0]);
       return;
     }
-    
-    // Pass the updated form data to the build function
+
     await executeUpdate(
       (app) => applicationService.buildStatusChangeUpdate(app, updatedFormData),
       "تم تغيير الحالة بنجاح"
@@ -107,7 +112,7 @@ export const useApplication = (applicationId) => {
       return;
     }
     await executeUpdate(
-      applicationService.buildScheduleInterviewUpdate,
+      (app) => applicationService.buildScheduleInterviewUpdate(app, formData),
       "تم جدولة المقابلة بنجاح"
     );
   };
@@ -119,7 +124,7 @@ export const useApplication = (applicationId) => {
       return;
     }
     await executeUpdate(
-      applicationService.buildRescheduleInterviewUpdate,
+      (app) => applicationService.buildRescheduleInterviewUpdate(app, formData),
       "تم إعادة جدولة المقابلة بنجاح"
     );
   };
@@ -131,7 +136,7 @@ export const useApplication = (applicationId) => {
       return;
     }
     await executeUpdate(
-      applicationService.buildNotesUpdate,
+      (app) => applicationService.buildNotesUpdate(app, formData),
       "تم حفظ الملاحظات بنجاح"
     );
   };
@@ -143,7 +148,7 @@ export const useApplication = (applicationId) => {
       return;
     }
     await executeUpdate(
-      applicationService.buildFeedbackUpdate,
+      (app) => applicationService.buildFeedbackUpdate(app, formData),
       "تم حفظ التقييم بنجاح"
     );
   };
@@ -155,7 +160,7 @@ export const useApplication = (applicationId) => {
       return;
     }
     await executeUpdate(
-      applicationService.buildScoreUpdate,
+      (app) => applicationService.buildScoreUpdate(app, formData),
       "تم حفظ النتيجة بنجاح"
     );
   };
@@ -167,15 +172,15 @@ export const useApplication = (applicationId) => {
       return;
     }
     await executeUpdate(
-      applicationService.buildCompleteInterviewUpdate,
+      (app) => applicationService.buildCompleteInterviewUpdate(app, formData),
       "تم تحديد المقابلة كمكتملة"
     );
   };
 
   // ==================== LIFECYCLE ====================
-
   useEffect(() => {
     if (applicationId) fetchApplication();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applicationId]);
 
   return {

@@ -8,7 +8,7 @@ async function resetPasswordHandler(req, { params }) {
   try {
     await connectDB();
 
-    const { id } = await params; // ✅ FIXED: await params
+    const { id } = await params; 
     const { newPassword } = await req.json();
 
     if (!newPassword || newPassword.length < 6) {

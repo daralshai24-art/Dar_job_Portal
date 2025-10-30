@@ -1,6 +1,7 @@
-//src/app/admin/applications/[id]/page.js
+// src/app/admin/applications/[id]/page.js
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 // Components
@@ -22,6 +23,8 @@ import { useApplication } from "@/hooks/useApplication";
 export default function ApplicationDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const [showTimeline, setShowTimeline] = useState(false); // timeline toggle
+
   const {
     application,
     loading,
@@ -40,30 +43,40 @@ export default function ApplicationDetailPage() {
   } = useApplication(params.id);
 
   if (loading) return <LoadingState />;
-  if (!application) return <ErrorState onBack={() => router.push("/admin/applications")} />;
+  if (!application)
+    return <ErrorState onBack={() => router.push("/admin/applications")} />;
 
   // Determine if interview is already scheduled
   const isInterviewScheduled = application.interviewDate && application.interviewTime;
 
   return (
     <div className="p-6 space-y-6">
+      {/* Header with timeline toggle */}
       <ApplicationHeader
         onBack={() => router.push("/admin/applications")}
         onEdit={handleEditToggle}
         editing={editing}
         onCancel={handleEditToggle}
+        showTimeline={showTimeline}
+        toggleTimeline={() => setShowTimeline((prev) => !prev)}
       />
+
+      {/* Timeline Section - collapsible */}
+      {showTimeline && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border">
+          <ApplicationTimeline timeline={application.timeline} />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sidebar */}
         <div className="space-y-6">
           <CandidateInfoCard application={application} />
-          <JobInfoCard application={application} />
+          <JobInfoCard application={application} /> {/* Ensure jobId is populated */}
         </div>
 
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Status Management */}
           <StatusCard
             application={application}
             formData={formData}
@@ -73,7 +86,6 @@ export default function ApplicationDetailPage() {
             saving={saving}
           />
 
-          {/* Interview Schedule/Reschedule */}
           <InterviewScheduleCard
             application={application}
             formData={formData}
@@ -86,7 +98,6 @@ export default function ApplicationDetailPage() {
             isScheduled={isInterviewScheduled}
           />
 
-          {/* Notes Section */}
           <NotesSection
             application={application}
             formData={formData}
@@ -96,7 +107,6 @@ export default function ApplicationDetailPage() {
             saving={saving}
           />
 
-          {/* Feedback Section */}
           <FeedbackSection
             application={application}
             formData={formData}
@@ -106,7 +116,6 @@ export default function ApplicationDetailPage() {
             saving={saving}
           />
 
-          {/* Scoring Section */}
           <ScoringSection
             application={application}
             formData={formData}
@@ -115,11 +124,6 @@ export default function ApplicationDetailPage() {
             onSave={saveScore}
             saving={saving}
           />
-
-          {/* Timeline Section */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <ApplicationTimeline timeline={application.timeline} />
-          </div>
         </div>
       </div>
     </div>
