@@ -168,7 +168,6 @@ export async function GET(request) {
 
     const applications = await Application.find(query)
       .populate("jobId", "title category location")
-      .populate("timeline.performedBy", "name email role")
       .sort({ createdAt: -1 });
 
     return NextResponse.json(applications);

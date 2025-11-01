@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema(
     department: {
       type: String,
       enum: ["HR", "IT", "Finance", "Operations", "Marketing", "Sales", "Other"],
-      default: "HR",
+      default: "Other",
     },
     
     // Stored as JSON - managed by service layer
