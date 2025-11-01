@@ -6,7 +6,6 @@ import { toast } from "react-hot-toast";
 
 // Hooks
 import { useUsers } from "@/hooks/useUsers";
-import { useConfirmationModal } from "@/hooks/useConfirmationModal";
 
 // Components
 import Button from "@/components/shared/ui/Button";
@@ -19,6 +18,48 @@ import { UserFormModal } from "@/components/admin/users/UserFormModal";
 export default function UsersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+
+  // ✅ Modal State Fix
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    confirmText: "تأكيد",
+    cancelText: "إلغاء",
+    variant: "default",
+    type: null,
+    onConfirm: null,
+    loading: false,
+    password: "",
+  });
+
+  // ✅ Show modal
+  const showConfirmation = ({
+    title,
+    message = "",
+    confirmText = "تأكيد",
+    cancelText = "إلغاء",
+    variant = "default",
+    type = null,
+    onConfirm,
+  }) => {
+    setModalState({
+      isOpen: true,
+      title,
+      message,
+      confirmText,
+      cancelText,
+      variant,
+      type,
+      onConfirm,
+      password: "",
+      loading: false,
+    });
+  };
+
+  // ✅ Hide modal
+  const hideConfirmation = () =>
+    setModalState((prev) => ({ ...prev, isOpen: false, password: "" }));
 
   const {
     users,
@@ -36,11 +77,7 @@ export default function UsersPage() {
     refresh,
   } = useUsers();
 
-  const { modalState, showConfirmation, hideConfirmation, setModalState } =
-    useConfirmationModal();
-
   // ==================== HANDLERS ====================
-
   const handleCreate = () => {
     setEditingUser(null);
     setShowCreateModal(true);
@@ -75,7 +112,6 @@ export default function UsersPage() {
       title: "حذف المستخدم",
       message: `هل أنت متأكد من حذف المستخدم "${user.name}"؟ لا يمكن التراجع عن هذا الإجراء.`,
       confirmText: "حذف",
-      cancelText: "إلغاء",
       variant: "danger",
       type: "delete",
       onConfirm: async () => {
@@ -90,11 +126,8 @@ export default function UsersPage() {
 
     showConfirmation({
       title: isActivating ? "تفعيل المستخدم" : "إيقاف المستخدم",
-      message: `هل أنت متأكد من ${isActivating ? "تفعيل" : "إيقاف"} المستخدم "${
-        user.name
-      }"؟`,
+      message: `هل أنت متأكد من ${isActivating ? "تفعيل" : "إيقاف"} المستخدم "${user.name}"؟`,
       confirmText: isActivating ? "تفعيل" : "إيقاف",
-      cancelText: "إلغاء",
       variant: isActivating ? "success" : "warning",
       type: "status",
       onConfirm: async () => {
@@ -104,33 +137,27 @@ export default function UsersPage() {
     });
   };
 
-  // ======= PASSWORD RESET ======
+  // ✅ Password Reset modal trigger
   const handlePasswordResetClick = (user) => {
     showConfirmation({
       title: "إعادة تعيين كلمة المرور",
       message: `أدخل كلمة المرور الجديدة للمستخدم "${user.name}"`,
       confirmText: "تأكيد",
-      cancelText: "إلغاء",
-      type: "resetPassword",
       variant: "warning",
-      // ✅ localPassword is passed from modal
+      type: "resetPassword",
       onConfirm: async (typedPassword) => {
-        console.log("Password from modal:", typedPassword);
-
         if (!typedPassword || typedPassword.length < 6) {
           toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
           return;
         }
 
-        setModalState((prev) => ({ ...prev, loading: true }));
+        setModalState((p) => ({ ...p, loading: true }));
 
         const res = await handleResetPassword(user._id, typedPassword);
 
-        setModalState((prev) => ({ ...prev, loading: false }));
+        setModalState((p) => ({ ...p, loading: false }));
 
-        if (res.success) {
-          hideConfirmation();
-        }
+        if (res.success) hideConfirmation();
       },
     });
   };
@@ -159,18 +186,14 @@ export default function UsersPage() {
         onClose={handleCloseModal}
         onSave={handleSaveUser}
         user={editingUser}
-        loading={
-          actionLoading === "create" || actionLoading === editingUser?._id
-        }
+        loading={actionLoading === "create" || actionLoading === editingUser?._id}
       />
 
-      {/* Page Header */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">إدارة المستخدمين</h1>
-          <p className="text-gray-600 mt-2">
-            إدارة المستخدمين والصلاحيات والأدوار
-          </p>
+          <p className="text-gray-600 mt-2">إدارة المستخدمين والصلاحيات والأدوار</p>
         </div>
 
         <Button onClick={handleCreate} size="lg">
@@ -179,10 +202,8 @@ export default function UsersPage() {
         </Button>
       </div>
 
-      {/* Statistics */}
       <UsersStats stats={stats} />
 
-      {/* Filters */}
       <UsersFilters
         filters={filters}
         onFilterChange={handleFilterChange}
@@ -193,13 +214,12 @@ export default function UsersPage() {
         filteredCount={users.length}
       />
 
-      {/* Users Table */}
       <UsersTable
         users={users}
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
         onToggleStatus={handleStatusToggle}
-        onResetPassword={handlePasswordResetClick} // ✅ Use the fixed handler
+        onResetPassword={handlePasswordResetClick}
         actionLoading={actionLoading}
         loading={loading}
       />
