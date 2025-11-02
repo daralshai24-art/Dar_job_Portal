@@ -19,7 +19,7 @@ export default function UsersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
 
-  // ✅ Modal State Fix
+  //  Modal State Fix
   const [modalState, setModalState] = useState({
     isOpen: false,
     title: "",
@@ -33,7 +33,7 @@ export default function UsersPage() {
     password: "",
   });
 
-  // ✅ Show modal
+  //  Show modal
   const showConfirmation = ({
     title,
     message = "",
@@ -57,7 +57,7 @@ export default function UsersPage() {
     });
   };
 
-  // ✅ Hide modal
+  //  Hide modal
   const hideConfirmation = () =>
     setModalState((prev) => ({ ...prev, isOpen: false, password: "" }));
 
@@ -137,7 +137,7 @@ export default function UsersPage() {
     });
   };
 
-  // ✅ Password Reset modal trigger
+  //  Password Reset modal trigger
   const handlePasswordResetClick = (user) => {
     showConfirmation({
       title: "إعادة تعيين كلمة المرور",

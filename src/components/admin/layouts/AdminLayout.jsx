@@ -14,7 +14,7 @@ export default function AdminLayout({ children }) {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const router = useRouter();
-  const path = usePathname(); // <-- correct usage for App Router
+  const path = usePathname(); 
   const { user, logout, isLoading } = useAuth();
 
   const currentUser = user;
@@ -87,7 +87,7 @@ export default function AdminLayout({ children }) {
         message="هل أنت متأكد من تسجيل الخروج من لوحة الإدارة؟"
         confirmText="تسجيل الخروج"
         cancelText="إلغاء"
-        variant="warning"
+        variant="danger"
         type="status"
       />
     </div>
