@@ -1,4 +1,3 @@
-// src/app/admin/settings/page.js
 "use client";
 
 import SettingsLayout from "@/components/admin/settings/SettingsLayout";
@@ -15,7 +14,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* <SettingsLayout /> */}
+      <SettingsLayout />
     </div>
   );
 }
