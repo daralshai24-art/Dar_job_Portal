@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 import CategoryTable from "@/components/admin/settings/reference/categories/CategoryTable";
 import { useConfirmationModal } from "@/components/shared/modals/ConfirmationModalContext";
 import { 
@@ -15,7 +16,6 @@ import {
 export default function CategoriesPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState(null);
   
   const { showConfirmation } = useConfirmationModal();
 
@@ -26,7 +26,7 @@ export default function CategoriesPage() {
       setCategories(data || []);
     } catch (err) {
       console.error(err);
-      showToast("فشل في تحميل الفئات", "error");
+      toast.error("فشل في تحميل الفئات");
     } finally {
       setLoading(false);
     }
@@ -35,11 +35,6 @@ export default function CategoriesPage() {
   useEffect(() => {
     fetchAll();
   }, []);
-
-  function showToast(message, type = "info") {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  }
 
   const handleOpenAdd = () => {
     showConfirmation({
@@ -51,18 +46,18 @@ export default function CategoriesPage() {
         const categoryName = formData?.name || formData || "";
         
         if (!categoryName.trim()) {
-          showToast("يرجى إدخال اسم الفئة", "error");
+          toast.error("يرجى إدخال اسم الفئة");
           return false;
         }
 
         try {
           await createCategory({ name: categoryName.trim() });
-          showToast("تم إضافة الفئة بنجاح", "success");
+          toast.success("تم إضافة الفئة بنجاح");
           fetchAll();
           return true;
         } catch (err) {
           console.error(err);
-          showToast("حدث خطأ أثناء الحفظ", "error");
+          toast.error("حدث خطأ أثناء الحفظ");
           return false;
         }
       },
@@ -79,18 +74,18 @@ export default function CategoriesPage() {
         const categoryName = formData?.name || formData || "";
         
         if (!categoryName.trim()) {
-          showToast("يرجى إدخال اسم الفئة", "error");
+          toast.error("يرجى إدخال اسم الفئة");
           return false;
         }
 
         try {
           await updateCategory(category._id, { name: categoryName.trim() });
-          showToast("تم تعديل الفئة بنجاح", "success");
+          toast.success("تم تعديل الفئة بنجاح");
           fetchAll();
           return true;
         } catch (err) {
           console.error(err);
-          showToast("حدث خطأ أثناء التحديث", "error");
+          toast.error("حدث خطأ أثناء التحديث");
           return false;
         }
       },
@@ -106,12 +101,12 @@ export default function CategoriesPage() {
       onConfirm: async () => {
         try {
           await deactivateCategory(category._id);
-          showToast("تم تعطيل الفئة", "success");
+          toast.success("تم تعطيل الفئة");
           fetchAll();
           return true;
         } catch (err) {
           console.error(err);
-          showToast("فشل في تعطيل الفئة", "error");
+          toast.error("فشل في تعطيل الفئة");
           return false;
         }
       },
@@ -127,12 +122,12 @@ export default function CategoriesPage() {
       onConfirm: async () => {
         try {
           await activateCategory(category._id);
-          showToast("تم تفعيل الفئة", "success");
+          toast.success("تم تفعيل الفئة");
           fetchAll();
           return true;
         } catch (err) {
           console.error(err);
-          showToast("فشل في تفعيل الفئة", "error");
+          toast.error("فشل في تفعيل الفئة");
           return false;
         }
       },
@@ -148,12 +143,12 @@ export default function CategoriesPage() {
       onConfirm: async () => {
         try {
           await deleteCategoryPermanently(category._id);
-          showToast("تم حذف الفئة نهائياً", "success");
+          toast.success("تم حذف الفئة نهائياً");
           fetchAll();
           return true;
         } catch (err) {
           console.error(err);
-          showToast("فشل في حذف الفئة", "error");
+          toast.error("فشل في حذف الفئة");
           return false;
         }
       },
@@ -180,16 +175,6 @@ export default function CategoriesPage() {
         onActivate={handleActivate}
         onPermanentDelete={handlePermanentDelete}
       />
-
-      {toast && (
-        <div
-          className={`fixed bottom-6 left-6 p-3 rounded shadow-lg ${
-            toast.type === "success" ? "bg-green-600 text-white" : "bg-gray-800 text-white"
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
     </div>
   );
 }
