@@ -1,14 +1,17 @@
-//src\components\admin\settings\SettingsLayout.jsx
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
 import SettingsSidebar from "./SettingsSidebar";
 import SystemTools from "./sections/SystemTools";
+import { useConfirmationModal } from "@/components/shared/modals/ConfirmationModalContext";
 
 export default function SettingsLayout() {
   const [activeSection, setActiveSection] = useState("tools");
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  const { showConfirmation } = useConfirmationModal();
 
   useEffect(() => {
     fetchSettings();
@@ -23,6 +26,7 @@ export default function SettingsLayout() {
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
+      toast.error("فشل في تحميل الإعدادات");
     } finally {
       setLoading(false);
     }
@@ -40,34 +44,49 @@ export default function SettingsLayout() {
       if (response.ok) {
         const savedSettings = await response.json();
         setSettings(savedSettings);
+        toast.success("تم تحديث الإعدادات بنجاح");
         return true;
+      } else {
+        toast.error("فشل في تحديث الإعدادات");
+        return false;
       }
-      return false;
     } catch (error) {
       console.error('Error updating settings:', error);
+      toast.error("حدث خطأ أثناء تحديث الإعدادات");
       return false;
     }
   };
 
-  const saveAllSettings = async () => {
+  const handleSaveAllSettings = async () => {
     if (!settings) return;
-    try {
-      const response = await fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
-      });
+    
+    showConfirmation({
+      title: "حفظ جميع الإعدادات",
+      message: "هل أنت متأكد من حفظ جميع الإعدادات؟",
+      variant: "primary",
+      confirmText: "حفظ",
+      onConfirm: async () => {
+        try {
+          const response = await fetch('/api/settings', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings),
+          });
 
-      if (response.ok) {
-        alert('تم حفظ جميع الإعدادات بنجاح');
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Error saving all settings:', error);
-      alert('حدث خطأ أثناء حفظ الإعدادات');
-      return false;
-    }
+          if (response.ok) {
+            toast.success("تم حفظ جميع الإعدادات بنجاح");
+            return true;
+          } else {
+            toast.error("فشل في حفظ الإعدادات");
+            return false;
+          }
+        } catch (error) {
+          console.error('Error saving all settings:', error);
+          toast.error("حدث خطأ أثناء حفظ الإعدادات");
+          return false;
+        }
+      },
+    });
   };
 
   if (loading) return (
@@ -80,7 +99,10 @@ export default function SettingsLayout() {
   );
 
   const renderSection = () => {
-    const sectionProps = { settings, onUpdate: updateSettings };
+    const sectionProps = { 
+      settings, 
+      onUpdate: updateSettings 
+    };
     
     switch (activeSection) {
       case "tools": 
@@ -100,7 +122,7 @@ export default function SettingsLayout() {
         <SettingsSidebar
           activeSection={activeSection}
           onSectionChange={setActiveSection}
-          onSaveAll={saveAllSettings}
+          onSaveAll={handleSaveAllSettings}
         />
       </div>
       <div className="lg:col-span-3">{renderSection()}</div>
