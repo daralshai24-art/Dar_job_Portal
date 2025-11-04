@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import { NextResponse } from "next/server";
 import Job from "../../../models/Job";
 import Category from "@/models/Category";
+import Application from "@/models/Application";
 
 /**
  * GET /api/jobs
@@ -24,24 +25,23 @@ export async function GET(request) {
       query.status = status;
     }
 
-    // Add category filter if provided - NOW USING CATEGORY ID
+    // Add category filter if provided - expects category ID
     if (category && category !== "all") {
-      query.category = category; // Now expects category ID
+      query.category = category;
     }
 
     // Add search functionality
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } }
       ];
     }
 
-    // Execute query with category population
     const jobs = await Job.find(query)
-      .populate('category', 'name  _id') // Populate category data
+      .populate("category", "name _id")
       .sort({ createdAt: -1 });
-    
+
     return NextResponse.json(jobs, { status: 200 });
   } catch (error) {
     console.error("GET /api/jobs error:", error);
@@ -59,17 +59,14 @@ export async function GET(request) {
 const validateJobInput = (body) => {
   const errors = [];
 
-  // Required fields
   if (!body.title?.trim()) errors.push("Title is required");
   if (!body.description?.trim()) errors.push("Description is required");
   if (!body.location?.trim()) errors.push("Location is required");
-  if (!body.category) errors.push("Category is required"); // Now required
+  if (!body.category) errors.push("Category is required");
 
-  // Field length validation
   if (body.title?.length > 100) errors.push("Title must be less than 100 characters");
   if (body.description?.length > 2000) errors.push("Description must be less than 2000 characters");
 
-  // Enum validation
   const validStatus = ["draft", "active", "inactive", "closed"];
   if (body.status && !validStatus.includes(body.status)) {
     errors.push(`Status must be one of: ${validStatus.join(", ")}`);
@@ -95,10 +92,10 @@ const prepareJobData = (body) => {
     location: body.location?.trim(),
     salary: body.salary?.trim() || "",
     status: body.status || "draft",
-    category: body.category, // Now expects category ID
+    category: body.category,
     jobType: body.jobType || "Full-time",
     experience: body.experience || "Entry Level",
-    requirements: body.requirements?.trim() || "",
+    requirements: body.requirements?.trim() || ""
   };
 };
 
@@ -109,28 +106,21 @@ export async function POST(request) {
     let body;
     try {
       body = await request.json();
-    } catch (parseError) {
+    } catch {
       return NextResponse.json(
         { error: "Invalid JSON in request body" },
         { status: 400 }
       );
     }
 
-    console.log('Received job data:', body);
-
-    // Validate input
     const validationErrors = validateJobInput(body);
     if (validationErrors.length > 0) {
       return NextResponse.json(
-        { 
-          error: "Validation failed", 
-          details: validationErrors 
-        },
+        { error: "Validation failed", details: validationErrors },
         { status: 400 }
       );
     }
 
-    // Verify category exists
     const categoryExists = await Category.findById(body.category);
     if (!categoryExists) {
       return NextResponse.json(
@@ -139,37 +129,24 @@ export async function POST(request) {
       );
     }
 
-    // Prepare job data
     const jobData = prepareJobData(body);
-
-    // Create job in database
     const job = await Job.create(jobData);
 
-    console.log('Job created successfully:', job._id);
-
-    // Return populated job data
-    const populatedJob = await Job.findById(job._id).populate('category', 'name  _id');
+    const populatedJob = await Job.findById(job._id)
+      .populate("category", "name _id");
 
     return NextResponse.json(
-      { 
-        success: true,
-        message: "Job created successfully",
-        data: populatedJob 
-      },
+      { success: true, message: "Job created successfully", data: populatedJob },
       { status: 201 }
     );
-
   } catch (error) {
     console.error("POST /api/jobs error:", error);
 
     if (error.name === "ValidationError") {
-      const validationErrors = Object.values(error.errors).map(
-        (err) => err.message
-      );
       return NextResponse.json(
         { 
-          error: "Database validation failed", 
-          details: validationErrors 
+          error: "Database validation failed",
+          details: Object.values(error.errors).map((e) => e.message)
         },
         { status: 400 }
       );
@@ -183,10 +160,31 @@ export async function POST(request) {
     }
 
     return NextResponse.json(
-      { 
-        error: "Internal server error",
-        message: process.env.NODE_ENV === "development" ? error.message : "Something went wrong"
-      },
+      { error: "Internal server error", message: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/jobs
+ * DELETE all jobs AND all applications
+ */
+export async function DELETE() {
+  try {
+    await connectDB();
+
+    await Application.deleteMany({});
+    await Job.deleteMany({});
+
+    return NextResponse.json(
+      { success: true, message: "✅ All jobs and applications deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("DELETE /api/jobs error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete jobs", details: error.message },
       { status: 500 }
     );
   }
