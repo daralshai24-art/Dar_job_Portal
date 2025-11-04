@@ -23,7 +23,7 @@ export default function AdminJobsPage() {
   const [actionLoading, setActionLoading] = useState(null);
 
   const router = useRouter();
-  const { modalState, showConfirmation, hideConfirmation, setModalState } = useConfirmationModal();
+  const { modalState, showConfirmation, hideConfirmation } = useConfirmationModal();
   const pagination = usePagination({ itemsPerPage: 5, currentPage: 1 });
 
   const fetchJobs = async () => {
@@ -54,7 +54,6 @@ export default function AdminJobsPage() {
       confirmText: currentStatus === "active" ? "إيقاف" : "تفعيل",
       variant: currentStatus === "active" ? "warning" : "success",
       onConfirm: async () => {
-        setModalState((prev) => ({ ...prev, loading: true }));
         setActionLoading(jobId);
 
         try {
@@ -71,7 +70,6 @@ export default function AdminJobsPage() {
           toast.error("حدث خطأ");
         } finally {
           setActionLoading(null);
-          setModalState((prev) => ({ ...prev, loading: false }));
         }
       },
     });
@@ -84,8 +82,6 @@ export default function AdminJobsPage() {
       confirmText: "حذف",
       variant: "danger",
       onConfirm: async () => {
-        setModalState((prev) => ({ ...prev, loading: true }));
-
         try {
           await fetch(`/api/jobs/${jobId}`, { method: "DELETE" });
           toast.success("تم حذف الوظيفة");
@@ -93,8 +89,6 @@ export default function AdminJobsPage() {
           hideConfirmation();
         } catch {
           toast.error("حدث خطأ أثناء الحذف");
-        } finally {
-          setModalState((prev) => ({ ...prev, loading: false }));
         }
       },
     });
