@@ -1,14 +1,12 @@
+//src\components\admin\settings\SettingsLayout.jsx
 "use client";
 
 import { useState, useEffect } from "react";
 import SettingsSidebar from "./SettingsSidebar";
-import GeneralSettings from "./sections/GeneralSettings";
-import EmailSettings from "./sections/EmailSettings";
-import JobSettings from "./sections/JobSettings";
 import SystemTools from "./sections/SystemTools";
 
 export default function SettingsLayout() {
-  const [activeSection, setActiveSection] = useState("general");
+  const [activeSection, setActiveSection] = useState("tools");
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -83,12 +81,16 @@ export default function SettingsLayout() {
 
   const renderSection = () => {
     const sectionProps = { settings, onUpdate: updateSettings };
+    
     switch (activeSection) {
-      case "general": return <GeneralSettings {...sectionProps} />;
-      case "email": return <EmailSettings {...sectionProps} />;
-      case "jobs": return <JobSettings {...sectionProps} />;
-      case "tools": return <SystemTools {...sectionProps} />;
-      default: return <GeneralSettings {...sectionProps} />;
+      case "tools": 
+        return <SystemTools {...sectionProps} />;
+      // Future sections can be added here
+      // case "general": return <GeneralSettings {...sectionProps} />;
+      // case "email": return <EmailSettings {...sectionProps} />;
+      // case "jobs": return <JobSettings {...sectionProps} />;
+      default: 
+        return <SystemTools {...sectionProps} />;
     }
   };
 
