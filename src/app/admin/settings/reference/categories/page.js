@@ -2,17 +2,22 @@
 
 import { useEffect, useState } from "react";
 import CategoryTable from "@/components/admin/settings/reference/categories/CategoryTable";
-import CategoryForm from "@/components/admin/settings/reference/categories/CategoryFormModal";
-import ConfirmDeleteModal from "@/components/admin/settings/reference/categories/ConfirmDeleteModal";
-import { getCategories, createCategory, updateCategory, deactivateCategory } from "@/services/categoriesService";
+import { useConfirmationModal } from "@/components/shared/modals/ConfirmationModalContext";
+import { 
+  getCategories, 
+  createCategory, 
+  updateCategory, 
+  deactivateCategory,
+  activateCategory,
+  deleteCategoryPermanently 
+} from "@/services/categoriesService";
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [deleteItem, setDeleteItem] = useState(null);
   const [toast, setToast] = useState(null);
+  
+  const { showConfirmation } = useConfirmationModal();
 
   const fetchAll = async () => {
     setLoading(true);
@@ -37,47 +42,122 @@ export default function CategoriesPage() {
   }
 
   const handleOpenAdd = () => {
-    setEditing(null);
-    setIsFormOpen(true);
+    showConfirmation({
+      title: "إضافة فئة",
+      type: "categoryForm",
+      confirmText: "حفظ",
+      initialFormData: { name: "" },
+      onConfirm: async (formData) => {
+        const categoryName = formData?.name || formData || "";
+        
+        if (!categoryName.trim()) {
+          showToast("يرجى إدخال اسم الفئة", "error");
+          return false;
+        }
+
+        try {
+          await createCategory({ name: categoryName.trim() });
+          showToast("تم إضافة الفئة بنجاح", "success");
+          fetchAll();
+          return true;
+        } catch (err) {
+          console.error(err);
+          showToast("حدث خطأ أثناء الحفظ", "error");
+          return false;
+        }
+      },
+    });
   };
 
-  const handleEdit = (cat) => {
-    setEditing(cat);
-    setIsFormOpen(true);
+  const handleEdit = (category) => {
+    showConfirmation({
+      title: "تعديل فئة",
+      type: "categoryForm",
+      confirmText: "تحديث",
+      initialFormData: { name: category.name },
+      onConfirm: async (formData) => {
+        const categoryName = formData?.name || formData || "";
+        
+        if (!categoryName.trim()) {
+          showToast("يرجى إدخال اسم الفئة", "error");
+          return false;
+        }
+
+        try {
+          await updateCategory(category._id, { name: categoryName.trim() });
+          showToast("تم تعديل الفئة بنجاح", "success");
+          fetchAll();
+          return true;
+        } catch (err) {
+          console.error(err);
+          showToast("حدث خطأ أثناء التحديث", "error");
+          return false;
+        }
+      },
+    });
   };
 
-  const handleFormSubmit = async (payload) => {
-    try {
-      if (editing) {
-        await updateCategory(editing._id, payload);
-        showToast("تم تعديل الفئة بنجاح", "success");
-      } else {
-        await createCategory(payload);
-        showToast("تم إضافة الفئة بنجاح", "success");
-      }
-      setIsFormOpen(false);
-      setEditing(null);
-      fetchAll();
-    } catch (err) {
-      console.error(err);
-      showToast("حدث خطأ أثناء الحفظ", "error");
-    }
+  const handleDeactivate = (category) => {
+    showConfirmation({
+      title: "تعطيل الفئة",
+      message: `هل أنت متأكد من تعطيل الفئة "${category.name}"؟`,
+      variant: "warning",
+      confirmText: "تعطيل",
+      onConfirm: async () => {
+        try {
+          await deactivateCategory(category._id);
+          showToast("تم تعطيل الفئة", "success");
+          fetchAll();
+          return true;
+        } catch (err) {
+          console.error(err);
+          showToast("فشل في تعطيل الفئة", "error");
+          return false;
+        }
+      },
+    });
   };
 
-  const handleRequestDelete = (category) => {
-    setDeleteItem(category); // assign the full category object
+  const handleActivate = (category) => {
+    showConfirmation({
+      title: "تفعيل الفئة",
+      message: `هل أنت متأكد من تفعيل الفئة "${category.name}"؟`,
+      variant: "primary",
+      confirmText: "تفعيل",
+      onConfirm: async () => {
+        try {
+          await activateCategory(category._id);
+          showToast("تم تفعيل الفئة", "success");
+          fetchAll();
+          return true;
+        } catch (err) {
+          console.error(err);
+          showToast("فشل في تفعيل الفئة", "error");
+          return false;
+        }
+      },
+    });
   };
 
-  const handleConfirmDelete = async (category) => {
-    try {
-      await deactivateCategory(category._id);
-      setDeleteItem(null);
-      showToast("تم تعطيل الفئة", "success");
-      fetchAll();
-    } catch (err) {
-      console.error(err);
-      showToast("فشل في حذف الفئة", "error");
-    }
+  const handlePermanentDelete = (category) => {
+    showConfirmation({
+      title: "حذف نهائي",
+      message: `هل أنت متأكد من الحذف النهائي للفئة "${category.name}"؟ لا يمكن التراجع عن هذا الإجراء.`,
+      variant: "danger",
+      confirmText: "حذف نهائي",
+      onConfirm: async () => {
+        try {
+          await deleteCategoryPermanently(category._id);
+          showToast("تم حذف الفئة نهائياً", "success");
+          fetchAll();
+          return true;
+        } catch (err) {
+          console.error(err);
+          showToast("فشل في حذف الفئة", "error");
+          return false;
+        }
+      },
+    });
   };
 
   return (
@@ -86,35 +166,20 @@ export default function CategoriesPage() {
         <h1 className="text-2xl font-bold text-gray-800">إدارة الفئات</h1>
         <button
           onClick={handleOpenAdd}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
         >
           + إضافة فئة
         </button>
       </div>
 
       <CategoryTable
-        data={categories} // must match the prop in CategoryTable
+        data={categories}
         loading={loading}
         onEdit={handleEdit}
-        onDelete={handleRequestDelete}
+        onDeactivate={handleDeactivate}
+        onActivate={handleActivate}
+        onPermanentDelete={handlePermanentDelete}
       />
-
-      {isFormOpen && (
-        <CategoryForm
-          open={isFormOpen}
-          onClose={() => { setIsFormOpen(false); setEditing(null); }}
-          initialData={editing}
-          onSubmit={handleFormSubmit}
-        />
-      )}
-
-      {deleteItem && (
-        <ConfirmDeleteModal
-          item={deleteItem}
-          onClose={() => setDeleteItem(null)}
-          onConfirm={() => handleConfirmDelete(deleteItem)}
-        />
-      )}
 
       {toast && (
         <div

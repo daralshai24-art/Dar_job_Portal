@@ -60,7 +60,26 @@ export async function PUT(request) {
   }
 }
 
-// DELETE deactivate category
+// PATCH activate category
+export async function PATCH(request) {
+  try {
+    await connectDB();
+    const user = await verifyAdmin();
+    if (user?.status === 403) return user;
+
+    const { id } = await request.json();
+    const updated = await Category.findByIdAndUpdate(
+      id, 
+      { isActive: true }, 
+      { new: true }
+    );
+    return NextResponse.json(updated);
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+// DELETE deactivate category (soft delete)
 export async function DELETE(request) {
   try {
     await connectDB();

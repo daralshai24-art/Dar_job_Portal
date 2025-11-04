@@ -30,3 +30,21 @@ export const deactivateCategory = async (id) => {
   });
   return res.json();
 };
+
+// Activate category
+export const activateCategory = async (id) => {
+  const res = await fetch("/api/admin/categories", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id }),
+  });
+  return res.json();
+};
+
+//Delete category permanently - uses the individual route
+export const deleteCategoryPermanently = async (id) => {
+  const res = await fetch(`/api/admin/categories/${id}`, {
+    method: "DELETE",
+  });
+  return res.json();
+};

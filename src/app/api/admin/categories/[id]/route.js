@@ -1,4 +1,3 @@
-// src/app/api/admin/categories/[id]/route.js
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Category from "@/models/Category";
@@ -30,7 +29,26 @@ export async function PUT(request, { params }) {
   }
 }
 
-// ✅ Soft delete (deactivate)
+// ✅ PATCH activate category
+export async function PATCH(request, { params }) {
+  try {
+    await connectDB();
+    const user = await verifyAdmin();
+    if (user?.status === 403) return user;
+
+    const { id } = params;
+    const updated = await Category.findByIdAndUpdate(
+      id, 
+      { isActive: true }, 
+      { new: true }
+    );
+    return NextResponse.json(updated);
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+// ✅ DELETE permanently (hard delete)
 export async function DELETE(request, { params }) {
   try {
     await connectDB();
@@ -38,9 +56,8 @@ export async function DELETE(request, { params }) {
     if (user?.status === 403) return user;
 
     const { id } = params;
-    await Category.findByIdAndUpdate(id, { isActive: false });
-
-    return NextResponse.json({ message: "تم تعطيل الفئة" });
+    await Category.findByIdAndDelete(id);
+    return NextResponse.json({ message: "تم حذف الفئة نهائياً" });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
