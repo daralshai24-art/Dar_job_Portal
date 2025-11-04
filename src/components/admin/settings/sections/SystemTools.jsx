@@ -134,7 +134,7 @@ export default function SystemTools() {
       
       <div className="space-y-6">
         {/* Backup Section */}
-        <div className="border border-gray-200 rounded-lg p-6">
+        {/* <div className="border border-gray-200 rounded-lg p-6">
           <div className="flex items-center gap-3 mb-4">
             <FileSpreadsheet className="w-6 h-6 text-green-600" />
             <h3 className="text-lg font-medium text-gray-800">النسخ الاحتياطي</h3>
@@ -171,7 +171,7 @@ export default function SystemTools() {
             )}
             {backupLoading ? 'جاري إنشاء ملف Excel...' : 'تحميل نسخة احتياطية (Excel)'}
           </button>
-        </div>
+        </div> */}
 
         {/* Deletion Section */}
         <div className="border border-red-200 rounded-lg p-6 bg-red-50">
