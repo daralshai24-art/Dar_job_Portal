@@ -12,7 +12,7 @@ import { UserBusinessService } from "@/services/user/userBusinessService";
 async function getUsersHandler(req) {
   try {
     await connectDB();
-
+    
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search");
     const role = searchParams.get("role");
@@ -89,4 +89,37 @@ export const GET = withAuth(getUsersHandler, {
 
 export const POST = withAuth(createUserHandler, {
   permission: { module: "users", action: "create" },
+});
+export const DELETE = withAuth(async (req) => {
+  try {
+    await connectDB();
+    const currentUser = req.user;
+
+    // Only super admin can trigger bulk delete
+    if (currentUser.role !== "super_admin") {
+      return NextResponse.json(
+        { error: "غير مصرح لك بحذف جميع المستخدمين" },
+        { status: 403 }
+      );
+    }
+
+    // Delete all EXCEPT super_admins and current user
+    await User.deleteMany({
+      role: { $ne: "super_admin" },
+      _id: { $ne: currentUser._id }
+    });
+
+    return NextResponse.json({
+      message: "تم حذف جميع المستخدمين ما عدا حساب المدير العام الحالي"
+    });
+
+  } catch (error) {
+    console.error("Bulk delete users error:", error);
+    return NextResponse.json(
+      { error: "فشل في حذف المستخدمين" },
+      { status: 500 }
+    );
+  }
+}, {
+  permission: { module: "users", action: "delete" }
 });
