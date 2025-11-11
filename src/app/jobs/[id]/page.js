@@ -32,7 +32,7 @@ export default function JobDetailsPage() {
 
   useEffect(() => {
     fetchJob();
-  }, [params]);
+  }, [params,fetchJob]);
 
   const fetchJob = async () => {
     try {

@@ -22,20 +22,35 @@ export function useUserForm({ user = null, onSave }) {
   const [loading, setLoading] = useState(false);
 
   // Initialize form when editing user
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        ...formData,
-        name: user.name || "",
-        email: user.email || "",
-        role: user.role || "",
-        department: user.department || "",
-        bio: user.bio || "",
-        status: user.status || "active",
-        phone: user.phone || "",
-      });
-    }
-  }, [user]);
+useEffect(() => {
+  if (user) {
+    setFormData({
+      name: user.name || "",
+      email: user.email || "",
+      role: user.role || "",
+      department: user.department || "",
+      bio: user.bio || "",
+      status: user.status || "active",
+      phone: user.phone || "",
+      password: "",
+      confirmPassword: "",
+    });
+  } else {
+    // إذا كانت إضافة مستخدم جديد، إعادة تعيين كل القيم
+    setFormData({
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      role: "",
+      department: "",
+      bio: "",
+      status: "active",
+      phone: "",
+    });
+  }
+}, [user]);
+
 
   const handleChange = (key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));

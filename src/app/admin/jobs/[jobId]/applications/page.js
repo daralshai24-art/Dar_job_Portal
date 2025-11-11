@@ -35,7 +35,7 @@ export default function JobApplicationsPage() {
       fetchJobApplications();
       fetchJobDetails();
     }
-  }, [jobId]);
+  }, [jobId,fetchJobApplications,fetchJobDetails]);
 
   const fetchJobApplications = async () => {
     try {

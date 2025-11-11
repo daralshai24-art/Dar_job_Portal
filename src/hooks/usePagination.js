@@ -1,9 +1,7 @@
-// hooks/usePagination.js
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 /**
  * Hook for managing pagination state
- * Can be reused across different components
  */
 export const usePagination = (initialState = {}) => {
   const [pagination, setPagination] = useState({
@@ -12,24 +10,26 @@ export const usePagination = (initialState = {}) => {
     ...initialState,
   });
 
-  const goToPage = (page) => {
+  const goToPage = useCallback((page) => {
     setPagination(prev => ({ ...prev, currentPage: page }));
-  };
+  }, []);
 
-  const setItemsPerPage = (itemsPerPage) => {
+  const setItemsPerPage = useCallback((itemsPerPage) => {
     setPagination(prev => ({ ...prev, itemsPerPage, currentPage: 1 }));
-  };
+  }, []);
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setPagination(prev => ({ ...prev, currentPage: 1 }));
-  };
+  }, []);
 
-  // Calculate paginated data
-  const getPaginatedData = (data = []) => {
-    const startIndex = (pagination.currentPage - 1) * pagination.itemsPerPage;
-    const endIndex = startIndex + pagination.itemsPerPage;
-    return data.slice(startIndex, endIndex);
-  };
+  const getPaginatedData = useCallback(
+    (data = []) => {
+      const startIndex = (pagination.currentPage - 1) * pagination.itemsPerPage;
+      const endIndex = startIndex + pagination.itemsPerPage;
+      return data.slice(startIndex, endIndex);
+    },
+    [pagination.currentPage, pagination.itemsPerPage]
+  );
 
   return {
     ...pagination,
