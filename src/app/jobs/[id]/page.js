@@ -30,10 +30,7 @@ export default function JobDetailsPage() {
   const params = useParams();
   const router = useRouter();
 
-  useEffect(() => {
-    fetchJob();
-  }, [params,fetchJob]);
-
+  
   const fetchJob = async () => {
     try {
       setLoading(true);
@@ -51,8 +48,11 @@ export default function JobDetailsPage() {
       setLoading(false);
     }
   };
-
-
+  
+  useEffect(() => {
+    fetchJob();
+  }, [params]);
+  
   if (loading) return <LoadingState />;
   if (!job) return <ErrorState router={router} />;
 

@@ -7,15 +7,16 @@ import Job from "@/models/Job";
  * GET /api/jobs/[id]
  * Retrieves a single job by ID
  */
-export async function GET(request, { params }) {
+export async function GET(request, context) {
   try {
     await connectDB();
     
-    const { id } = await params;
+    const { params } = context;
+    const { id } = await params; // ✅ Await params before accessing properties
 
     // Find job by ID and populate category
     const job = await Job.findById(id)
-      .populate('category', 'name _id') // Add this line to populate category
+      .populate('category', 'name _id')
       .exec();
 
     if (!job) {
@@ -39,12 +40,13 @@ export async function GET(request, { params }) {
  * PUT /api/jobs/[id]
  * Updates a job by ID
  */
-export async function PUT(request, { params }) {
+export async function PUT(request, context) {
   try {
     await connectDB();
     
-    const { id } = await params;
-    
+    const { params } = context;
+    const { id } = await params; // ✅ Await params
+
     // Parse request body
     let body;
     try {
@@ -69,7 +71,7 @@ export async function PUT(request, { params }) {
         new: true, // Return the updated document
         runValidators: true // Run schema validators
       }
-    ).populate('category', 'name _id'); // Populate category after update
+    ).populate('category', 'name _id');
 
     if (!updatedJob) {
       return NextResponse.json(
@@ -89,7 +91,6 @@ export async function PUT(request, { params }) {
   } catch (error) {
     console.error("PUT /api/jobs/[id] error:", error);
 
-    // Handle Mongoose validation errors
     if (error.name === "ValidationError") {
       const validationErrors = Object.values(error.errors).map(
         (err) => err.message
@@ -103,7 +104,6 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // Handle invalid ObjectId
     if (error.name === "CastError") {
       return NextResponse.json(
         { error: "معرف الوظيفة غير صالح" },
@@ -125,15 +125,15 @@ export async function PUT(request, { params }) {
  * DELETE /api/jobs/[id]
  * Deletes a job by ID
  */
-export async function DELETE(request, { params }) {
+export async function DELETE(request, context) {
   try {
     await connectDB();
     
-    const { id } = await params;
+    const { params } = context;
+    const { id } = await params; // ✅ Await params
 
     console.log('Attempting to delete job:', id);
 
-    // Find and delete the job
     const deletedJob = await Job.findByIdAndDelete(id);
 
     if (!deletedJob) {
@@ -154,7 +154,6 @@ export async function DELETE(request, { params }) {
   } catch (error) {
     console.error("DELETE /api/jobs/[id] error:", error);
 
-    // Handle invalid ObjectId
     if (error.name === "CastError") {
       return NextResponse.json(
         { error: "معرف الوظيفة غير صالح" },
