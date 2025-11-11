@@ -2,9 +2,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import CategoryButton from "@/components/shared/UI/CategoryButton";
+import CategoryButton from "@/components/shared/ui/CategoryButton";
 import { fetchCategories } from "@/lib/constants";
-import LoadingSpinner from "@/components/shared/UI/LoadingSpinner";
+import LoadingSpinner from "@/components/shared/ui/LoadingSpinner";
 
 const CategoryFilters = ({ selectedCategory, onCategorySelect }) => {
   const [categories, setCategories] = useState([]);

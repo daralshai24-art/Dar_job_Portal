@@ -2,7 +2,7 @@
 "use client";
 
 import JobCard from "./JobCard";
-import LoadingSpinner from "@/components/shared/UI/LoadingSpinner";
+import LoadingSpinner from "@/components/shared/ui/LoadingSpinner";
 
 const JobList = ({ jobs, loading }) => {
   if (loading) {

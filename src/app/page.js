@@ -7,7 +7,7 @@ import Header from "@/components/shared/Header";
 import Footer from "@/components/shared/Footer";
 import HeroSection from "@/components/home/HeroSection";
 import JobsSection from "@/components/home/JobsSection";
-import LoadingSpinner from "@/components/shared/UI/LoadingSpinner";
+import LoadingSpinner from "@/components/shared/ui/LoadingSpinner";
 import toast from "react-hot-toast";
 
 export default function HomePage() {

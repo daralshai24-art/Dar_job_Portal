@@ -4,7 +4,7 @@
 import { Filter, Search, Briefcase, MapPin, Clock } from "lucide-react";
 import { memo } from "react";
 import { useCategories } from "@/hooks/useCategories";
-import LoadingSpinner from "@/components/shared/UI/LoadingSpinner";
+import LoadingSpinner from "@/components/shared/ui/LoadingSpinner";
 
 const FiltersSidebar = ({
   searchTerm,

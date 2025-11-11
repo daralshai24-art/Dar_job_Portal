@@ -1,3 +1,4 @@
+//src\components\Home\HeroSection.jsx
 import { Search, TrendingUp, Users, Award } from "lucide-react";
 import { COLORS } from "@/lib/constants";
 
