@@ -1,4 +1,4 @@
-// src/components/Public/NoResults.jsx
+// src\components\public\NoResults.jsx
 "use client";
 
 import { Search, Filter } from "lucide-react";

@@ -4,7 +4,7 @@
 import JobCard from "@/components/jobs/JobCard";
 import CategoryFilters from "./CategoryFilters";
 import LoadingSpinner from "@/components/shared/ui/LoadingSpinner";
-import NoResults from "@/components/Public/NoResults";
+import NoResults from "@/components/public/NoResults";
 
 const JobsSection = ({
   jobs,
