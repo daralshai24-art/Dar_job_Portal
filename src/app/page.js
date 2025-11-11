@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/shared/Header";
 import Footer from "@/components/shared/Footer";
-import HeroSection from "@/components/home/HeroSection";
-import JobsSection from "@/components/home/JobsSection";
+import HeroSection from "@/components/Home/HeroSection";
+import JobsSection from "@/components/Home/JobsSection";
 import LoadingSpinner from "@/components/shared/ui/LoadingSpinner";
 import toast from "react-hot-toast";
 
