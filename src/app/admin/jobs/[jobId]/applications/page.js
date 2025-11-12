@@ -30,12 +30,13 @@ export default function JobApplicationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  useEffect(() => {
-    if (jobId) {
-      fetchJobApplications();
-      fetchJobDetails();
-    }
-  }, [jobId,fetchJobApplications,fetchJobDetails]);
+ useEffect(() => {
+  if (jobId) {
+    fetchJobApplications();
+    fetchJobDetails();
+  }
+}, [jobId]);
+
 
   const fetchJobApplications = async () => {
     try {

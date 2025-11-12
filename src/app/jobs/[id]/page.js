@@ -34,7 +34,7 @@ export default function JobDetailsPage() {
   const fetchJob = async () => {
     try {
       setLoading(true);
-      const { id } = await params;
+      const { id } =  params;
       const response = await fetch(`/api/jobs/${id}`);
       
       if (!response.ok) throw new Error("Job not found");
