@@ -58,7 +58,7 @@ export default function AdminJobsPage() {
         setActionLoading(jobId);
 
         try {
-          await fetch(`/api/jobs/${jobId}`, {
+          await fetch(`/api/admin/jobs/${jobId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ status: newStatus }),
@@ -84,7 +84,7 @@ export default function AdminJobsPage() {
       variant: "danger",
       onConfirm: async () => {
         try {
-          await fetch(`/api/jobs/${jobId}`, { method: "DELETE" });
+          await fetch(`/api/admin/jobs/${jobId}`, { method: "DELETE" });
           toast.success("تم حذف الوظيفة");
           fetchJobs();
           hideConfirmation();

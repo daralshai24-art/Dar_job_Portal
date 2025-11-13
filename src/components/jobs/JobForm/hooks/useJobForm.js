@@ -7,19 +7,19 @@ import { validateJobForm, jobFormInitialData } from "../validation";
 export const useJobForm = (initialData, mode, formActionsRef) => {
   const router = useRouter();
   const isSubmittingRef = useRef(false);
-  
+
   const [formData, setFormData] = useState(jobFormInitialData);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [dynamicOptions, setDynamicOptions] = useState({
     titles: [],
     locations: [],
-    categories: []
+    categories: [],
   });
   const [newOptions, setNewOptions] = useState({
     title: "",
-    location: "", 
-    category: ""
+    location: "",
+    category: "",
   });
 
   // Initialize form with initialData for edit mode
@@ -42,15 +42,12 @@ export const useJobForm = (initialData, mode, formActionsRef) => {
   useEffect(() => {
     if (formActionsRef && formActionsRef.current) {
       setTimeout(() => {
-        formActionsRef.current?.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'center'
-        });
+        formActionsRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 100);
     }
   }, [formData.status, formActionsRef]);
 
-  // Load dynamic options
+  // Load dynamic options from the server
   useEffect(() => {
     loadDynamicOptions();
   }, []);
@@ -58,180 +55,103 @@ export const useJobForm = (initialData, mode, formActionsRef) => {
   const loadDynamicOptions = async () => {
     try {
       const res = await fetch("/api/jobs/options");
-      if (res.ok) {
-        const data = await res.json();
-        setDynamicOptions(data);
-      } else {
-        console.error("Failed to load options:", res.status);
-      }
-    } catch (error) {
-      console.error("Error loading dynamic options:", error);
+      if (!res.ok) throw new Error("Failed to fetch job options");
+      const data = await res.json();
+      setDynamicOptions(data);
+    } catch (err) {
+      console.error("Error loading options:", err);
     }
   };
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
-    }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   const handleNewOptionChange = (field, value) => {
-    setNewOptions(prev => ({ ...prev, [field]: value }));
+    setNewOptions((prev) => ({ ...prev, [field]: value }));
   };
 
   const addNewOption = async (field) => {
     const fieldMap = {
-      'titles': 'title',
-      'locations': 'location', 
-      'categories': 'category'
+      titles: "title",
+      locations: "location",
+      categories: "category",
     };
-    
+
     const singularField = fieldMap[field];
-    const value = newOptions[singularField]?.trim() || '';
-    
+    const value = newOptions[singularField]?.trim();
     if (!value) {
       toast.error("يرجى إدخال قيمة");
       return;
     }
 
-    console.log(`Adding new ${field}:`, value);
-
-    // Special handling for categories
     if (field === "categories") {
-      // Check if category already exists in loaded options
-      const existingCategory = dynamicOptions.categories.find(cat => 
-        cat.name.toLowerCase() === value.toLowerCase()
-      );
-
-      if (existingCategory) {
-        // If it exists in the options, select it instead of showing error
-        setFormData(prev => ({ ...prev, category: existingCategory._id }));
-        setNewOptions(prev => ({ ...prev, category: "" }));
-        toast.success(`تم اختيار التصنيف: ${value}`);
-        return;
-      }
-
+      // Handle categories via protected API
       try {
-        console.log("Sending category creation request...");
-        const res = await fetch("/api/jobs/options", {
+        const res = await fetch("/api/admin/categories", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            field, 
-            value
-          })
+          body: JSON.stringify({ name: value }),
         });
 
-        console.log("Response status:", res.status);
         const result = await res.json();
-        console.log("Response data:", result);
 
         if (res.ok && result.success) {
-          console.log("Category created successfully:", result.data);
-          // Add the new category to the options
-          setDynamicOptions(prev => ({
+          setDynamicOptions((prev) => ({
             ...prev,
-            categories: [...prev.categories, result.data].sort((a, b) => 
+            categories: [...prev.categories, result.data].sort((a, b) =>
               a.name.localeCompare(b.name)
-            )
+            ),
           }));
-          
-          // Set the form to use the new category
-          setFormData(prev => ({ ...prev, category: result.data._id }));
-          
-          // Clear the new category input
-          setNewOptions(prev => ({ 
-            ...prev, 
-            category: ""
-          }));
-          
+          setFormData((prev) => ({ ...prev, category: result.data._id }));
+          setNewOptions((prev) => ({ ...prev, category: "" }));
           toast.success("تم إضافة التصنيف بنجاح");
-        } else {
-          console.error("API Error:", result);
-          
-          // Handle duplicate category gracefully
-          if (result.error?.includes("already exists") || res.status === 409) {
-            // If category already exists, refresh options and select it
-            await loadDynamicOptions();
-            const existingCat = dynamicOptions.categories.find(cat => 
-              cat.name.toLowerCase() === value.toLowerCase()
-            );
-            if (existingCat) {
-              setFormData(prev => ({ ...prev, category: existingCat._id }));
-              toast.success(`تم اختيار التصنيف: ${value}`);
-            } else {
-              toast.error("التصنيف موجود مسبقاً، جاري تحديث القائمة...");
-            }
-            return;
+        } else if (res.status === 409) {
+          await loadDynamicOptions();
+          const existingCat = dynamicOptions.categories.find(
+            (cat) => cat.name.toLowerCase() === value.toLowerCase()
+          );
+          if (existingCat) {
+            setFormData((prev) => ({ ...prev, category: existingCat._id }));
+            toast.success(`تم اختيار التصنيف: ${value}`);
           }
-          
-          const errorMessage = result.error || result.message || "فشل في إضافة التصنيف";
-          throw new Error(errorMessage);
+        } else {
+          throw new Error(result.error || result.message || "فشل في إضافة التصنيف");
         }
-      } catch (error) {
-        console.error("Error adding new category:", error);
-        
-        // Handle MongoDB duplicate error gracefully
-        if (error.message?.includes("duplicate key") || error.message?.includes("already exists")) {
-          toast.error("التصنيف موجود مسبقاً");
-          await loadDynamicOptions(); // Refresh the options
-          return;
-        }
-        
-        toast.error(error.message || "حدث خطأ غير متوقع في إضافة التصنيف");
+      } catch (err) {
+        console.error("Error adding category:", err);
+        toast.error(err.message || "حدث خطأ غير متوقع");
       }
       return;
     }
 
-    // Handle titles and locations
+    // Titles & Locations: dynamically add to state
     const existingOptions = dynamicOptions[field] || [];
-    const isDuplicate = existingOptions.some(option => {
-      if (typeof option === 'string') {
-        return option.toLowerCase() === value.toLowerCase();
-      }
-      return option.name?.toLowerCase() === value.toLowerCase();
-    });
+    const isDuplicate = existingOptions.some(
+      (option) =>
+        (typeof option === "string" ? option.toLowerCase() : option.name.toLowerCase()) ===
+        value.toLowerCase()
+    );
 
     if (isDuplicate) {
       toast.error("هذا الخيار موجود مسبقاً");
       return;
     }
 
-    try {
-      const res = await fetch("/api/jobs/options", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ field, value })
-      });
+    setDynamicOptions((prev) => ({
+      ...prev,
+      [field]: [...prev[field], value].sort(),
+    }));
 
-      const result = await res.json();
-
-      if (res.ok) {
-        setDynamicOptions(prev => ({
-          ...prev,
-          [field]: [...prev[field], value].sort()
-        }));
-        
-        setFormData(prev => ({ ...prev, [singularField]: value }));
-        setNewOptions(prev => ({ ...prev, [singularField]: "" }));
-        toast.success("تمت الإضافة بنجاح");
-      } else {
-        throw new Error(result.error || "فشل في إضافة القيمة");
-      }
-    } catch (error) {
-      console.error("Error adding new option:", error);
-      toast.error(error.message || "فشل في إضافة القيمة");
-    }
+    setFormData((prev) => ({ ...prev, [singularField]: value }));
+    setNewOptions((prev) => ({ ...prev, [singularField]: "" }));
+    toast.success("تمت الإضافة بنجاح");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (isSubmittingRef.current) {
-      return;
-    }
+    if (isSubmittingRef.current) return;
 
     const formErrors = validateJobForm(formData);
     if (Object.keys(formErrors).length > 0) {
@@ -245,7 +165,8 @@ export const useJobForm = (initialData, mode, formActionsRef) => {
     setErrors({});
 
     try {
-      const url = mode === "create" ? "/api/jobs" : `/api/jobs/${initialData._id}`;
+      const url =
+        mode === "create" ? "/api/admin/jobs" : `/api/admin/jobs/${initialData._id}`;
       const method = mode === "create" ? "POST" : "PUT";
 
       const submitData = {
@@ -259,8 +180,6 @@ export const useJobForm = (initialData, mode, formActionsRef) => {
         status: formData.status,
       };
 
-      console.log('Submitting job data:', submitData);
-
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -268,26 +187,18 @@ export const useJobForm = (initialData, mode, formActionsRef) => {
       });
 
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || `فشل في ${mode === "create" ? "إنشاء" : "تحديث"} الوظيفة`);
-      }
+      if (!res.ok) throw new Error(data.error || "فشل في حفظ الوظيفة");
 
       setLoading(false);
       isSubmittingRef.current = false;
-
       toast.success(
-        mode === "create" ? "تم إنشاء الوظيفة بنجاح! " : "تم تحديث الوظيفة بنجاح! ",
+        mode === "create" ? "تم إنشاء الوظيفة بنجاح!" : "تم تحديث الوظيفة بنجاح!",
         { duration: 1500 }
       );
-
-      setTimeout(() => {
-        window.location.href = "/admin/jobs";
-      }, 1200);
-
+      setTimeout(() => (window.location.href = "/admin/jobs"), 1200);
     } catch (err) {
       console.error("Error saving job:", err);
-      toast.error(err.message);
+      toast.error(err.message || "حدث خطأ أثناء الحفظ");
       setLoading(false);
       isSubmittingRef.current = false;
     }
@@ -307,6 +218,6 @@ export const useJobForm = (initialData, mode, formActionsRef) => {
     handleNewOptionChange,
     addNewOption,
     handleSubmit,
-    handleCancel
+    handleCancel,
   };
 };

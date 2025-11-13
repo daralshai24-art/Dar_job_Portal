@@ -24,7 +24,7 @@ export default function SystemTools() {
       title: 'حذف جميع الوظائف',
       description: 'سيتم حذف جميع الوظائف وطلبات التوظيف المرتبطة بها',
       count: 0,
-      endpoint: '/api/jobs'
+      endpoint: '/api/admin/jobs'
     },
     {
       id: 'users',
