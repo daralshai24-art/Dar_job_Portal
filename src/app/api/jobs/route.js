@@ -2,7 +2,7 @@
 import { connectDB } from "@/lib/db";
 import { NextResponse } from "next/server";
 import Job from "../../../models/Job";
-
+import  "@/models/Category";
 
 /**
  * GET /api/jobs
