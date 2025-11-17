@@ -9,7 +9,7 @@ import { updateApplicationServer } from "@/services/serverApplicationService";
 export async function GET(request, { params }) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
 
     // Populate jobId and category
     const application = await Application.findById(id)
@@ -40,7 +40,7 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } =await params;
 
     const updateData = await request.json();
 
