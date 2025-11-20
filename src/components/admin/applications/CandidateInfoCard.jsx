@@ -1,5 +1,5 @@
 //src\components\admin\applications\CandidateInfoCard.jsx
-import { User, Mail, Phone, Download } from "lucide-react";
+import { User, Mail, Phone, Download ,MapPin} from "lucide-react";
 import { Card, CardHeader, CardContent } from "@/components/shared/ui/Card";
 import Button from "@/components/shared/ui/Button";
 
@@ -18,6 +18,7 @@ export const CandidateInfoCard = ({ application }) => {
         <InfoItem icon={User} text={application.name} />
         <InfoItem icon={Mail} text={application.email} />
         {application.phone && <InfoItem icon={Phone} text={application.phone} />}
+        <InfoItem icon={MapPin} text={application.city||'غير معرف'} />
         
         <Button
           onClick={() => window.open(application.cv?.path, '_blank')}
