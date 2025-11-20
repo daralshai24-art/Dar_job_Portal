@@ -8,61 +8,70 @@ export const useJobApplication = (job) => {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
-  const updateFormField = useCallback((field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
-    }
-  }, [errors]);
+  const updateFormField = useCallback(
+    (field, value) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+      // Clear error when user starts typing
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: "" }));
+      }
+    },
+    [errors]
+  );
 
   const validateFile = useCallback((file) => {
     if (!file) {
-      setErrors(prev => ({ ...prev, cv: ERROR_MESSAGES.FILE_REQUIRED }));
+      setErrors((prev) => ({ ...prev, cv: ERROR_MESSAGES.FILE_REQUIRED }));
       return false;
     }
 
     if (file.size > FORM_CONFIG.FILE.MAX_SIZE) {
-      setErrors(prev => ({ ...prev, cv: ERROR_MESSAGES.FILE_TOO_LARGE }));
+      setErrors((prev) => ({ ...prev, cv: ERROR_MESSAGES.FILE_TOO_LARGE }));
       toast.error(ERROR_MESSAGES.FILE_TOO_LARGE);
       return false;
     }
 
     const fileExtension = "." + file.name.split(".").pop().toLowerCase();
     if (!FORM_CONFIG.FILE.ALLOWED_TYPES.includes(fileExtension)) {
-      setErrors(prev => ({ ...prev, cv: ERROR_MESSAGES.FILE_TYPE_NOT_SUPPORTED }));
+      setErrors((prev) => ({
+        ...prev,
+        cv: ERROR_MESSAGES.FILE_TYPE_NOT_SUPPORTED,
+      }));
       toast.error(ERROR_MESSAGES.FILE_TYPE_NOT_SUPPORTED);
       return false;
     }
 
     // Clear file error if validation passes
-    setErrors(prev => ({ ...prev, cv: "" }));
+    setErrors((prev) => ({ ...prev, cv: "" }));
     return true;
   }, []);
 
   const validatePhone = useCallback((phone) => {
     if (!phone) return true; // Phone is optional
-    
+
     // Remove any non-numeric characters
-    const numericPhone = phone.replace(/\D/g, '');
-    
+    const numericPhone = phone.replace(/\D/g, "");
+
     if (!FORM_CONFIG.PHONE.PATTERN.test(phone)) {
-      setErrors(prev => ({ ...prev, phone: ERROR_MESSAGES.PHONE_NUMBERS_ONLY }));
+      setErrors((prev) => ({
+        ...prev,
+        phone: ERROR_MESSAGES.PHONE_NUMBERS_ONLY,
+      }));
       return false;
     }
-    
+
     if (numericPhone.length < FORM_CONFIG.PHONE.MIN_LENGTH) {
-      setErrors(prev => ({ ...prev, phone: ERROR_MESSAGES.PHONE_TOO_SHORT }));
+      setErrors((prev) => ({ ...prev, phone: ERROR_MESSAGES.PHONE_TOO_SHORT }));
       return false;
     }
-    
+
     if (numericPhone.length > FORM_CONFIG.PHONE.MAX_LENGTH) {
-      setErrors(prev => ({ ...prev, phone: ERROR_MESSAGES.PHONE_TOO_LONG }));
+      setErrors((prev) => ({ ...prev, phone: ERROR_MESSAGES.PHONE_TOO_LONG }));
       return false;
     }
 
     // Clear phone error if validation passes
-    setErrors(prev => ({ ...prev, phone: "" }));
+    setErrors((prev) => ({ ...prev, phone: "" }));
     return true;
   }, []);
 
@@ -86,7 +95,6 @@ export const useJobApplication = (job) => {
 
     // Phone validation (optional but must be valid if provided)
     if (formData.phone && !validatePhone(formData.phone)) {
-      
       newErrors.phone = errors.phone;
     }
 
@@ -94,7 +102,10 @@ export const useJobApplication = (job) => {
     if (!formData.cv) {
       newErrors.cv = ERROR_MESSAGES.FILE_REQUIRED;
     }
-
+    // City validation
+    if (!formData.city || formData.city.trim() === "") {
+      newErrors.city = "المدينة مطلوبة";
+    }
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
@@ -115,66 +126,70 @@ export const useJobApplication = (job) => {
   const formatPhoneNumber = useCallback((phone) => {
     if (!phone) return "";
     // Remove all non-numeric characters and convert to string
-    return phone.replace(/\D/g, '');
+    return phone.replace(/\D/g, "");
   }, []);
 
-  const handleInputChange = useCallback((e) => {
-    const { name, value, files } = e.target;
+  const handleInputChange = useCallback(
+    (e) => {
+      const { name, value, files } = e.target;
 
-    if (name === "cv" && files?.[0]) {
-      const file = files[0];
-      if (validateFile(file)) {
-        updateFormField(name, file);
-      } else {
-        // Reset file input if validation fails
-        e.target.value = "";
-      }
-    } else if (name === "phone") {
-      // For phone field, only allow numbers and format immediately
-      const numericValue = value.replace(/\D/g, '');
-      updateFormField(name, numericValue);
-      
-      // Validate phone in real-time if user has entered something
-      if (numericValue) {
-        validatePhone(numericValue);
-      } else {
-        // Clear phone error if field is empty
-        setErrors(prev => ({ ...prev, phone: "" }));
-      }
-    } else {
-      updateFormField(name, value);
-    }
-  }, [validateFile, updateFormField, validatePhone]);
+      if (name === "cv" && files?.[0]) {
+        const file = files[0];
+        if (validateFile(file)) {
+          updateFormField(name, file);
+        } else {
+          // Reset file input if validation fails
+          e.target.value = "";
+        }
+      } else if (name === "phone") {
+        // For phone field, only allow numbers and format immediately
+        const numericValue = value.replace(/\D/g, "");
+        updateFormField(name, numericValue);
 
-const handleSubmit = async (e) => {
+        // Validate phone in real-time if user has entered something
+        if (numericValue) {
+          validatePhone(numericValue);
+        } else {
+          // Clear phone error if field is empty
+          setErrors((prev) => ({ ...prev, phone: "" }));
+        }
+      } else {
+        updateFormField(name, value);
+      }
+    },
+    [validateFile, updateFormField, validatePhone]
+  );
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setSubmitting(true);
-    
+
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append('jobId', job._id);
-      formDataToSend.append('name', formData.name.trim());
-      formDataToSend.append('email', formData.email.trim().toLowerCase());
-      
+      formDataToSend.append("jobId", job._id);
+      formDataToSend.append("name", formData.name.trim());
+      formDataToSend.append("email", formData.email.trim().toLowerCase());
+      formDataToSend.append("city", formData.city);
+
       const formattedPhone = formatPhoneNumber(formData.phone);
-      formDataToSend.append('phone', formattedPhone);
-      
+      formDataToSend.append("phone", formattedPhone);
+
       if (formData.cv) {
-        formDataToSend.append('cv', formData.cv);
+        formDataToSend.append("cv", formData.cv);
       }
 
-      const response = await fetch('/api/applications', {
-        method: 'POST',
+      const response = await fetch("/api/applications", {
+        method: "POST",
         body: formDataToSend,
       });
 
-      const contentType = response.headers.get('content-type');
+      const contentType = response.headers.get("content-type");
       let result;
-      
-      if (contentType && contentType.includes('application/json')) {
+
+      if (contentType && contentType.includes("application/json")) {
         result = await response.json();
       } else {
         const text = await response.text();
@@ -184,17 +199,22 @@ const handleSubmit = async (e) => {
       if (!response.ok) {
         throw new Error(result.error || ERROR_MESSAGES.SUBMISSION_FAILED);
       }
-      
+
       // ✅ UPDATED: Add duration to success toast
-      toast.success(result.message || "تم إرسال طلب التوظيف بنجاح! سيتم التواصل معك قريباً", {
-        duration: 6000,
-      });
+      toast.success(
+        result.message || "تم إرسال طلب التوظيف بنجاح! سيتم التواصل معك قريباً",
+        {
+          duration: 6000,
+        }
+      );
       resetForm();
-      
     } catch (error) {
-      console.error('Application submission error:', error);
-      
-      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      console.error("Application submission error:", error);
+
+      if (
+        error.name === "TypeError" &&
+        error.message.includes("Failed to fetch")
+      ) {
         toast.error(ERROR_MESSAGES.NETWORK_ERROR);
       } else {
         toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
@@ -210,7 +230,7 @@ const handleSubmit = async (e) => {
     errors,
     handleInputChange,
     handleSubmit,
-    validateFile
+    validateFile,
   };
 };
 

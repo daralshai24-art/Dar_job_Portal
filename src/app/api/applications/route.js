@@ -18,6 +18,7 @@ export async function POST(request) {
       name: formData.get("name"),
       email: formData.get("email"),
       phone: formData.get("phone"),
+      city:formData.get("city")
     };
 
     // ✅ Validate required fields

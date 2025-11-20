@@ -7,6 +7,7 @@
       name: { type: String, required: true },
       email: { type: String, required: true },
       phone: { type: String },
+      city: { type: String, required: true },
       cv: {
         filename: String,
         originalName: String,
