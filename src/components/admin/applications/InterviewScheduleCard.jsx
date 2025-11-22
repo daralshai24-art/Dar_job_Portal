@@ -21,7 +21,7 @@ export const InterviewScheduleCard = ({
   const interviewTypeOptions = [
     { value: "in_person", label: "مقابلة شخصية" },
     { value: "online", label: "مقابلة أونلاين" },
-    { value: "phone", label: "مقابلة هاتفية" },
+   
   ];
 
   const getInterviewTypeIcon = (type) => {
@@ -37,7 +37,6 @@ export const InterviewScheduleCard = ({
     const texts = {
       in_person: "مقابلة شخصية",
       online: "مقابلة أونلاين",
-      phone: "مقابلة هاتفية",
     };
     return texts[type] || type;
   };
