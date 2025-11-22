@@ -16,14 +16,17 @@ import { ScoringSection } from "@/components/admin/applications/ScoringSection";
 import { ApplicationTimeline } from "@/components/admin/applications/ApplicationTimeline";
 import { LoadingState } from "@/components/admin/applications/LoadingState";
 import { ErrorState } from "@/components/admin/applications/ErrorState";
+import { RelatedApplicationsCard } from "@/components/admin/applications/RelatedApplicationsCard";
+
 
 // Hooks
 import { useApplication } from "@/hooks/useApplication";
+import { useRelatedApplications } from "@/hooks/useRelatedApplications";
 
 export default function ApplicationDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const [showTimeline, setShowTimeline] = useState(false); // timeline toggle
+  const [showTimeline, setShowTimeline] = useState(false);
 
   const {
     application,
@@ -42,26 +45,29 @@ export default function ApplicationDetailPage() {
     completeInterview
   } = useApplication(params.id);
 
+  const { relatedApps, loading: relatedLoading } = useRelatedApplications(
+    application?.email,
+    application?._id?.toString() // ensure it's string
+  );
+
+
   if (loading) return <LoadingState />;
   if (!application)
     return <ErrorState onBack={() => router.push("/admin/applications")} />;
 
-  // Determine if interview is already scheduled
   const isInterviewScheduled = application.interviewDate && application.interviewTime;
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header with timeline toggle */}
       <ApplicationHeader
         onBack={() => router.push("/admin/applications")}
         onEdit={handleEditToggle}
         editing={editing}
         onCancel={handleEditToggle}
         showTimeline={showTimeline}
-        toggleTimeline={() => setShowTimeline((prev) => !prev)}
+        toggleTimeline={() => setShowTimeline(prev => !prev)}
       />
 
-      {/* Timeline Section - collapsible */}
       {showTimeline && (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border">
           <ApplicationTimeline timeline={application.timeline} />
@@ -69,13 +75,19 @@ export default function ApplicationDetailPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sidebar */}
         <div className="space-y-6">
           <CandidateInfoCard application={application} />
-          <JobInfoCard application={application} /> {/* Ensure jobId is populated */}
+          <JobInfoCard application={application} />
+           
+          {/* ✅ ONLY render when email exists */}
+          {application?.email && (
+            <RelatedApplicationsCard 
+              email={application.email}
+              currentId={application._id?.toString() || application._id}
+            />
+          )}
         </div>
 
-        {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           <StatusCard
             application={application}
@@ -85,7 +97,6 @@ export default function ApplicationDetailPage() {
             onStatusChange={handleStatusChange}
             saving={saving}
           />
-
           <InterviewScheduleCard
             application={application}
             formData={formData}
@@ -97,7 +108,6 @@ export default function ApplicationDetailPage() {
             saving={saving}
             isScheduled={isInterviewScheduled}
           />
-
           <NotesSection
             application={application}
             formData={formData}
@@ -106,7 +116,6 @@ export default function ApplicationDetailPage() {
             onSave={saveNotes}
             saving={saving}
           />
-
           <FeedbackSection
             application={application}
             formData={formData}
@@ -115,7 +124,6 @@ export default function ApplicationDetailPage() {
             onSave={saveFeedback}
             saving={saving}
           />
-
           <ScoringSection
             application={application}
             formData={formData}
@@ -126,6 +134,8 @@ export default function ApplicationDetailPage() {
           />
         </div>
       </div>
+
+      
     </div>
   );
 }
