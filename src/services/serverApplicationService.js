@@ -1,6 +1,14 @@
-// src/services/serverApplicationService.js
+// src/services/serverApplicationService.js (SAFE UPDATE - Won't Break Anything)
 import Application from "@/models/Application";
 import { createTimelineEntry } from "@/services/timelineService";
+
+// 🆕 ONLY import if emailService exists, otherwise skip
+let emailService = null;
+try {
+  emailService = require("@/services/emailService").default;
+} catch (e) {
+  console.log("Email service not available yet - emails will be skipped");
+}
 
 /**
  * updateApplicationServer
@@ -18,6 +26,12 @@ export async function updateApplicationServer({ applicationId, user, updateData 
 
   // defensive: remove client-sent timeline if present
   if (updateData.timeline) delete updateData.timeline;
+
+  // 🆕 Store previous state for email logic (before changes)
+  const previousStatus = application.status;
+  const previousInterviewDate = application.interviewDate;
+  const previousInterviewTime = application.interviewTime;
+  const hadInterview = !!(previousInterviewDate && previousInterviewTime);
 
   // detect changes
   const changes = [];
@@ -74,6 +88,89 @@ export async function updateApplicationServer({ applicationId, user, updateData 
     details: updateData.details || null,
     score: updateData.interviewScore || null
   });
+
+  // ==================== 🆕 EMAIL NOTIFICATION LOGIC ====================
+  // This section is OPTIONAL and won't break if emailService doesn't exist
+  // Emails are sent asynchronously and failures won't affect the update
+  
+  if (emailService) {
+    try {
+      // Populate job details for emails
+      const populatedApp = await Application.findById(application._id)
+        .populate({
+          path: "jobId",
+          select: "title location category",
+          populate: { path: "category", select: "name" }
+        })
+        .lean();
+
+      // Prepare application data for emails
+      const appData = {
+        ...populatedApp,
+        _id: populatedApp._id.toString(),
+        jobId: populatedApp.jobId ? {
+          ...populatedApp.jobId,
+          _id: populatedApp.jobId._id.toString()
+        } : null
+      };
+
+      const userId = user?.id || user?._id;
+
+      // Determine which email to send based on action
+      let emailPromise = null;
+
+      // Interview scheduled (first time)
+      if (action === "interview_scheduled" && !hadInterview) {
+        emailPromise = emailService.sendInterviewScheduled({
+          application: appData,
+          triggeredBy: userId
+        });
+      }
+      
+      // Interview rescheduled
+      else if (action === "interview_rescheduled" && hadInterview) {
+        emailPromise = emailService.sendInterviewRescheduled({
+          application: appData,
+          triggeredBy: userId
+        });
+      }
+      
+      // Application rejected
+      else if (action === "rejected" && previousStatus !== "rejected") {
+        emailPromise = emailService.sendApplicationRejected({
+          application: appData,
+          triggeredBy: userId
+        });
+      }
+      
+      // Application accepted/hired
+      else if (action === "hired" && previousStatus !== "hired") {
+        emailPromise = emailService.sendApplicationAccepted({
+          application: appData,
+          triggeredBy: userId
+        });
+      }
+
+      // Send email asynchronously (don't wait for it)
+      if (emailPromise) {
+        emailPromise
+          .then(result => {
+            if (result.success) {
+              console.log(`✅ Email sent successfully: ${action} to ${appData.email}`);
+            } else {
+              console.warn(`⚠️ Email failed: ${result.error}`);
+            }
+          })
+          .catch(emailError => {
+            console.error("📧 Email error (non-critical):", emailError.message);
+          });
+      }
+    } catch (emailError) {
+      // Email errors should never break the application update
+      console.error("📧 Email notification error (non-critical):", emailError.message);
+    }
+  }
+  // ==================== END EMAIL LOGIC ====================
 
   return {
     application: await Application.findById(application._id).lean(),

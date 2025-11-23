@@ -1,0 +1,1 @@
+//src\services\email\templates\applicant\applicationAccepted.js

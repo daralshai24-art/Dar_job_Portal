@@ -1,4 +1,4 @@
-// src/app/api/applications/route.js
+// src/app/api/applications/route.js (UPDATED - With Email Notification)
 import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
@@ -6,6 +6,14 @@ import { connectDB } from "@/lib/db";
 import Application from "@/models/Application";
 import Timeline from "@/models/Timeline";
 import Job from "@/models/Job";
+
+// 🆕 Import email service (safe - won't break if doesn't exist)
+let emailService = null;
+try {
+  emailService = require("@/services/emailService").default;
+} catch (e) {
+  console.log("Email service not available yet - emails will be skipped");
+}
 
 export async function POST(request) {
   try {
@@ -18,7 +26,7 @@ export async function POST(request) {
       name: formData.get("name"),
       email: formData.get("email"),
       phone: formData.get("phone"),
-      city:formData.get("city")
+      city: formData.get("city")
     };
 
     // ✅ Validate required fields
@@ -103,6 +111,54 @@ export async function POST(request) {
       $inc: { applicationsCount: 1 },
       lastApplicationDate: new Date(),
     });
+
+    // ==================== 🆕 SEND CONFIRMATION EMAIL ====================
+    // This is OPTIONAL and won't break if emailService doesn't exist
+    // Email is sent asynchronously and failures won't affect the application submission
+    
+    if (emailService) {
+      try {
+        // Populate job details for email
+        const populatedApp = await Application.findById(application._id)
+          .populate({
+            path: "jobId",
+            select: "title location category",
+            populate: { path: "category", select: "name" }
+          })
+          .lean();
+
+        // Prepare application data for email
+        const appData = {
+          ...populatedApp,
+          _id: populatedApp._id.toString(),
+          jobId: populatedApp.jobId ? {
+            ...populatedApp.jobId,
+            _id: populatedApp.jobId._id.toString()
+          } : null
+        };
+
+        // Send confirmation email asynchronously (don't wait for it)
+        emailService.sendApplicationReceived({
+          application: appData,
+          triggeredBy: null // System triggered
+        })
+          .then(result => {
+            if (result.success) {
+              console.log(`✅ Confirmation email sent to ${appData.email}`);
+            } else {
+              console.warn(`⚠️ Email failed: ${result.error}`);
+            }
+          })
+          .catch(emailError => {
+            console.error("📧 Email error (non-critical):", emailError.message);
+          });
+
+      } catch (emailError) {
+        // Email errors should never break the application submission
+        console.error("📧 Email notification error (non-critical):", emailError.message);
+      }
+    }
+    // ==================== END EMAIL LOGIC ====================
 
     // ✅ Return minimal response (timeline fetched on detail page)
     return NextResponse.json(
