@@ -11,6 +11,7 @@
   "dependencies": {
     "@headlessui/react": "^2.2.9",
     "@next/font": "^14.2.15",
+    "@react-email/components": "^1.0.1",
     "bcryptjs": "^3.0.2",
     "jose": "^6.1.0",
     "jsonwebtoken": "^9.0.2",
@@ -22,9 +23,11 @@
     "react": "19.1.0",
     "react-datepicker": "^8.7.0",
     "react-dom": "19.1.0",
+    "react-email": "^5.0.5",
     "react-hot-toast": "^2.6.0",
     "react-icons": "^5.5.0",
     "react-select": "^5.10.2",
+    "resend": "^6.5.2",
     "xlsx": "^0.18.5",
     "zod": "^4.1.5"
   },
