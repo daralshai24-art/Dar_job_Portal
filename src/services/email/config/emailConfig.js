@@ -20,7 +20,7 @@ export const EMAIL_CONFIG = {
   // Application settings
   app: {
     url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-    name: process.env.COMPANY_NAME || "شركتنا",
+    name: process.env.COMPANY_NAME || "شركة دار الشاي العربي للتجارة",
   },
 
   // Email types (for tracking)

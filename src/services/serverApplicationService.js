@@ -5,7 +5,7 @@ import { createTimelineEntry } from "@/services/timelineService";
 // 🆕 ONLY import if emailService exists, otherwise skip
 let emailService = null;
 try {
-  emailService = require("@/services/emailService").default;
+  emailService = require("@/services/email").default;
 } catch (e) {
   console.log("Email service not available yet - emails will be skipped");
 }
