@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { getAuthUser } from "@/lib/apiAuth";
 import Application from "@/models/Application";
-import emailService from "@/services/emailService";
+import emailService from "@/services/email/index";
 import mongoose from "mongoose";
 
 /**

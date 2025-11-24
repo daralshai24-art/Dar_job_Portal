@@ -17,6 +17,8 @@ import { ApplicationTimeline } from "@/components/admin/applications/Application
 import { LoadingState } from "@/components/admin/applications/LoadingState";
 import { ErrorState } from "@/components/admin/applications/ErrorState";
 import { RelatedApplicationsCard } from "@/components/admin/applications/RelatedApplicationsCard";
+import { ManagerFeedbackCard } from "@/components/admin/applications/ManagerFeedbackCard";
+
 
 
 // Hooks
@@ -124,6 +126,7 @@ export default function ApplicationDetailPage() {
             onSave={saveFeedback}
             saving={saving}
           />
+          <ManagerFeedbackCard application={application} />
           <ScoringSection
             application={application}
             formData={formData}
