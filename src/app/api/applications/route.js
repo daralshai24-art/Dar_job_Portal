@@ -1,4 +1,4 @@
-// src/app/api/applications/route.js (UPDATED - With Email Notification)
+// src/app/api/applications/route.js (FIXED - Correct Import Path)
 import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
@@ -7,10 +7,10 @@ import Application from "@/models/Application";
 import Timeline from "@/models/Timeline";
 import Job from "@/models/Job";
 
-// 🆕 Import email service (safe - won't break if doesn't exist)
+// 🆕 FIXED: Import email service from new modular structure
 let emailService = null;
 try {
-  emailService = require("@/services/emailService").default;
+  emailService = require("@/services/email").default; // ← Changed from emailService to email
 } catch (e) {
   console.log("Email service not available yet - emails will be skipped");
 }
@@ -113,8 +113,6 @@ export async function POST(request) {
     });
 
     // ==================== 🆕 SEND CONFIRMATION EMAIL ====================
-    // This is OPTIONAL and won't break if emailService doesn't exist
-    // Email is sent asynchronously and failures won't affect the application submission
     
     if (emailService) {
       try {
@@ -137,10 +135,10 @@ export async function POST(request) {
           } : null
         };
 
-        // Send confirmation email asynchronously (don't wait for it)
+        // Send confirmation email asynchronously
         emailService.sendApplicationReceived({
           application: appData,
-          triggeredBy: null // System triggered
+          triggeredBy: null
         })
           .then(result => {
             if (result.success) {
@@ -154,13 +152,11 @@ export async function POST(request) {
           });
 
       } catch (emailError) {
-        // Email errors should never break the application submission
         console.error("📧 Email notification error (non-critical):", emailError.message);
       }
     }
     // ==================== END EMAIL LOGIC ====================
 
-    // ✅ Return minimal response (timeline fetched on detail page)
     return NextResponse.json(
       {
         message: "تم إرسال طلب التوظيف بنجاح! سيتم التواصل معك قريباً",
