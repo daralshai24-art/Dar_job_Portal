@@ -31,7 +31,7 @@ export function feedbackRequestTemplate({
     ${greeting(managerName)}
     
     <p style="font-size: 16px; color: #4a5568; line-height: 1.8; margin: 0 0 30px 0;">
-      نرجو منك تقييم المرشح <strong>${candidateName}</strong> للوظيفة <strong>${jobTitle}</strong>.
+      نرجو منك تقييم المرشح <strong> ${candidateName}</strong> للوظيفة <strong> ${jobTitle} </strong>.
       رأيك مهم جداً في عملية اتخاذ القرار.
     </p>
     

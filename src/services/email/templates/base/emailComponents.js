@@ -14,8 +14,8 @@ export function emailHeader({ gradient, icon, title, subtitle }) {
     <tr>
       <td style="background: ${gradient}; padding: 40px 30px; text-align: center;">
         <div style="font-size: 48px; margin-bottom: 10px;">${icon}</div>
-        <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">${title}</h1>
-        <p style="color: rgba(255,255,255,0.95); margin: 12px 0 0 0; font-size: 16px;">${subtitle}</p>
+        <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;"> ${title} </h1>
+        <p style="color: rgba(255,255,255,0.95); margin: 12px 0 0 0; font-size: 16px;"> ${subtitle} </p>
       </td>
     </tr>
   `;
@@ -45,7 +45,7 @@ export function emailFooter({ companyName = EMAIL_CONFIG.app.name }) {
 export function greeting(name, color = "#667eea") {
   return `
     <p style="font-size: 18px; color: #1a202c; line-height: 1.6; margin: 0 0 20px 0;">
-      عزيزي/عزيزتي <strong style="color: ${color};">${name}</strong>،
+      عزيزي/عزيزتي <strong style="color:  ${color};"> ${name} </strong>،
     </p>
   `;
 }
@@ -67,7 +67,7 @@ export function infoCard({ title, items, borderColor = "#667eea" }) {
 
   return `
     <div style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 25px; border-radius: 12px; margin: 30px 0; border-right: 4px solid ${borderColor};">
-      <h3 style="margin: 0 0 20px 0; color: ${borderColor}; font-size: 20px; font-weight: 600;">${title}</h3>
+      <h3 style="margin: 0 0 20px 0; color: ${borderColor}; font-size: 20px; font-weight: 600;"> ${title} </h3>
       <table width="100%" cellpadding="8" cellspacing="0">
         ${rows}
       </table>
@@ -81,7 +81,7 @@ export function infoCard({ title, items, borderColor = "#667eea" }) {
 export function highlightedBox({ gradient, title, content }) {
   return `
     <div style="background: ${gradient}; padding: 30px; border-radius: 16px; margin: 35px 0; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
-      <h2 style="color: white; margin: 0 0 25px 0; font-size: 22px; text-align: center; font-weight: 600;">${title}</h2>
+      <h2 style="color: white; margin: 0 0 25px 0; font-size: 22px; text-align: center; font-weight: 600;"> ${title} </h2>
       ${content}
     </div>
   `;
@@ -125,8 +125,8 @@ export function alertBox({ type = "info", title, content }) {
 
   return `
     <div style="background-color: ${style.bg}; padding: 25px; border-radius: 12px; margin: 25px 0; border: 2px solid ${style.border};">
-      <h3 style="margin: 0 0 15px 0; color: ${style.color}; font-size: 18px; font-weight: 600;">${title}</h3>
-      <div style="margin: 0; color: ${style.color}; font-size: 15px; line-height: 1.8;">${content}</div>
+      <h3 style="margin: 0 0 15px 0; color: ${style.color}; font-size: 18px; font-weight: 600;"> ${title} </h3>
+      <div style="margin: 0; color: ${style.color}; font-size: 15px; line-height: 1.8;"> ${content} </div>
     </div>
   `;
 }
