@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { CheckCircle, AlertCircle, Clock, Loader2 } from "lucide-react";
+import Button from "@/components/shared/ui/Button";
 
 export default function FeedbackPage() {
   const params = useParams();
@@ -103,12 +104,12 @@ export default function FeedbackPage() {
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">رابط غير صالح</h2>
           <p className="text-gray-600 mb-6">{error}</p>
-          <button
+          <Button
             onClick={() => router.push("/")}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
           >
             العودة للرئيسية
-          </button>
+          </Button>
         </div>
       </div>
     );
