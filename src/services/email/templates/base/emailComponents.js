@@ -1,48 +1,82 @@
-// src/services/email/templates/base/emailComponents.js (TRULY FIXED - Visibility Issue)
+// src/services/email/templates/base/emailComponents.js
+import EMAIL_CONFIG from "../../config/emailConfig.js";
+
 /**
- * Reusable Email Components - FIXED TEXT VISIBILITY
+ * Reusable Email Components - Defensive & Outlook-friendly
+ *
+ * Notes:
+ * - Components accept both `items` (array) and `content` (HTML string) where applicable.
+ * - All functions defensively handle undefined inputs so .map() never throws.
+ * - Keep API/backwards-compatibility: infoItem is still exported.
  */
 
-import EMAIL_CONFIG from "../../config/emailConfig.js";
+// --------------- Helpers -----------------
+
+const safe = (v) => (v ?? "").toString().trim();
+const raw = (v) => (v === undefined || v === null ? "" : v); // allow HTML strings to pass through
+const logoUrl = process.env.COMPANY_LOGO_URL || EMAIL_CONFIG.app.logoUrl || "";
+
+// A base inline font + direction helper for Arabic RTL emails
+const baseFont =
+  "font-family: Arial, Helvetica, sans-serif; direction: rtl; text-align: right; line-height: 1.6;";
+
+/* ============================
+   Components
+   ============================ */
 
 /**
  * Email Header Component (with logo)
  */
-export function emailHeader({ gradient, icon, title, subtitle, showLogo = true }) {
-  const logoUrl = process.env.COMPANY_LOGO_URL || EMAIL_CONFIG.app.logoUrl;
-  
+export function emailHeader({
+  gradient = "#667eea",
+  icon = "",
+  title = "",
+  subtitle = "",
+  showLogo = true,
+}) {
   return `
     <tr>
-      <td style="background: ${gradient}; padding: 40px 30px; text-align: center;">
-        ${showLogo && logoUrl ? `
-          <img src="${logoUrl}" alt="Logo" style="max-width: 120px; height: auto; margin-bottom: 20px;" />
-        ` : ''}
-        <div style="font-size: 48px; margin-bottom: 10px;">${icon}</div>
-        <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">${title}</h1>
-        <p style="color: rgba(255,255,255,0.95); margin: 12px 0 0 0; font-size: 16px;">${subtitle}</p>
+      <td style="background: ${safe(gradient)}; padding: 40px 30px; text-align: center;">
+        ${
+          showLogo && logoUrl
+            ? `
+         <!-- Outlook-friendly logo -->
+         <img src="${logoUrl}" alt="Logo"
+           width="80" height="80"
+           style="display:block; margin:0 auto 20px auto; width:150px; height:auto; max-width:150px; max-height:150px;" />
+        `
+            : ``
+        }
+        <div style="${baseFont} font-size: 42px; margin-bottom: 10px; color: #ffffff;">${safe(icon)}</div>
+        <h1 style="${baseFont} color: #ffffff; margin: 0; font-size: 28px; font-weight: 600;">${safe(title)}</h1>
+        <p style="${baseFont} color: rgba(255,255,255,0.95); margin: 12px 0 0 0; font-size: 16px;">${safe(subtitle)}</p>
       </td>
     </tr>
   `;
 }
 
 /**
- * Email Footer Component (with logo)
+ * Email Footer Component
  */
-export function emailFooter({ companyName = EMAIL_CONFIG.app.name, showLogo = false }) {
-  const logoUrl = process.env.COMPANY_LOGO_URL || EMAIL_CONFIG.app.logoUrl;
-  
+export function emailFooter({
+  companyName = EMAIL_CONFIG.app.name,
+  showLogo = false,
+} = {}) {
   return `
     <tr>
       <td style="background-color: #f7fafc; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;">
-        ${showLogo && logoUrl ? `
-          <img src="${logoUrl}" alt="Logo" style="max-width: 80px; height: auto; margin-bottom: 15px; opacity: 0.7;" />
-        ` : ''}
-        <p style="margin: 0 0 10px 0; color: #718096; font-size: 14px;">
-          ${companyName}
-        </p>
-        <p style="margin: 0; color: #a0aec0; font-size: 13px;">
-          هذا البريد تم إرساله تلقائياً، يرجى عدم الرد عليه
-        </p>
+        ${
+          showLogo && logoUrl
+            ? `
+          <!-- Outlook-friendly logo -->
+          <img src="${logoUrl}" alt="Logo"
+            width="80" height="80"
+            style="display:block; margin:0 auto 15px auto; width:80px; height:auto; max-width:80px; max-height:80px; opacity:0.8;" />
+        `
+            : ``
+        }
+        <p style="${baseFont} margin: 0 0 10px 0; color: #718096; font-size: 14px;">${safe(companyName)}</p>
+        <p style="${baseFont} margin: 0; color: #a0aec0; font-size: 13px;">هذا البريد تم إرساله تلقائياً، يرجى عدم الرد عليه</p>
       </td>
     </tr>
   `;
@@ -51,35 +85,44 @@ export function emailFooter({ companyName = EMAIL_CONFIG.app.name, showLogo = fa
 /**
  * Greeting Component
  */
-export function greeting(name, color = "#667eea") {
+export function greeting(name = "", color = "#667eea") {
   return `
-    <p style="font-size: 18px; color: #1a202c; line-height: 1.6; margin: 0 0 20px 0;">
-      عزيزي/عزيزتي <strong style="color: ${color};">${name}</strong>،
+    <p style="${baseFont} font-size: 18px; color: #1a202c; line-height: 1.6; margin: 0 0 20px 0;">
+      عزيزي/عزيزتي <strong style="color: ${safe(color)};">${safe(name)}</strong>، 
     </p>
   `;
 }
 
 /**
  * Info Card Component
+ * - items: array of { label, value }
+ * Defensive: items default to []
  */
-export function infoCard({ title, items, borderColor = "#667eea", icon = "📋" }) {
+export function infoCard({
+  title = "",
+  items = [],
+  borderColor = "#667eea",
+  icon = "📋",
+} = {}) {
+  if (!Array.isArray(items)) items = [];
+
   const rows = items
     .map(
       (item) => `
-    <tr>
-      <td style="color: #718096; font-size: 14px; padding: 8px 0; vertical-align: top;"><strong>${item.label}:</strong></td>
-      <td style="color: #2d3748; font-size: 14px; text-align: left; padding: 8px 0; vertical-align: top;">${item.value}</td>
-    </tr>
-  `
+      <tr>
+        <td style="${baseFont} color: #718096; font-size: 14px; padding: 8px 0; vertical-align: top;"><strong>${safe(item.label)}:</strong></td>
+        <td style="${baseFont} color: #2d3748; font-size: 14px; text-align: left; padding: 8px 0; vertical-align: top;">${safe(item.value)}</td>
+      </tr>
+    `
     )
     .join("");
 
   return `
-    <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border-radius: 12px; margin: 30px 0; border-right: 4px solid ${borderColor};">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border-radius: 12px; margin: 30px 0; border-right: 4px solid ${safe(borderColor)};">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="margin: 0 0 20px 0; color: ${borderColor}; font-size: 20px; font-weight: 600;">${icon} ${title}</h3>
-          <table width="100%" cellpadding="8" cellspacing="0">
+          <h3 style="${baseFont} margin: 0 0 20px 0; color: ${safe(borderColor)}; font-size: 20px; font-weight: 600;">${safe(icon)} ${safe(title)}</h3>
+          <table width="100%" cellpadding="0" cellspacing="0">
             ${rows}
           </table>
         </td>
@@ -89,38 +132,53 @@ export function infoCard({ title, items, borderColor = "#667eea", icon = "📋" 
 }
 
 /**
- * Highlighted Box Component - FIXED: Proper text visibility
+ * Highlighted Box Component
+ * - Prefer `items` (array). For backward compatibility, you may pass `content` (HTML string).
+ * - If `items` exists and is an array it will be used; else `content` will be injected as-is.
  */
-export function highlightedBox({ gradient, title, items }) {
-  // Create each item with FIXED visibility
-  const itemsHtml = items.map((item, index) => {
-    const isLast = index === items.length - 1;
-    return `
-      <tr>
-        <td style="padding-bottom: ${isLast ? '0' : '15px'};">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: rgba(255,255,255,0.25); border-radius: 12px;">
+export function highlightedBox({
+  gradient = "#667eea",
+  title = "",
+  items = undefined,
+  content = undefined,
+} = {}) {
+  // Normalize items: if not an array, set to empty array (so .map won't fail)
+  const useItems = Array.isArray(items) ? items : [];
+
+  // If items provided -> render them; else render `content` (raw HTML allowed)
+  const innerHtml = useItems.length
+    ? useItems
+        .map((item, index) => {
+          const isLast = index === useItems.length - 1;
+          return `
             <tr>
-              <td style="padding: 20px;">
-                <p style="margin: 0 0 8px 0; color: rgba(255,255,255,0.95); font-size: 14px; font-weight: 500;">${item.label}</p>
-                <p style="margin: 0; color: #ffffff; font-size: 20px; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,0.1);">${item.icon} ${item.value}</p>
+              <td style="padding-bottom: ${isLast ? "0" : "15px"};">
+                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: rgba(255,255,255,0.12); border-radius: 12px;">
+                  <tr>
+                    <td style="padding: 18px;">
+                      <p style="${baseFont} margin: 0 0 8px 0; color: rgba(255,255,255,0.95); font-size: 14px; font-weight: 500;">${safe(item.label)}</p>
+                      <p style="${baseFont} margin: 0; color: #ffffff; font-size: 18px; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,0.08);">${safe(item.icon ?? "")} ${safe(item.value)}</p>
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
-          </table>
-        </td>
-      </tr>
-    `;
-  }).join('');
+          `;
+        })
+        .join("")
+    : // fallback to raw content (allow HTML)
+      `<tr><td style="padding: 8px 0;">${raw(content) || ""}</td></tr>`;
 
   return `
     <table width="100%" cellpadding="0" cellspacing="0" style="margin: 35px 0;">
       <tr>
         <td>
-          <table width="100%" cellpadding="0" cellspacing="0" style="background: ${gradient}; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background: ${safe(gradient)}; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.10);">
             <tr>
-              <td style="padding: 30px;">
-                <h2 style="color: #ffffff; margin: 0 0 25px 0; font-size: 22px; text-align: center; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">${title}</h2>
+              <td style="padding: 26px;">
+                <h2 style="${baseFont} color: #ffffff; margin: 0 0 18px 0; font-size: 20px; text-align: center; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.06);">${safe(title)}</h2>
                 <table width="100%" cellpadding="0" cellspacing="0">
-                  ${itemsHtml}
+                  ${innerHtml}
                 </table>
               </td>
             </tr>
@@ -132,16 +190,17 @@ export function highlightedBox({ gradient, title, items }) {
 }
 
 /**
- * Info Item Component (DEPRECATED - kept for backward compatibility)
- * Use highlightedBox with items array instead
+ * infoItem (DEPRECATED)
+ * Kept for backward compatibility because other templates still import it.
+ * Use highlightedBox(items:[]) or infoCard for richer UI.
  */
-export function infoItem({ label, value, icon = "" }) {
+export function infoItem({ label = "", value = "", icon = "" } = {}) {
   return `
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 15px;">
       <tr>
-        <td style="background-color: rgba(255,255,255,0.15); padding: 20px; border-radius: 12px;">
-          <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 14px; margin-bottom: 5px;">${label}</p>
-          <p style="margin: 0; color: white; font-size: 20px; font-weight: 600;">${icon} ${value}</p>
+        <td style="background-color: rgba(255,255,255,0.12); padding: 14px; border-radius: 12px;">
+          <p style="${baseFont} margin: 0 0 6px 0; color: rgba(0,0,0,0.65); font-size: 14px;">${safe(label)}</p>
+          <p style="${baseFont} margin: 0; color: #111827; font-size: 18px; font-weight: 600;">${safe(icon)} ${safe(value)}</p>
         </td>
       </tr>
     </table>
@@ -151,25 +210,30 @@ export function infoItem({ label, value, icon = "" }) {
 /**
  * Alert Box Component
  */
-export function alertBox({ type = "info", title, content, icon = "" }) {
+export function alertBox({
+  type = "info",
+  title = "",
+  content = "",
+  icon = "",
+} = {}) {
   const styles = {
     info: {
       bg: "#ebf4ff",
       border: "#bee3f8",
       color: "#2c5282",
-      defaultIcon: "ℹ️"
+      defaultIcon: "ℹ️",
     },
     warning: {
       bg: "#fffbeb",
       border: "#fbbf24",
       color: "#92400e",
-      defaultIcon: "⚠️"
+      defaultIcon: "⚠️",
     },
     success: {
       bg: "#e6fffa",
       border: "#319795",
       color: "#134e4a",
-      defaultIcon: "✅"
+      defaultIcon: "✅",
     },
   };
 
@@ -177,11 +241,11 @@ export function alertBox({ type = "info", title, content, icon = "" }) {
   const displayIcon = icon || style.defaultIcon;
 
   return `
-    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: ${style.bg}; border-radius: 12px; margin: 25px 0; border: 2px solid ${style.border};">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: ${style.bg}; border-radius: 12px; margin: 20px 0; border: 2px solid ${style.border};">
       <tr>
-        <td style="padding: 25px;">
-          <h3 style="margin: 0 0 15px 0; color: ${style.color}; font-size: 18px; font-weight: 600;">${displayIcon} ${title}</h3>
-          <div style="margin: 0; color: ${style.color}; font-size: 15px; line-height: 1.8;">${content}</div>
+        <td style="padding: 20px;">
+          <h3 style="${baseFont} margin: 0 0 10px 0; color: ${style.color}; font-size: 17px; font-weight: 600;">${displayIcon} ${safe(title)}</h3>
+          <div style="${baseFont} color: ${style.color}; font-size: 15px; line-height: 1.8;">${raw(content)}</div>
         </td>
       </tr>
     </table>
@@ -189,18 +253,18 @@ export function alertBox({ type = "info", title, content, icon = "" }) {
 }
 
 /**
- * Button Component - FIXED for better email client support
+ * Button Component (table-wrapped for Outlook compatibility)
  */
-export function button({ url, text, color = "#667eea" }) {
+export function button({ url = "#", text = "Click", color = "#667eea" } = {}) {
   return `
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
       <tr>
         <td align="center">
-          <table cellpadding="0" cellspacing="0" border="0">
+          <table cellpadding="0" cellspacing="0" border="0" role="presentation">
             <tr>
-              <td style="background: ${color}; border-radius: 8px; text-align: center;">
-                <a href="${url}" style="display: inline-block; padding: 16px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; font-family: Arial, sans-serif;" target="_blank">
-                  ${text}
+              <td style="background: ${safe(color)}; border-radius: 8px; text-align: center;">
+                <a href="${safe(url)}" style="${baseFont} display: inline-block; padding: 12px 30px; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 700;" target="_blank" rel="noopener noreferrer">
+                  ${safe(text)}
                 </a>
               </td>
             </tr>
@@ -214,30 +278,39 @@ export function button({ url, text, color = "#667eea" }) {
 /**
  * Signature Component
  */
-export function signature({ teamName = "فريق التوظيف", color = "#667eea" }) {
+export function signature({
+  teamName = "فريق التوظيف",
+  color = "#667eea",
+} = {}) {
   return `
-    <p style="font-size: 16px; color: #2d3748; margin: 30px 0 0 0; font-weight: 500;">
-      مع أطيب التحيات،<br>
-      <strong style="color: ${color};">${teamName}</strong>
+    <p style="${baseFont} font-size: 15px; margin: 28px 0 0;">
+      مع أطيب التحيات،<br/>
+      <strong style="color: ${safe(color)};">${safe(teamName)}</strong>
     </p>
   `;
 }
 
 /**
  * List Component
+ * Defensive: items default to []
  */
-export function list({ items, color = "#2c5282" }) {
+export function list({ items = [], color = "#2c5282" } = {}) {
+  if (!Array.isArray(items)) items = [];
+
   const listItems = items
-    .map((item) => `<li style="margin-bottom: 10px;">${item}</li>`)
+    .map((item) => `<li style="margin-bottom: 10px;">${safe(item)}</li>`)
     .join("");
 
   return `
-    <ul style="margin: 0; padding: 0 0 0 20px; color: ${color}; line-height: 1.8;">
+    <ul style="${baseFont} margin: 0; padding: 0 0 0 20px; color: ${safe(color)}; line-height: 1.8;">
       ${listItems}
     </ul>
   `;
 }
 
+/* ============================
+   Default export (keep compatibility)
+   ============================ */
 export default {
   emailHeader,
   emailFooter,
