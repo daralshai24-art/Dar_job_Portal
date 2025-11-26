@@ -42,7 +42,7 @@ export function emailHeader({
             ? `
          <!-- Outlook-friendly logo -->
          <img src="${logoUrl}" alt="Logo"
-           width="80" height="80"
+           width="150" height="150"
            style="display:block; margin:0 auto 20px auto; width:150px; height:auto; max-width:150px; max-height:150px;" />
         `
             : ``
@@ -257,23 +257,37 @@ export function alertBox({
  */
 export function button({ url = "#", text = "Click", color = "#667eea" } = {}) {
   return `
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
-      <tr>
-        <td align="center">
-          <table cellpadding="0" cellspacing="0" border="0" role="presentation">
-            <tr>
-              <td style="background: ${safe(color)}; border-radius: 8px; text-align: center;">
-                <a href="${safe(url)}" style="${baseFont} display: inline-block; padding: 12px 30px; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 700;" target="_blank" rel="noopener noreferrer">
-                  ${safe(text)}
-                </a>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
+  <!--[if mso]>
+  <center>
+  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="${safe(url)}"
+    style="height:48px;v-text-anchor:middle;width:260px;" arcsize="15%" stroke="f" fillcolor="${safe(color)}">
+    <w:anchorlock/>
+    <center style="color:#ffffff;font-size:17px;font-weight:bold;">
+      ${safe(text)}
+    </center>
+  </v:roundrect>
+  </center>
+  <![endif]-->
+
+  <!--[if !mso]><!-- -->
+    <a href="${safe(url)}"
+      style="${baseFont}
+        display:inline-block;
+        background:${safe(color)};
+        padding:15px 36px;
+        color:#ffffff !important;
+        text-decoration:none;
+        font-size:17px;
+        font-weight:700;
+        border-radius:10px;
+      ">
+      ${safe(text)}
+    </a>
+  <!--<![endif]-->
   `;
 }
+
+
 
 /**
  * Signature Component
