@@ -1,7 +1,9 @@
 // src/models/FeedbackToken.js
 import mongoose from "mongoose";
 import crypto from "crypto";
-
+import "@/models/Application";
+import "@/models/Job"
+import "@/models/Category"
 /**
  * FeedbackToken Model
  * Generates secure, time-limited tokens for manager feedback links
