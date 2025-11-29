@@ -19,8 +19,6 @@ import { ErrorState } from "@/components/admin/applications/ErrorState";
 import { RelatedApplicationsCard } from "@/components/admin/applications/RelatedApplicationsCard";
 import { ManagerFeedbackCard } from "@/components/admin/applications/ManagerFeedbackCard";
 
-
-
 // Hooks
 import { useApplication } from "@/hooks/useApplication";
 import { useRelatedApplications } from "@/hooks/useRelatedApplications";
@@ -29,6 +27,7 @@ export default function ApplicationDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [showTimeline, setShowTimeline] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   const {
     application,
@@ -44,20 +43,20 @@ export default function ApplicationDetailPage() {
     saveNotes,
     saveFeedback,
     saveScore,
-    completeInterview
+    completeInterview,
   } = useApplication(params.id);
 
-  const { relatedApps, loading: relatedLoading } = useRelatedApplications(
+  const { relatedApps, loading: relatedLoading } =   useRelatedApplications(
     application?.email,
     application?._id?.toString() // ensure it's string
   );
-
 
   if (loading) return <LoadingState />;
   if (!application)
     return <ErrorState onBack={() => router.push("/admin/applications")} />;
 
-  const isInterviewScheduled = application.interviewDate && application.interviewTime;
+  const isInterviewScheduled =
+    application.interviewDate && application.interviewTime;
 
   return (
     <div className="p-6 space-y-6">
@@ -67,7 +66,9 @@ export default function ApplicationDetailPage() {
         editing={editing}
         onCancel={handleEditToggle}
         showTimeline={showTimeline}
-        toggleTimeline={() => setShowTimeline(prev => !prev)}
+        toggleTimeline={() => setShowTimeline((prev) => !prev)}
+        showFeedback={showFeedback}
+        toggleFeedback={() => setShowFeedback((prev) => !prev)}
       />
 
       {showTimeline && (
@@ -75,15 +76,20 @@ export default function ApplicationDetailPage() {
           <ApplicationTimeline timeline={application.timeline} />
         </div>
       )}
+      {showFeedback && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border">
+          <ManagerFeedbackCard application={application} />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="space-y-6">
           <CandidateInfoCard application={application} />
           <JobInfoCard application={application} />
-           
+
           {/* ✅ ONLY render when email exists */}
           {application?.email && (
-            <RelatedApplicationsCard 
+            <RelatedApplicationsCard
               email={application.email}
               currentId={application._id?.toString() || application._id}
             />
@@ -126,7 +132,7 @@ export default function ApplicationDetailPage() {
             onSave={saveFeedback}
             saving={saving}
           />
-          <ManagerFeedbackCard application={application} />
+
           <ScoringSection
             application={application}
             formData={formData}
@@ -137,8 +143,6 @@ export default function ApplicationDetailPage() {
           />
         </div>
       </div>
-
-      
     </div>
   );
 }
