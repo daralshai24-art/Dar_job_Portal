@@ -1,4 +1,3 @@
-// components/admin/applications/ApplicationTimeline.jsx
 import {
   Calendar,
   User,
@@ -11,13 +10,8 @@ import {
   StickyNote,
   Star,
   Repeat,
-  Briefcase,
-  Mail,
-  Phone,
 } from "lucide-react";
-import { formatDate12Hour } from "@/utils/formatDate12Hour";
 
-// Map icons to actions
 const getActionIcon = (action) => {
   const icons = {
     created: FileText,
@@ -35,7 +29,6 @@ const getActionIcon = (action) => {
   return icons[action] || MessageCircle;
 };
 
-// Human readable action labels
 const getActionText = (action) => {
   const texts = {
     created: "تم تقديم الطلب",
@@ -88,13 +81,13 @@ const formatDate = (dateStr) => {
   });
 };
 
-export const ApplicationTimeline = ({ timeline = [], applicant, jobId }) => {
+export const ApplicationTimeline = ({ timeline = [] }) => {
   const sortedTimeline = [...timeline].sort(
     (a, b) => new Date(b.date) - new Date(a.date)
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full overflow-x-auto">
       <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
         سجل التقدم
       </h3>
@@ -105,14 +98,13 @@ export const ApplicationTimeline = ({ timeline = [], applicant, jobId }) => {
           <p>لا توجد أحداث في السجل حتى الآن</p>
         </div>
       ) : (
-        <div className="relative">
-          <div className="absolute right-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+        <div className="relative pl-6 sm:pl-10">
+          {/* Timeline vertical line */}
+          <div className="absolute right-0 top-0 bottom-0 w-0.5 bg-gray-200 sm:right-auto sm:left-4"></div>
 
           <div className="space-y-6">
             {sortedTimeline.map((event, index) => {
               const IconComponent = getActionIcon(event.action);
-
-              // choose the name if available, fallback email
               const performer =
                 typeof event.performedBy === "object"
                   ? event.performedBy?.name ||
@@ -123,8 +115,9 @@ export const ApplicationTimeline = ({ timeline = [], applicant, jobId }) => {
               return (
                 <div
                   key={index}
-                  className="relative flex items-start space-x-3 space-x-reverse group"
+                  className="relative flex flex-col sm:flex-row sm:items-start gap-2"
                 >
+                  {/* Timeline dot */}
                   <div
                     className={`relative z-10 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
                       event.status === "hired"
@@ -141,41 +134,43 @@ export const ApplicationTimeline = ({ timeline = [], applicant, jobId }) => {
                     <IconComponent className="w-3 h-3 text-white" />
                   </div>
 
-                  <div className="flex-1 bg-white rounded-lg border border-gray-200 p-3 sm:p-4 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-gray-900">
-                          {getActionText(event.action)}
-                        </span>
-                        {event.status && (
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                              event.status
-                            )}`}
-                          >
-                            {getStatusText(event.status)}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center text-xs text-gray-500">
-                        <Clock className="w-3 h-3 ml-1" />
-                        {formatDate(event.date)}
-                      </div>
-                    </div>
+                  {/* Event content */}
+                  <div className="flex-1 bg-white rounded-lg border border-gray-200 p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow min-w-[250px]">
+  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <div className="flex flex-wrap items-center gap-2 min-w-0">
+      <span className="font-semibold text-gray-900 text-sm sm:text-base truncate">
+        {getActionText(event.action)}
+      </span>
+      {event.status && (
+        <span
+          className={`inline-flex px-3 py-1.5 text-xs sm:text-sm font-medium rounded-full ${getStatusColor(
+            event.status
+          )} truncate`}
+        >
+          {getStatusText(event.status)}
+        </span>
+      )}
+    </div>
+    <div className="flex items-center text-xs sm:text-sm text-gray-500 gap-1 mt-1 sm:mt-0">
+      <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+      <span className="truncate">{formatDate(event.date)}</span>
+    </div>
+  </div>
 
-                    {/* Notes */}
-                    {event.notes && (
-                      <p className="text-sm text-gray-600 leading-relaxed">
-                        {event.notes}
-                      </p>
-                    )}
+  {event.notes && (
+    <p className="text-sm sm:text-base text-gray-600 leading-relaxed mt-2 truncate">
+      {event.notes}
+    </p>
+  )}
 
-                    {/* Performed By */}
-                    <div className="flex items-center text-xs text-gray-500 mt-2">
-                      <User className="w-3 h-3 ml-1" />
-                      بواسطة: <span className="font-medium ml-1">{performer}</span>
-                    </div>
-                  </div>
+  <div className="flex items-center text-xs sm:text-sm text-gray-500 mt-2 gap-2 flex-wrap">
+    <User className="w-3 h-3 sm:w-4 sm:h-4" />
+    <span className="truncate">
+      بواسطة: <span className="font-medium">{performer}</span>
+    </span>
+  </div>
+</div>
+
                 </div>
               );
             })}
