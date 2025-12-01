@@ -2,8 +2,12 @@ import { Table, TableRow, TableCell } from "@/components/ui/Table";
 import { Pagination } from "@/components/ui/Pagination";
 import { Download, Eye, Mail, Phone, Calendar, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Card, CardHeader, CardContent } from "@/components/shared/ui/Card";
+import { Card, CardContent } from "@/components/shared/ui/Card";
 import LoadingSpinner from "@/components/shared/ui/LoadingSpinner";
+import { useTableSelection } from "@/hooks/useTableSelection";
+import { BulkActionsBar } from "@/components/admin/shared/BulkActionsBar";
+import { useState } from "react";
+import toast from "react-hot-toast";
 
 const ApplicationStatusBadge = ({ status }) => {
   const statusConfig = {
@@ -24,16 +28,24 @@ const ApplicationStatusBadge = ({ status }) => {
   );
 };
 
-const ApplicationRow = ({ application, onView, onDownloadCV }) => {
+const ApplicationRow = ({ application, onView, onDownloadCV, isSelected, onSelect }) => {
   return (
     <TableRow className="hover:bg-gray-50">
+      <TableCell>
+        <input
+          type="checkbox"
+          className="rounded border-gray-300 text-[#B38025] focus:ring-[#B38025]"
+          checked={isSelected}
+          onChange={() => onSelect(application._id)}
+        />
+      </TableCell>
       <TableCell>
         <div className="flex flex-col">
           <div className="font-medium text-gray-900">{application.name}</div>
           <div className="text-sm text-gray-500">{application.jobId?.title}</div>
         </div>
       </TableCell>
-      
+
       <TableCell>
         <div className="flex flex-col">
           <div className="flex items-center text-sm text-gray-900">
@@ -48,18 +60,18 @@ const ApplicationRow = ({ application, onView, onDownloadCV }) => {
           )}
         </div>
       </TableCell>
-      
+
       <TableCell>
         <ApplicationStatusBadge status={application.status} />
       </TableCell>
-      
+
       <TableCell>
         <div className="flex items-center text-sm text-gray-500">
           <Calendar size={14} className="ml-1" />
           {new Date(application.createdAt).toLocaleDateString('ar-EG')}
         </div>
       </TableCell>
-      
+
       <TableCell>
         <div className="flex items-center space-x-2 space-x-reverse">
           <button
@@ -82,9 +94,10 @@ const ApplicationRow = ({ application, onView, onDownloadCV }) => {
   );
 };
 
-export const ApplicationsTable = ({ 
-  applications, 
-  loading, 
+export const ApplicationsTable = ({
+  applications,
+  allIds,
+  loading,
   onViewApplication,
   onDownloadCV,
   // Pagination props
@@ -92,8 +105,45 @@ export const ApplicationsTable = ({
   itemsPerPage = 10,
   totalItems = 0,
   onPageChange,
-  showPagination = true
+  showPagination = true,
+  // Refresh callback
+  onRefresh
 }) => {
+  const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
+
+  const {
+    selectedIds,
+    handleSelect,
+    handleSelectAll,
+    clearSelection,
+    isAllSelected,
+    isIndeterminate
+  } = useTableSelection(applications, allIds);
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`هل أنت متأكد من حذف ${selectedIds.length} طلب؟`)) return;
+
+    setBulkDeleteLoading(true);
+    try {
+      const response = await fetch('/api/applications/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+
+      if (!response.ok) throw new Error('Failed to delete applications');
+
+      toast.success('تم حذف الطلبات المحددة بنجاح');
+      clearSelection();
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Bulk delete error:', error);
+      toast.error('حدث خطأ أثناء حذف الطلبات');
+    } finally {
+      setBulkDeleteLoading(false);
+    }
+  };
+
   const columns = [
     { key: 'candidate', label: 'المتقدم / الوظيفة' },
     { key: 'contact', label: 'معلومات التواصل' },
@@ -135,13 +185,22 @@ export const ApplicationsTable = ({
 
   return (
     <>
-      <Table columns={columns}>
+      <Table
+        columns={columns}
+        selection={{
+          isAllSelected,
+          isIndeterminate,
+          onSelectAll: handleSelectAll
+        }}
+      >
         {applications.map((application) => (
           <ApplicationRow
             key={application._id}
             application={application}
             onView={onViewApplication}
             onDownloadCV={onDownloadCV}
+            isSelected={selectedIds.includes(application._id)}
+            onSelect={handleSelect}
           />
         ))}
       </Table>
@@ -155,6 +214,13 @@ export const ApplicationsTable = ({
           onPageChange={onPageChange}
         />
       )}
+
+      <BulkActionsBar
+        selectedCount={selectedIds.length}
+        onDelete={handleBulkDelete}
+        onClearSelection={clearSelection}
+        loading={bulkDeleteLoading}
+      />
     </>
   );
 };
