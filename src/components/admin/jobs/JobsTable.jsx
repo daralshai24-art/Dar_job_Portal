@@ -9,6 +9,7 @@ import { useTableSelection } from "@/hooks/useTableSelection";
 import { BulkActionsBar } from "@/components/admin/shared/BulkActionsBar";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useConfirmationModal } from "@/components/shared/modals/ConfirmationModalContext";
 
 const StatusButton = ({ status, onClick, disabled }) => {
   const statusConfig = JOB_STATUS[status?.toUpperCase()] || JOB_STATUS.ACTIVE;
@@ -78,6 +79,7 @@ export const JobsTable = ({
 }) => {
   const router = useRouter();
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
+  const { showConfirmation } = useConfirmationModal();
 
   const {
     selectedIds,
@@ -89,27 +91,33 @@ export const JobsTable = ({
   } = useTableSelection(jobs, allIds);
 
   const handleBulkDelete = async () => {
-    if (!confirm(`هل أنت متأكد من حذف ${selectedIds.length} وظيفة؟`)) return;
+    showConfirmation({
+      title: "حذف الوظائف المحددة",
+      message: `هل أنت متأكد من حذف ${selectedIds.length} وظيفة؟ لا يمكن التراجع عن هذا الإجراء.`,
+      confirmText: "حذف",
+      variant: "danger",
+      onConfirm: async () => {
+        setBulkDeleteLoading(true);
+        try {
+          const response = await fetch('/api/admin/jobs/bulk-delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: selectedIds }),
+          });
 
-    setBulkDeleteLoading(true);
-    try {
-      const response = await fetch('/api/admin/jobs/bulk-delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: selectedIds }),
-      });
+          if (!response.ok) throw new Error('Failed to delete jobs');
 
-      if (!response.ok) throw new Error('Failed to delete jobs');
-
-      toast.success('تم حذف الوظائف المحددة بنجاح');
-      clearSelection();
-      if (onRefresh) onRefresh();
-    } catch (error) {
-      console.error('Bulk delete error:', error);
-      toast.error('حدث خطأ أثناء حذف الوظائف');
-    } finally {
-      setBulkDeleteLoading(false);
-    }
+          toast.success('تم حذف الوظائف المحددة بنجاح');
+          clearSelection();
+          if (onRefresh) onRefresh();
+        } catch (error) {
+          console.error('Bulk delete error:', error);
+          toast.error('حدث خطأ أثناء حذف الوظائف');
+        } finally {
+          setBulkDeleteLoading(false);
+        }
+      }
+    });
   };
 
   const formatDate = (dateString) => {

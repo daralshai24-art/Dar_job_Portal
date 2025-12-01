@@ -8,6 +8,7 @@ import { useTableSelection } from "@/hooks/useTableSelection";
 import { BulkActionsBar } from "@/components/admin/shared/BulkActionsBar";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useConfirmationModal } from "@/components/shared/modals/ConfirmationModalContext";
 
 const ApplicationStatusBadge = ({ status }) => {
   const statusConfig = {
@@ -110,6 +111,7 @@ export const ApplicationsTable = ({
   onRefresh
 }) => {
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
+  const { showConfirmation } = useConfirmationModal();
 
   const {
     selectedIds,
@@ -121,27 +123,33 @@ export const ApplicationsTable = ({
   } = useTableSelection(applications, allIds);
 
   const handleBulkDelete = async () => {
-    if (!confirm(`هل أنت متأكد من حذف ${selectedIds.length} طلب؟`)) return;
+    showConfirmation({
+      title: "حذف الطلبات المحددة",
+      message: `هل أنت متأكد من حذف ${selectedIds.length} طلب؟ لا يمكن التراجع عن هذا الإجراء.`,
+      confirmText: "حذف",
+      variant: "danger",
+      onConfirm: async () => {
+        setBulkDeleteLoading(true);
+        try {
+          const response = await fetch('/api/applications/bulk-delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: selectedIds }),
+          });
 
-    setBulkDeleteLoading(true);
-    try {
-      const response = await fetch('/api/applications/bulk-delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: selectedIds }),
-      });
+          if (!response.ok) throw new Error('Failed to delete applications');
 
-      if (!response.ok) throw new Error('Failed to delete applications');
-
-      toast.success('تم حذف الطلبات المحددة بنجاح');
-      clearSelection();
-      if (onRefresh) onRefresh();
-    } catch (error) {
-      console.error('Bulk delete error:', error);
-      toast.error('حدث خطأ أثناء حذف الطلبات');
-    } finally {
-      setBulkDeleteLoading(false);
-    }
+          toast.success('تم حذف الطلبات المحددة بنجاح');
+          clearSelection();
+          if (onRefresh) onRefresh();
+        } catch (error) {
+          console.error('Bulk delete error:', error);
+          toast.error('حدث خطأ أثناء حذف الطلبات');
+        } finally {
+          setBulkDeleteLoading(false);
+        }
+      }
+    });
   };
 
   const columns = [
