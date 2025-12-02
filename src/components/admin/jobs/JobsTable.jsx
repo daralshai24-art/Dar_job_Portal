@@ -5,17 +5,21 @@ import { JobActions } from "./JobActions";
 import { JOB_STATUS, TABLE_COLUMNS } from "@/lib/constants";
 import { Users, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTableSelection } from "@/hooks/useTableSelection";
+import { BulkActionsBar } from "@/components/admin/shared/BulkActionsBar";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useConfirmationModal } from "@/components/shared/modals/ConfirmationModalContext";
 
 const StatusButton = ({ status, onClick, disabled }) => {
   const statusConfig = JOB_STATUS[status?.toUpperCase()] || JOB_STATUS.ACTIVE;
-  
+
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors ${statusConfig.color} ${
-        disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:opacity-80"
-      }`}
+      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors ${statusConfig.color} ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:opacity-80"
+        }`}
     >
       {statusConfig.label}
     </button>
@@ -57,10 +61,11 @@ const JobDetails = ({ job }) => (
   </div>
 );
 
-export const JobsTable = ({ 
-  jobs, 
-  onDelete, 
-  onToggleStatus, 
+export const JobsTable = ({
+  jobs,
+  allIds,
+  onDelete,
+  onToggleStatus,
   actionLoading,
   loading,
   // Pagination props
@@ -68,9 +73,52 @@ export const JobsTable = ({
   itemsPerPage = 10,
   totalItems = 0,
   onPageChange,
-  showPagination = true
+  showPagination = true,
+  // Refresh data callback
+  onRefresh
 }) => {
   const router = useRouter();
+  const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
+  const { showConfirmation } = useConfirmationModal();
+
+  const {
+    selectedIds,
+    handleSelect,
+    handleSelectAll,
+    clearSelection,
+    isAllSelected,
+    isIndeterminate
+  } = useTableSelection(jobs, allIds);
+
+  const handleBulkDelete = async () => {
+    showConfirmation({
+      title: "حذف الوظائف المحددة",
+      message: `هل أنت متأكد من حذف ${selectedIds.length} وظيفة؟ لا يمكن التراجع عن هذا الإجراء.`,
+      confirmText: "حذف",
+      variant: "danger",
+      onConfirm: async () => {
+        setBulkDeleteLoading(true);
+        try {
+          const response = await fetch('/api/admin/jobs/bulk-delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: selectedIds }),
+          });
+
+          if (!response.ok) throw new Error('Failed to delete jobs');
+
+          toast.success('تم حذف الوظائف المحددة بنجاح');
+          clearSelection();
+          if (onRefresh) onRefresh();
+        } catch (error) {
+          console.error('Bulk delete error:', error);
+          toast.error('حدث خطأ أثناء حذف الوظائف');
+        } finally {
+          setBulkDeleteLoading(false);
+        }
+      }
+    });
+  };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("ar-EG", {
@@ -107,9 +155,25 @@ export const JobsTable = ({
 
   return (
     <>
-      <Table columns={TABLE_COLUMNS.JOBS}>
+      <Table
+        columns={TABLE_COLUMNS.JOBS}
+        selection={{
+          isAllSelected,
+          isIndeterminate,
+          onSelectAll: handleSelectAll
+        }}
+      >
         {jobs.map((job) => (
           <TableRow key={job._id}>
+            <TableCell>
+              <input
+                type="checkbox"
+                className="rounded border-gray-300 text-[#B38025] focus:ring-[#B38025]"
+                checked={selectedIds.includes(job._id)}
+                onChange={() => handleSelect(job._id)}
+              />
+            </TableCell>
+
             {/* Job Details */}
             <TableCell>
               <JobDetails job={job} />
@@ -162,6 +226,13 @@ export const JobsTable = ({
           onPageChange={onPageChange}
         />
       )}
+
+      <BulkActionsBar
+        selectedCount={selectedIds.length}
+        onDelete={handleBulkDelete}
+        onClearSelection={clearSelection}
+        loading={bulkDeleteLoading}
+      />
     </>
   );
-};  
+};
