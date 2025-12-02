@@ -1,4 +1,3 @@
-//src\app\admin\applications\page.js
 "use client";
 
 import { useState, useEffect } from "react";
@@ -22,9 +21,9 @@ export default function ApplicationsPage() {
     try {
       setLoading(true);
       const response = await fetch("/api/applications");
-      
+
       if (!response.ok) throw new Error("Failed to fetch applications");
-      
+
       const data = await response.json();
       setApplications(data);
     } catch (error) {
@@ -94,6 +93,7 @@ export default function ApplicationsPage() {
       {/* Applications Table */}
       <ApplicationsTable
         applications={filteredApplications}
+        allIds={filteredApplications.map(a => a._id)}
         loading={loading}
         onViewApplication={handleViewApplication}
         onDownloadCV={handleDownloadCV}

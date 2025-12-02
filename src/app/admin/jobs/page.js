@@ -1,4 +1,3 @@
-//src\app\admin\jobs\page.js
 "use client";
 
 import { useState, useEffect } from "react";
@@ -131,6 +130,7 @@ export default function AdminJobsPage() {
 
       <JobsTable
         jobs={paginated}
+        allIds={filteredJobs.map(j => j._id)}
         onDelete={handleDeleteJob}
         onToggleStatus={handleToggleStatus}
         actionLoading={actionLoading}
