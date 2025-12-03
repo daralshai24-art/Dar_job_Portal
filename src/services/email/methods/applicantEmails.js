@@ -4,7 +4,7 @@
  * All email methods related to applicants
  */
 
-import { sendEmail } from "../emailSender.js";
+import { sendEmail, getEmailSettings } from "../emailSender.js";
 import EMAIL_CONFIG from "../config/emailConfig.js";
 import { applicationReceivedTemplate } from "../templates/applicant/applicationReceived.js";
 import { interviewScheduledTemplate } from "../templates/applicant/interviewScheduled.js";
@@ -16,7 +16,8 @@ import { applicationAcceptedTemplate } from "../templates/applicant/applicationA
  * Send application received confirmation
  */
 export async function sendApplicationReceived({ application, triggeredBy }) {
-  const html = applicationReceivedTemplate(application);
+  const settings = await getEmailSettings();
+  const html = applicationReceivedTemplate(application, { logoUrl: settings.companyLogo });
   const subject = `${EMAIL_CONFIG.subjects.ar.APPLICATION_RECEIVED} - ${EMAIL_CONFIG.subjects.en.APPLICATION_RECEIVED}`;
 
   return sendEmail({
@@ -35,7 +36,8 @@ export async function sendApplicationReceived({ application, triggeredBy }) {
  * Send interview scheduled notification
  */
 export async function sendInterviewScheduled({ application, triggeredBy }) {
-  const html = interviewScheduledTemplate(application);
+  const settings = await getEmailSettings();
+  const html = interviewScheduledTemplate(application, { logoUrl: settings.companyLogo });
   const subject = `${EMAIL_CONFIG.subjects.ar.INTERVIEW_SCHEDULED} - ${EMAIL_CONFIG.subjects.en.INTERVIEW_SCHEDULED}`;
 
   return sendEmail({
@@ -59,7 +61,8 @@ export async function sendInterviewScheduled({ application, triggeredBy }) {
  * Send interview rescheduled notification
  */
 export async function sendInterviewRescheduled({ application, triggeredBy }) {
-  const html = interviewRescheduledTemplate(application);
+  const settings = await getEmailSettings();
+  const html = interviewRescheduledTemplate(application, { logoUrl: settings.companyLogo });
   const subject = `${EMAIL_CONFIG.subjects.ar.INTERVIEW_RESCHEDULED} - ${EMAIL_CONFIG.subjects.en.INTERVIEW_RESCHEDULED}`;
 
   return sendEmail({
@@ -82,7 +85,8 @@ export async function sendInterviewRescheduled({ application, triggeredBy }) {
  * Send application rejected notification
  */
 export async function sendApplicationRejected({ application, triggeredBy }) {
-  const html = applicationRejectedTemplate(application);
+  const settings = await getEmailSettings();
+  const html = applicationRejectedTemplate(application, { logoUrl: settings.companyLogo });
   const subject = `${EMAIL_CONFIG.subjects.ar.APPLICATION_REJECTED} - ${EMAIL_CONFIG.subjects.en.APPLICATION_REJECTED}`;
 
   return sendEmail({
@@ -101,7 +105,8 @@ export async function sendApplicationRejected({ application, triggeredBy }) {
  * Send application accepted notification
  */
 export async function sendApplicationAccepted({ application, triggeredBy }) {
-  const html = applicationAcceptedTemplate(application);
+  const settings = await getEmailSettings();
+  const html = applicationAcceptedTemplate(application, { logoUrl: settings.companyLogo });
   const subject = `${EMAIL_CONFIG.subjects.ar.APPLICATION_ACCEPTED} - ${EMAIL_CONFIG.subjects.en.APPLICATION_ACCEPTED}`;
 
   return sendEmail({

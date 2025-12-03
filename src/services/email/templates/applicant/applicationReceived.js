@@ -14,7 +14,7 @@ import {
   list,
 } from "../base/emailComponents.js";
 
-export function applicationReceivedTemplate(application) {
+export function applicationReceivedTemplate(application, { logoUrl } = {}) {
   const jobTitle = application.jobId?.title || "الوظيفة";
   const jobLocation = application.jobId?.location || "غير محدد";
   const applicationDate = new Date(application.createdAt).toLocaleDateString(
@@ -31,6 +31,7 @@ export function applicationReceivedTemplate(application) {
     icon: "✅",
     title: "تم استلام طلبك بنجاح",
     subtitle: "Application Received Successfully",
+    logoUrl,
   });
 
   const body = `
@@ -42,28 +43,28 @@ export function applicationReceivedTemplate(application) {
     </p>
     
     ${infoCard({
-      title: "📋 تفاصيل الطلب",
-      items: [
-        { label: "الوظيفة", value: jobTitle },
-        { label: "الموقع", value: jobLocation },
-        { label: "تاريخ التقديم", value: applicationDate },
-        { label: "البريد الإلكتروني", value: application.email },
-      ],
-      borderColor: "#667eea",
-    })}
+    title: "📋 تفاصيل الطلب",
+    items: [
+      { label: "الوظيفة", value: jobTitle },
+      { label: "الموقع", value: jobLocation },
+      { label: "تاريخ التقديم", value: applicationDate },
+      { label: "البريد الإلكتروني", value: application.email },
+    ],
+    borderColor: "#667eea",
+  })}
     
     ${alertBox({
-      type: "info",
-      title: "🔄 الخطوات القادمة",
-      content: list({
-        items: [
-          "سيقوم فريقنا بمراجعة سيرتك الذاتية ومؤهلاتك",
-          "سنتواصل معك خلال 5-7 أيام عمل في حال تطابقت مؤهلاتك",
-          "يرجى متابعة بريدك الإلكتروني للحصول على التحديثات",
-        ],
-        color: "#2c5282",
-      }),
-    })}
+    type: "info",
+    title: "🔄 الخطوات القادمة",
+    content: list({
+      items: [
+        "سيقوم فريقنا بمراجعة سيرتك الذاتية ومؤهلاتك",
+        "سنتواصل معك خلال 5-7 أيام عمل في حال تطابقت مؤهلاتك",
+        "يرجى متابعة بريدك الإلكتروني للحصول على التحديثات",
+      ],
+      color: "#2c5282",
+    }),
+  })}
     
     <p style="font-size: 16px; color: #4a5568; line-height: 1.8; margin: 30px 0 0 0;">
       نقدر اهتمامك بالانضمام إلى فريقنا ونتمنى لك التوفيق! 🌟
@@ -72,7 +73,7 @@ export function applicationReceivedTemplate(application) {
     ${signature({ teamName: "فريق التوظيف", color: "#667eea" })}
   `;
 
-  const footer = emailFooter({});
+  const footer = emailFooter({ logoUrl });
 
   return baseEmailTemplate({ header, body, footer });
 }

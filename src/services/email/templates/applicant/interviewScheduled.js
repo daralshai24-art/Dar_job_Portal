@@ -15,7 +15,7 @@ import {
   list,
 } from "../base/emailComponents.js";
 
-export function interviewScheduledTemplate(application) {
+export function interviewScheduledTemplate(application, { logoUrl } = {}) {
   const jobTitle = application.jobId?.title || "الوظيفة";
   const date = new Date(application.interviewDate).toLocaleDateString("ar-SA", {
     weekday: "long",
@@ -38,15 +38,16 @@ export function interviewScheduledTemplate(application) {
     icon: "🎉",
     title: "تم جدولة المقابلة!",
     subtitle: "Interview Scheduled",
+    logoUrl,
   });
 
   const interviewDetails = `
     ${infoItem({ label: "التاريخ", value: date, icon: "📅" })}
     ${infoItem({
-      label: "الوقت",
-      value: application.interviewTime,
-      icon: "🕒",
-    })}
+    label: "الوقت",
+    value: application.interviewTime,
+    icon: "🕒",
+  })}
     ${infoItem({ label: "نوع المقابلة", value: interviewTypeText, icon: "" })}
   `.replace(/margin-bottom: 15px;/g, "margin-bottom: 15px; margin-top: 0;");
 
@@ -59,29 +60,27 @@ export function interviewScheduledTemplate(application) {
     </p>
     
     ${highlightedBox({
-      gradient: "linear-gradient(135deg, #48bb78 0%, #38a169 100%)",
-      title: "📅 تفاصيل المقابلة",
-      content: interviewDetails,
-    })}
+    gradient: "linear-gradient(135deg, #48bb78 0%, #38a169 100%)",
+    title: "📅 تفاصيل المقابلة",
+    content: interviewDetails,
+  })}
     
-    ${
-      application.interviewLocation
-        ? alertBox({
-            type: "success",
-            title: "📍 الموقع",
-            content: `<p style="margin: 0;">${application.interviewLocation}</p>`,
-          })
-        : ""
+    ${application.interviewLocation
+      ? alertBox({
+        type: "success",
+        title: "📍 الموقع",
+        content: `<p style="margin: 0;">${application.interviewLocation}</p>`,
+      })
+      : ""
     }
     
-    ${
-      application.interviewNotes
-        ? alertBox({
-            type: "warning",
-            title: "⚠️ ملاحظات هامة",
-            content: `<p style="margin: 0;">${application.interviewNotes}</p>`,
-          })
-        : ""
+    ${application.interviewNotes
+      ? alertBox({
+        type: "warning",
+        title: "⚠️ ملاحظات هامة",
+        content: `<p style="margin: 0;">${application.interviewNotes}</p>`,
+      })
+      : ""
     }
     
     ${alertBox({
@@ -105,7 +104,7 @@ export function interviewScheduledTemplate(application) {
     ${signature({ teamName: "فريق التوظيف", color: "#48bb78" })}
   `;
 
-  const footer = emailFooter({});
+  const footer = emailFooter({ logoUrl });
 
   return baseEmailTemplate({ header, body, footer });
 }

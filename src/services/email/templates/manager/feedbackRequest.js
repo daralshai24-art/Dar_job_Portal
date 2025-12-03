@@ -16,6 +16,7 @@ export function feedbackRequestTemplate({
   feedbackUrl,
   message,
   expiresInDays,
+  logoUrl,
 }) {
   const jobTitle = application.jobId?.title || "الوظيفة";
   const candidateName = application.name;
@@ -25,6 +26,7 @@ export function feedbackRequestTemplate({
     icon: "📝",
     title: "طلب تقييم مرشح",
     subtitle: "Candidate Feedback Request",
+    logoUrl,
   });
 
   const body = `
@@ -35,14 +37,13 @@ export function feedbackRequestTemplate({
       رأيك مهم جداً في عملية اتخاذ القرار.
     </p>
     
-    ${
-      message
-        ? alertBox({
-            type: "info",
-            title: "💬 رسالة من فريق التوظيف",
-            content: `<p style="margin: 0;">${message}</p>`,
-          })
-        : ""
+    ${message
+      ? alertBox({
+        type: "info",
+        title: "💬 رسالة من فريق التوظيف",
+        content: `<p style="margin: 0;">${message}</p>`,
+      })
+      : ""
     }
     
     ${infoCard({
@@ -75,7 +76,7 @@ export function feedbackRequestTemplate({
     ${signature({ teamName: "فريق التوظيف", color: "#6366f1" })}
   `;
 
-  const footer = emailFooter({});
+  const footer = emailFooter({ logoUrl });
 
   return baseEmailTemplate({ header, body, footer });
 }

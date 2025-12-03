@@ -27,26 +27,31 @@ const baseFont =
 /**
  * Email Header Component (with logo)
  */
+/**
+ * Email Header Component (with logo)
+ */
 export function emailHeader({
   gradient = "#667eea",
   icon = "",
   title = "",
   subtitle = "",
   showLogo = true,
+  logoUrl: propLogoUrl, // Allow overriding logo
 }) {
+  const displayLogoUrl = propLogoUrl || logoUrl;
+
   return `
     <tr>
       <td style="background: ${safe(gradient)}; padding: 40px 30px; text-align: center;">
-        ${
-          showLogo && logoUrl
-            ? `
+        ${showLogo && displayLogoUrl
+      ? `
          <!-- Outlook-friendly logo -->
-         <img src="${logoUrl}" alt="Logo"
+         <img src="${displayLogoUrl}" alt="Logo"
            width="150" height="150"
            style="display:block; margin:0 auto 20px auto; width:150px; height:auto; max-width:150px; max-height:150px;" />
         `
-            : ``
-        }
+      : ``
+    }
         <div style="${baseFont} font-size: 42px; margin-bottom: 10px; color: #ffffff;">${safe(icon)}</div>
         <h1 style="${baseFont} color: #ffffff; margin: 0; font-size: 28px; font-weight: 600;">${safe(title)}</h1>
         <p style="${baseFont} color: rgba(255,255,255,0.95); margin: 12px 0 0 0; font-size: 16px;">${safe(subtitle)}</p>
@@ -61,20 +66,22 @@ export function emailHeader({
 export function emailFooter({
   companyName = EMAIL_CONFIG.app.name,
   showLogo = false,
+  logoUrl: propLogoUrl,
 } = {}) {
+  const displayLogoUrl = propLogoUrl || logoUrl;
+
   return `
     <tr>
       <td style="background-color: #f7fafc; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;">
-        ${
-          showLogo && logoUrl
-            ? `
+        ${showLogo && displayLogoUrl
+      ? `
           <!-- Outlook-friendly logo -->
-          <img src="${logoUrl}" alt="Logo"
+          <img src="${displayLogoUrl}" alt="Logo"
             width="80" height="80"
             style="display:block; margin:0 auto 15px auto; width:80px; height:auto; max-width:80px; max-height:80px; opacity:0.8;" />
         `
-            : ``
-        }
+      : ``
+    }
         <p style="${baseFont} margin: 0 0 10px 0; color: #718096; font-size: 14px;">${safe(companyName)}</p>
         <p style="${baseFont} margin: 0; color: #a0aec0; font-size: 13px;">هذا البريد تم إرساله تلقائياً، يرجى عدم الرد عليه</p>
       </td>
@@ -148,9 +155,9 @@ export function highlightedBox({
   // If items provided -> render them; else render `content` (raw HTML allowed)
   const innerHtml = useItems.length
     ? useItems
-        .map((item, index) => {
-          const isLast = index === useItems.length - 1;
-          return `
+      .map((item, index) => {
+        const isLast = index === useItems.length - 1;
+        return `
             <tr>
               <td style="padding-bottom: ${isLast ? "0" : "15px"};">
                 <table width="100%" cellpadding="0" cellspacing="0" style="background-color: rgba(255,255,255,0.12); border-radius: 12px;">
@@ -164,10 +171,10 @@ export function highlightedBox({
               </td>
             </tr>
           `;
-        })
-        .join("")
+      })
+      .join("")
     : // fallback to raw content (allow HTML)
-      `<tr><td style="padding: 8px 0;">${raw(content) || ""}</td></tr>`;
+    `<tr><td style="padding: 8px 0;">${raw(content) || ""}</td></tr>`;
 
   return `
     <table width="100%" cellpadding="0" cellspacing="0" style="margin: 35px 0;">

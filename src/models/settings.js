@@ -12,12 +12,15 @@ const settingsSchema = new mongoose.Schema({
     maintenanceMode: { type: Boolean, default: false }
   },
   email: {
+    provider: { type: String, default: 'resend' },
+    resendApiKey: String,
     smtpHost: String,
     smtpPort: { type: Number, default: 587 },
     smtpUsername: String,
     smtpPassword: String,
     fromEmail: String,
     fromName: String,
+    companyLogo: String,
     emailNotifications: { type: Boolean, default: true },
     applicationAlerts: { type: Boolean, default: true }
   },

@@ -13,9 +13,36 @@ import {
   markEmailAsSent,
   markEmailAsFailed,
 } from "./emailTracker.js";
+import Settings from "@/models/settings";
+import { connectDB } from "@/lib/db";
 
-// Initialize Resend provider
-const resend = new Resend(EMAIL_CONFIG.provider.apiKey);
+/**
+ * Get email settings from DB or fallback to config
+ */
+export async function getEmailSettings() {
+  try {
+    await connectDB();
+    const settings = await Settings.findOne();
+
+    if (settings && settings.email) {
+      return {
+        apiKey: settings.email.resendApiKey || EMAIL_CONFIG.provider.apiKey,
+        fromEmail: settings.email.fromEmail || EMAIL_CONFIG.sender.email,
+        fromName: settings.email.fromName || EMAIL_CONFIG.sender.name,
+        companyLogo: settings.email.companyLogo,
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching email settings:", error);
+  }
+
+  return {
+    apiKey: EMAIL_CONFIG.provider.apiKey,
+    fromEmail: EMAIL_CONFIG.sender.email,
+    fromName: EMAIL_CONFIG.sender.name,
+    companyLogo: process.env.COMPANY_LOGO_URL,
+  };
+}
 
 /**
  * Send email with full tracking and validation
@@ -32,6 +59,18 @@ export async function sendEmail({
   metadata = {},
 }) {
   try {
+    // Step 0: Get Settings
+    const settings = await getEmailSettings();
+
+    if (!settings.apiKey) {
+      return {
+        success: false,
+        error: "Email service not configured (missing API Key)",
+      };
+    }
+
+    const resend = new Resend(settings.apiKey);
+
     // Step 1: Validate payload
     const validation = validateEmailPayload({
       to,
@@ -70,8 +109,13 @@ export async function sendEmail({
     });
 
     // Step 4: Send via provider (Resend)
+    console.log(`[Email Debug] Sending email...`);
+    console.log(`[Email Debug] API Key starts with: ${settings.apiKey?.substring(0, 5)}...`);
+    console.log(`[Email Debug] From: ${settings.fromName} <${settings.fromEmail}>`);
+    console.log(`[Email Debug] To: ${to}`);
+
     const { data, error } = await resend.emails.send({
-      from: EMAIL_CONFIG.sender.email,
+      from: `${settings.fromName} <${settings.fromEmail}>`,
       to,
       subject,
       html,
@@ -86,7 +130,7 @@ export async function sendEmail({
 
     await markEmailAsSent(notification._id, data?.id);
     console.log(`✓ Email sent: ${emailType} to ${to}`);
-    
+
     return {
       success: true,
       messageId: data?.id,
@@ -103,8 +147,16 @@ export async function sendEmail({
  */
 export async function sendEmailWithoutTracking({ to, subject, html }) {
   try {
+    const settings = await getEmailSettings();
+
+    if (!settings.apiKey) {
+      return { success: false, error: "Missing API Key" };
+    }
+
+    const resend = new Resend(settings.apiKey);
+
     const { data, error } = await resend.emails.send({
-      from: EMAIL_CONFIG.sender.email,
+      from: `${settings.fromName} <${settings.fromEmail}>`,
       to,
       subject,
       html,
@@ -123,4 +175,5 @@ export async function sendEmailWithoutTracking({ to, subject, html }) {
 export default {
   sendEmail,
   sendEmailWithoutTracking,
+  getEmailSettings,
 };

@@ -4,13 +4,14 @@ import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import SettingsSidebar from "./SettingsSidebar";
 import SystemTools from "./sections/SystemTools";
+import EmailSettings from "./sections/EmailSettings";
 import { useConfirmationModal } from "@/components/shared/modals/ConfirmationModalContext";
 
 export default function SettingsLayout() {
   const [activeSection, setActiveSection] = useState("tools");
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   const { showConfirmation } = useConfirmationModal();
 
   useEffect(() => {
@@ -59,7 +60,7 @@ export default function SettingsLayout() {
 
   const handleSaveAllSettings = async () => {
     if (!settings) return;
-    
+
     showConfirmation({
       title: "حفظ جميع الإعدادات",
       message: "هل أنت متأكد من حفظ جميع الإعدادات؟",
@@ -99,19 +100,20 @@ export default function SettingsLayout() {
   );
 
   const renderSection = () => {
-    const sectionProps = { 
-      settings, 
-      onUpdate: updateSettings 
+    const sectionProps = {
+      settings,
+      onUpdate: updateSettings
     };
-    
+
     switch (activeSection) {
-      case "tools": 
+      case "tools":
         return <SystemTools {...sectionProps} />;
+      case "email":
+        return <EmailSettings {...sectionProps} />;
       // Future sections can be added here
       // case "general": return <GeneralSettings {...sectionProps} />;
-      // case "email": return <EmailSettings {...sectionProps} />;
       // case "jobs": return <JobSettings {...sectionProps} />;
-      default: 
+      default:
         return <SystemTools {...sectionProps} />;
     }
   };

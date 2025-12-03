@@ -4,7 +4,7 @@
  * All email methods related to managers/reviewers
  */
 
-import { sendEmail } from "../emailSender.js";
+import { sendEmail, getEmailSettings } from "../emailSender.js";
 import { connectDB } from "@/lib/db";
 import FeedbackToken from "@/models/FeedbackToken";
 import EMAIL_CONFIG from "../config/emailConfig.js";
@@ -38,6 +38,9 @@ export async function sendManagerFeedbackRequest({
     // Generate feedback URL
     const feedbackUrl = `${EMAIL_CONFIG.app.url}/feedback/${tokenDoc.token}`;
 
+    // Get email settings
+    const settings = await getEmailSettings();
+
     // Get email template
     const html = feedbackRequestTemplate({
       application,
@@ -45,6 +48,7 @@ export async function sendManagerFeedbackRequest({
       feedbackUrl,
       message,
       expiresInDays,
+      logoUrl: settings.companyLogo,
     });
 
     const subject = `${EMAIL_CONFIG.subjects.ar.MANAGER_FEEDBACK_REQUEST} - ${EMAIL_CONFIG.subjects.en.MANAGER_FEEDBACK_REQUEST}`;

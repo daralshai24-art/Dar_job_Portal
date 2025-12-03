@@ -11,7 +11,7 @@ import {
   signature,
 } from "../base/emailComponents.js";
 
-export function applicationRejectedTemplate(application) {
+export function applicationRejectedTemplate(application, { logoUrl } = {}) {
   const jobTitle = application.jobId?.title || "الوظيفة";
 
   const header = emailHeader({
@@ -19,6 +19,7 @@ export function applicationRejectedTemplate(application) {
     icon: "📋",
     title: "تحديث حول طلبك",
     subtitle: "Application Update",
+    logoUrl,
   });
 
   const body = `
@@ -43,7 +44,7 @@ export function applicationRejectedTemplate(application) {
     ${signature({ teamName: "فريق التوظيف", color: "#6b7280" })}
   `;
 
-  const footer = emailFooter({});
+  const footer = emailFooter({ logoUrl });
 
   return baseEmailTemplate({ header, body, footer });
 }

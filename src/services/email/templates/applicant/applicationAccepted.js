@@ -14,7 +14,7 @@ import {
   list,
 } from "../base/emailComponents.js";
 
-export function applicationAcceptedTemplate(application) {
+export function applicationAcceptedTemplate(application, { logoUrl } = {}) {
   const jobTitle = application.jobId?.title || "الوظيفة";
 
   const header = emailHeader({
@@ -22,6 +22,7 @@ export function applicationAcceptedTemplate(application) {
     icon: "🎉",
     title: "مبروك! تم قبولك للوظيفة",
     subtitle: "Congratulations!",
+    logoUrl,
   });
 
   const celebrationContent = `
@@ -41,24 +42,24 @@ export function applicationAcceptedTemplate(application) {
     </p>
     
     ${highlightedBox({
-      gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-      title: "🌟 تهانينا",
-      content: celebrationContent,
-    })}
+    gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+    title: "🌟 تهانينا",
+    content: celebrationContent,
+  })}
     
     ${alertBox({
-      type: "success",
-      title: "📝 الخطوات القادمة",
-      content: list({
-        items: [
-          "سيتواصل معك قسم الموارد البشرية خلال يومين عمل",
-          "سيتم مناقشة تفاصيل العقد والراتب والمزايا",
-          "سنحدد موعد بداية العمل بما يناسبك",
-          "سنرسل لك المستندات المطلوبة للتوقيع",
-        ],
-        color: "#134e4a",
-      }),
-    })}
+    type: "success",
+    title: "📝 الخطوات القادمة",
+    content: list({
+      items: [
+        "سيتواصل معك قسم الموارد البشرية خلال يومين عمل",
+        "سيتم مناقشة تفاصيل العقد والراتب والمزايا",
+        "سنحدد موعد بداية العمل بما يناسبك",
+        "سنرسل لك المستندات المطلوبة للتوقيع",
+      ],
+      color: "#134e4a",
+    }),
+  })}
     
     <p style="font-size: 16px; color: #4a5568; line-height: 1.8; margin: 30px 0 0 0;">
       نتطلع بشغف للعمل معك والمساهمة معاً في نجاح فريقنا! 🚀
@@ -67,7 +68,7 @@ export function applicationAcceptedTemplate(application) {
     ${signature({ teamName: "فريق التوظيف", color: "#10b981" })}
   `;
 
-  const footer = emailFooter({});
+  const footer = emailFooter({ logoUrl });
 
   return baseEmailTemplate({ header, body, footer });
 }

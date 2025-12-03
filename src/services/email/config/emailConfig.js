@@ -21,6 +21,7 @@ export const EMAIL_CONFIG = {
   app: {
     url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
     name: process.env.COMPANY_NAME || "شركة دار الشاي العربي للتجارة",
+    logoUrl: process.env.COMPANY_LOGO_URL || "",
   },
 
   // Email types (for tracking)
@@ -32,7 +33,7 @@ export const EMAIL_CONFIG = {
     INTERVIEW_REMINDER: "interview_reminder",
     APPLICATION_REJECTED: "application_rejected",
     APPLICATION_ACCEPTED: "application_accepted",
-    
+
     // Manager emails
     MANAGER_FEEDBACK_REQUEST: "manager_feedback_request",
     MANAGER_FEEDBACK_REMINDER: "manager_feedback_reminder",
