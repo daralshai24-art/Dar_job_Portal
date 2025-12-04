@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Save, TestTube, Mail, Key, User, Image as ImageIcon } from "lucide-react";
 import { toast } from "react-hot-toast";
+import Button from "../../../shared/ui/Button";
 
 export default function EmailSettings({ settings, onUpdate }) {
   const [emailSettings, setEmailSettings] = useState({
@@ -17,6 +18,7 @@ export default function EmailSettings({ settings, onUpdate }) {
 
   const [testEmail, setTestEmail] = useState("");
   const [sendingTest, setSendingTest] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (settings?.email) {
@@ -33,9 +35,14 @@ export default function EmailSettings({ settings, onUpdate }) {
   }, [settings]);
 
   const handleSave = async () => {
-    const success = await onUpdate('email', emailSettings);
-    if (success) {
-      // toast is handled in parent
+    setSaving(true);
+    try {
+      const success = await onUpdate('email', emailSettings);
+      if (success) {
+        // toast is handled in parent
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -193,25 +200,29 @@ export default function EmailSettings({ settings, onUpdate }) {
               placeholder="أدخل بريدك الإلكتروني للتجربة"
               className="flex-1 px-3 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
-            <button
+            <Button
               onClick={sendTestEmail}
-              disabled={sendingTest || !testEmail}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              disabled={!testEmail}
+              loading={sendingTest}
+              variant="info"
+              className="whitespace-nowrap"
             >
-              {sendingTest ? 'جاري الإرسال...' : 'إرسال تجريبي'}
-            </button>
+              إرسال تجريبي
+            </Button>
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="flex justify-end pt-4 border-t border-gray-200">
-          <button
+          <Button
             onClick={handleSave}
-            className="flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors duration-300 shadow-sm"
+            variant="primary"
+            loading={saving}
+            className="flex items-center gap-2"
           >
             <Save className="w-4 h-4" />
             حفظ الإعدادات
-          </button>
+          </Button>
         </div>
       </div>
     </div>
