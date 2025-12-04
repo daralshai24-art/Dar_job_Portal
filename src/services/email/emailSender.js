@@ -24,25 +24,38 @@ export async function getEmailSettings() {
     await connectDB();
     const settings = await Settings.findOne();
 
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "http://localhost:3000";
+
     if (settings && settings.email) {
       return {
         apiKey: settings.email.resendApiKey || EMAIL_CONFIG.provider.apiKey,
         fromEmail: settings.email.fromEmail || EMAIL_CONFIG.sender.email,
         fromName: settings.email.fromName || EMAIL_CONFIG.sender.name,
-        companyLogo: settings.email.companyLogo,
+        companyLogo:
+          settings.email.companyLogo ||
+          `${appUrl}/images/logo-darelshai.png`,
+        appUrl,
       };
     }
   } catch (error) {
     console.error("Error fetching email settings:", error);
   }
 
+  const fallbackAppUrl =
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "http://localhost:3000";
+
   return {
     apiKey: EMAIL_CONFIG.provider.apiKey,
     fromEmail: EMAIL_CONFIG.sender.email,
     fromName: EMAIL_CONFIG.sender.name,
-    companyLogo: process.env.COMPANY_LOGO_URL,
+    companyLogo:
+      process.env.COMPANY_LOGO_URL ||
+      `${fallbackAppUrl}/images/logo-darelshai.png`,
+    appUrl: fallbackAppUrl,
   };
 }
+
 
 /**
  * Send email with full tracking and validation
