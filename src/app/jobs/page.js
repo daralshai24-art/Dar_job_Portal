@@ -19,7 +19,7 @@ import { LOCATIONS, JOB_TYPES } from "@/constants/filterOptions";
 export default function JobsPage() {
   const searchParams = useSearchParams();
   const initialSearchTerm = searchParams.get("search") || "";
-  
+
   const { jobs, loading } = useJobsData();
   const {
     searchTerm,
@@ -35,13 +35,13 @@ export default function JobsPage() {
   } = useJobFilters(jobs, initialSearchTerm);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-50 pt-16 md:pt-20">
       <Header />
-      
+
       <div className="flex-1">
         <JobsHeader totalJobs={jobs.length} filteredJobs={filteredJobs} loading={loading} />
-        
-        <div className="container mx-auto px-4 py-6 lg:py-8">
+
+        <div className="w-full container-px py-8 lg:py-12">
           <div className="flex flex-col lg:grid lg:grid-cols-4 gap-6 lg:gap-8">
             {/* Filters */}
             <div className="lg:col-span-1">
@@ -62,9 +62,9 @@ export default function JobsPage() {
 
             {/* Jobs Content */}
             <div className="lg:col-span-3">
-              <JobsContent 
-                filteredJobs={filteredJobs} 
-                totalJobs={jobs.length} 
+              <JobsContent
+                filteredJobs={filteredJobs}
+                totalJobs={jobs.length}
                 loading={loading}
                 searchTerm={searchTerm}
                 selectedCategory={selectedCategory}

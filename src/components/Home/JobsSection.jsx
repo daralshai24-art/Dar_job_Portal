@@ -17,10 +17,10 @@ const JobsSection = ({
   onClearFilters
 }) => {
   return (
-    <section className="flex-1 bg-gray-50 py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="flex-1 bg-gray-50 py-12 w-screen">
+      <div className="w-full container-px">
         <SectionHeader />
-        
+
         <CategoryFilters
           selectedCategory={selectedCategory}
           onCategorySelect={onCategorySelect}
@@ -61,17 +61,17 @@ const SectionHeader = () => (
   </div>
 );
 
-const JobsContent = ({ 
-  filteredJobs, 
-  searchTerm, 
-  selectedCategory, 
-  onClearFilters, 
-  onViewAllJobs 
+const JobsContent = ({
+  filteredJobs,
+  searchTerm,
+  selectedCategory,
+  onClearFilters,
+  onViewAllJobs
 }) => {
   if (filteredJobs.length === 0) {
     return (
       <div className="py-16">
-        <NoResults 
+        <NoResults
           hasFilters={searchTerm || selectedCategory !== "all"}
           onClearFilters={onClearFilters}
         />
@@ -82,7 +82,7 @@ const JobsContent = ({
   return (
     <div className="space-y-12">
       <JobsGrid jobs={filteredJobs.slice(0, 6)} />
-      <ViewMoreSection 
+      <ViewMoreSection
         filteredJobs={filteredJobs}
         onViewAllJobs={onViewAllJobs}
       />
@@ -91,7 +91,7 @@ const JobsContent = ({
 };
 
 const JobsGrid = ({ jobs }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
     {jobs.map((job) => (
       <JobCard key={job._id} job={job} />
     ))}

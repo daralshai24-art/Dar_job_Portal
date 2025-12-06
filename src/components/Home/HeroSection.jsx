@@ -2,15 +2,15 @@
 import { Search, TrendingUp, Users, Award } from "lucide-react";
 import { COLORS } from "@/lib/constants";
 
-const HeroSection = ({ 
-  searchTerm, 
-  onSearchChange, 
-  onSearchSubmit, 
+const HeroSection = ({
+  searchTerm,
+  onSearchChange,
+  onSearchSubmit,
   onViewAllJobs,
-//   stats 
+  //   stats 
 }) => {
   return (
-    <section className="bg-gradient-to-br from-[#1D3D1E] to-[#2A5A2C] text-white relative overflow-hidden">
+    <section className="w-screen bg-gradient-to-br from-[#1D3D1E] to-[#2A5A2C] text-white relative overflow-hidden">
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-10">
         <div
@@ -21,8 +21,8 @@ const HeroSection = ({
         ></div>
       </div>
 
-      <div className="relative flex flex-col justify-center items-center text-center py-24 px-4">
-        <h1 className="text-4xl md:text-6xl font-extrabold mb-6 text-[#F1DD8C] leading-tight">
+      <div className="relative flex flex-col justify-center items-center text-center py-12 md:py-24 container-px">
+        <h1 className="text-3xl md:text-6xl font-extrabold mb-6 text-[#F1DD8C] leading-relaxed">
           أهلا بكم في بوابة
           <br />
           <span className="text-white">دار الشاي العربي للوظائف</span>
@@ -33,14 +33,14 @@ const HeroSection = ({
         </p>
 
         {/* Search Form */}
-        <SearchForm 
+        <SearchForm
           searchTerm={searchTerm}
           onSearchChange={onSearchChange}
           onSearchSubmit={onSearchSubmit}
         />
 
         {/* Stats */}
- 
+
 
         {/* CTA Button */}
         <ViewAllJobsButton onClick={onViewAllJobs} />
@@ -50,19 +50,23 @@ const HeroSection = ({
 };
 
 const SearchForm = ({ searchTerm, onSearchChange, onSearchSubmit }) => (
-  <form onSubmit={onSearchSubmit} className="flex w-full max-w-lg shadow-xl rounded-lg overflow-hidden border border-[#B38025] mb-8">
+  <form
+    onSubmit={onSearchSubmit}
+    className="flex w-full max-w-2xl bg-white rounded-2xl shadow-xl overflow-hidden border border-[#B38025]/30 mb-8 transform transition-all duration-300 hover:shadow-2xl hover:border-[#B38025] group"
+  >
     <input
       type="text"
-      placeholder="ادخل اسم الوظيفة للبحث"
+      placeholder="ادخل اسم الوظيفة للبحث..."
       value={searchTerm}
       onChange={onSearchChange}
-      className="flex-1 px-8 py-4 focus:outline-none focus:ring-2 focus:ring-[#D6B666] placeholder:text-[#D6B666] text-lg text-right"
+      className="flex-1 px-6 py-4 focus:outline-none text-gray-800 placeholder:text-gray-400 text-base md:text-lg text-right bg-transparent"
     />
     <button
       type="submit"
-      className="bg-[#B38025] px-6 py-4 text-white flex items-center justify-center hover:bg-[#D6B666] hover:text-[#1D3D1E] transition-all duration-300 cursor-pointer"
+      className="bg-[#B38025] px-6 py-4 md:px-10 text-white flex items-center justify-center gap-2 hover:bg-[#D6B666] hover:text-[#1D3D1E] transition-all duration-300 cursor-pointer active:scale-95 shadow-md hover:shadow-lg"
     >
-      <Search size={24} />
+      <Search className="w-6 h-6" />
+      <span className="hidden md:inline font-bold text-lg">بحث</span>
     </button>
   </form>
 );
