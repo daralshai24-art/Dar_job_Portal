@@ -141,4 +141,18 @@
   .container-px {
     @apply px-4 md:px-8;
   }
+
+  /* Custom Scrollbar */
+  .scrollbar-brand::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+
+  .scrollbar-brand::-webkit-scrollbar-track {
+    @apply bg-gray-100 rounded-full;
+  }
+
+  .scrollbar-brand::-webkit-scrollbar-thumb {
+    @apply bg-[#B38025]/50 rounded-full hover:bg-[#B38025];
+  }
 }
