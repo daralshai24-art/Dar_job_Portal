@@ -1,10 +1,7 @@
-// src/services/email/emailSender.js
-/**
- * Email Sender
- * Core logic for sending emails via provider (Resend)
- */
+// [Modified] emailSender.js to support SMTP
 
 import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import EMAIL_CONFIG from "./config/emailConfig.js";
 import { validateEmailPayload } from "./emailValidator.js";
 import {
@@ -29,7 +26,14 @@ export async function getEmailSettings() {
 
     if (settings && settings.email) {
       return {
+        provider: settings.email.provider || "resend",
         apiKey: settings.email.resendApiKey || EMAIL_CONFIG.provider.apiKey,
+        smtp: {
+          host: settings.email.smtpHost,
+          port: settings.email.smtpPort,
+          user: settings.email.smtpUsername,
+          pass: settings.email.smtpPassword,
+        },
         fromEmail: settings.email.fromEmail || EMAIL_CONFIG.sender.email,
         fromName: settings.email.fromName || EMAIL_CONFIG.sender.name,
         companyLogo:
@@ -46,6 +50,7 @@ export async function getEmailSettings() {
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "http://localhost:3000";
 
   return {
+    provider: "resend",
     apiKey: EMAIL_CONFIG.provider.apiKey,
     fromEmail: EMAIL_CONFIG.sender.email,
     fromName: EMAIL_CONFIG.sender.name,
@@ -56,6 +61,55 @@ export async function getEmailSettings() {
   };
 }
 
+/**
+ * Send email functionality abstraction
+ */
+async function sendViaProvider(settings, { to, subject, html }) {
+  // Option 1: Resend
+  if (settings.provider === "resend") {
+    if (!settings.apiKey) throw new Error("Missing Resend API Key");
+
+    const resend = new Resend(settings.apiKey);
+    const { data, error } = await resend.emails.send({
+      from: `${settings.fromName} <${settings.fromEmail}>`,
+      to,
+      subject,
+      html,
+    });
+
+    if (error) throw new Error(error.message);
+    return data?.id;
+  }
+
+  // Option 2: SMTP
+  if (settings.provider === "smtp") {
+    if (!settings.smtp?.host) throw new Error("Missing SMTP Host");
+
+    const transporter = nodemailer.createTransport({
+      host: settings.smtp.host,
+      port: settings.smtp.port || 587,
+      secure: settings.smtp.port === 465, // true for 465, false for other ports
+      auth: {
+        user: settings.smtp.user,
+        pass: settings.smtp.pass,
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    const info = await transporter.sendMail({
+      from: `"${settings.fromName}" <${settings.fromEmail}>`,
+      to,
+      subject,
+      html,
+    });
+
+    return info.messageId;
+  }
+
+  throw new Error(`Unknown provider: ${settings.provider}`);
+}
 
 /**
  * Send email with full tracking and validation
@@ -74,15 +128,6 @@ export async function sendEmail({
   try {
     // Step 0: Get Settings
     const settings = await getEmailSettings();
-
-    if (!settings.apiKey) {
-      return {
-        success: false,
-        error: "Email service not configured (missing API Key)",
-      };
-    }
-
-    const resend = new Resend(settings.apiKey);
 
     // Step 1: Validate payload
     const validation = validateEmailPayload({
@@ -121,34 +166,26 @@ export async function sendEmail({
       metadata,
     });
 
-    // Step 4: Send via provider (Resend)
-    console.log(`[Email Debug] Sending email...`);
-    console.log(`[Email Debug] API Key starts with: ${settings.apiKey?.substring(0, 5)}...`);
-    console.log(`[Email Debug] From: ${settings.fromName} <${settings.fromEmail}>`);
-    console.log(`[Email Debug] To: ${to}`);
+    // Step 4: Send via provider
+    console.log(`[Email Debug] Sending via ${settings.provider}...`);
 
-    const { data, error } = await resend.emails.send({
-      from: `${settings.fromName} <${settings.fromEmail}>`,
-      to,
-      subject,
-      html,
-    });
+    try {
+      const messageId = await sendViaProvider(settings, { to, subject, html });
 
-    // Step 5: Handle result
-    if (error) {
+      await markEmailAsSent(notification._id, messageId);
+      console.log(`✓ Email sent via ${settings.provider}: ${emailType} to ${to}`);
+
+      return {
+        success: true,
+        messageId: messageId,
+        notificationId: notification._id,
+      };
+    } catch (error) {
       await markEmailAsFailed(notification._id, error.message);
       console.error(`✗ Email failed: ${emailType} to ${to}`, error);
       return { success: false, error: error.message };
     }
 
-    await markEmailAsSent(notification._id, data?.id);
-    console.log(`✓ Email sent: ${emailType} to ${to}`);
-
-    return {
-      success: true,
-      messageId: data?.id,
-      notificationId: notification._id,
-    };
   } catch (error) {
     console.error("Email sending error:", error);
     return { success: false, error: error.message };
@@ -161,25 +198,8 @@ export async function sendEmail({
 export async function sendEmailWithoutTracking({ to, subject, html }) {
   try {
     const settings = await getEmailSettings();
-
-    if (!settings.apiKey) {
-      return { success: false, error: "Missing API Key" };
-    }
-
-    const resend = new Resend(settings.apiKey);
-
-    const { data, error } = await resend.emails.send({
-      from: `${settings.fromName} <${settings.fromEmail}>`,
-      to,
-      subject,
-      html,
-    });
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    return { success: true, messageId: data?.id };
+    const messageId = await sendViaProvider(settings, { to, subject, html });
+    return { success: true, messageId };
   } catch (error) {
     return { success: false, error: error.message };
   }

@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth.config";
 import committeeService from "@/services/committee/CommitteeService";
 
-export async function GET(req, { params }) {
+export async function GET(req, props) {
+    const params = await props.params;
     try {
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -21,7 +22,8 @@ export async function GET(req, { params }) {
     }
 }
 
-export async function PATCH(req, { params }) {
+export async function PATCH(req, props) {
+    const params = await props.params;
     try {
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -42,7 +44,8 @@ export async function PATCH(req, { params }) {
     }
 }
 
-export async function DELETE(req, { params }) {
+export async function DELETE(req, props) {
+    const params = await props.params;
     try {
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });

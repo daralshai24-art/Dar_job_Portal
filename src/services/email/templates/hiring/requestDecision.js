@@ -1,4 +1,4 @@
-import baseEmailTemplate from "../base/baseEmailTemplate.js";
+import baseEmailTemplate from "../base/baseTemplate.js";
 import {
     emailHeader,
     emailFooter,

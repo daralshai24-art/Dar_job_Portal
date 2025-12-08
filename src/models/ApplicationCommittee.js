@@ -21,7 +21,7 @@ const applicationCommitteeSchema = new mongoose.Schema(
             userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
             role: {
                 type: String,
-                enum: ["supervisor", "manager", "head_department", "hr_manager", "department_manager"],
+                enum: ["supervisor", "manager", "head_department", "department_manager", "interviewer", "technical_reviewer", "hr_reviewer", "decision_maker"],
                 required: true
             },
             status: {
@@ -85,7 +85,7 @@ const applicationCommitteeSchema = new mongoose.Schema(
 // Indexes
 applicationCommitteeSchema.index({ status: 1, createdAt: -1 });
 applicationCommitteeSchema.index({ "members.userId": 1, status: 1 });
-applicationCommitteeSchema.index({ "members.status": 1 });
+// removed duplicate index for members.status
 
 // Virtuals
 applicationCommitteeSchema.virtual("isComplete").get(function () {

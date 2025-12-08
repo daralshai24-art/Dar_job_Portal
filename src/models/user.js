@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema(
     // ==================== ROLE & PERMISSIONS ====================
     role: {
       type: String,
-      enum: ["super_admin", "admin", "hr_manager", "hr_specialist", "interviewer", "viewer"],
+      enum: ["super_admin", "admin", "hr_manager", "hr_specialist", "department_manager", "head_of_department", "direct_manager", "interviewer", "viewer"],
       default: "viewer",
       required: true,
     },
@@ -39,7 +39,7 @@ const userSchema = new mongoose.Schema(
       enum: ["HR", "IT", "Finance", "Operations", "Marketing", "Sales", "Other"],
       default: "Other",
     },
-    
+
     // Stored as JSON - managed by service layer
     permissions: {
       type: mongoose.Schema.Types.Mixed,
@@ -109,7 +109,7 @@ userSchema.methods.isLocked = function () {
 };
 
 // ==================== VIRTUAL FIELDS ====================
-userSchema.virtual("isActive").get(function () { 
+userSchema.virtual("isActive").get(function () {
   return this.status === "active" && !this.isLocked();
 });
 

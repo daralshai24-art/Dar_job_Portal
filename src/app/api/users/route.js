@@ -12,7 +12,7 @@ import { UserBusinessService } from "@/services/user/userBusinessService";
 async function getUsersHandler(req) {
   try {
     await connectDB();
-    
+
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search");
     const role = searchParams.get("role");
@@ -30,7 +30,11 @@ async function getUsersHandler(req) {
     }
 
     if (role && role !== "all") {
-      query.role = role;
+      if (role.includes(",")) {
+        query.role = { $in: role.split(",") };
+      } else {
+        query.role = role;
+      }
     }
 
     if (status && status !== "all") {

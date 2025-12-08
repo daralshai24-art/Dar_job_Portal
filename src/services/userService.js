@@ -7,6 +7,9 @@ export const USER_ROLES = {
   ADMIN: "admin",
   HR_MANAGER: "hr_manager",
   HR_SPECIALIST: "hr_specialist",
+  DEPARTMENT_MANAGER: "department_manager",
+  HEAD_OF_DEPARTMENT: "head_of_department",
+  DIRECT_MANAGER: "direct_manager",
   INTERVIEWER: "interviewer",
   VIEWER: "viewer",
 };
@@ -28,14 +31,16 @@ export const DEPARTMENTS = {
   OTHER: "Other",
 };
 
-// ==================== LABELS ====================
 export const ROLE_LABELS = {
   super_admin: "مدير عام",
-  // admin: "مشرف",
+  admin: "مشرف",
   hr_manager: "مدير الموارد البشرية",
-  // hr_specialist: "أخصائي موارد بشرية",
-  // interviewer: "محاور",
-  // viewer: "مشاهد",
+  hr_specialist: "أخصائي موارد بشرية",
+  department_manager: "مدير إدارة",
+  head_of_department: "مدير القسم",
+  direct_manager: "المدير المباشر",
+  interviewer: "محاور",
+  viewer: "مشاهد",
 };
 
 export const STATUS_LABELS = {
@@ -48,11 +53,11 @@ export const STATUS_LABELS = {
 export const DEPARTMENT_LABELS = {
   HR: "الموارد البشرية",
   IT: "تقنية المعلومات",
-  // Finance: "المالية",
-  // Operations: "العمليات",
-  // Marketing: "التسويق",
-  // Sales: "المبيعات",
-  // Other: "أخرى",
+  Finance: "المالية",
+  Operations: "العمليات",
+  Marketing: "التسويق",
+  Sales: "المبيعات",
+  Other: "أخرى",
 };
 
 // ==================== UTILS ====================
@@ -232,7 +237,7 @@ export const formatUserForDisplay = (user) => {
     roleLabel: getRoleLabel(user.role),
     statusLabel: getStatusLabel(user.status),
     departmentLabel: getDepartmentLabel(user.department),
-    lastLoginFormatted: user.lastLogin 
+    lastLoginFormatted: user.lastLogin
       ? new Date(user.lastLogin).toLocaleDateString("ar-SA")
       : "لم يسجل دخول بعد",
     createdAtFormatted: new Date(user.createdAt).toLocaleDateString("ar-SA"),
@@ -251,12 +256,12 @@ export const getUserAvatarColor = (email) => {
     "#B38025", "#2C5F2D", "#1E3A5F", "#8B4513",
     "#2F4F4F", "#556B2F", "#8B0000", "#483D8B"
   ];
-  
+
   if (!email) return colors[0];
-  
+
   const hash = email.split("").reduce((acc, char) => {
     return char.charCodeAt(0) + ((acc << 5) - acc);
   }, 0);
-  
+
   return colors[Math.abs(hash) % colors.length];
 };

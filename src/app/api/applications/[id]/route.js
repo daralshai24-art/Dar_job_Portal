@@ -5,8 +5,11 @@ import { getAuthUser } from "@/lib/apiAuth";
 import Application from "@/models/Application";
 import Timeline from "@/models/Timeline";
 import { updateApplicationServer } from "@/services/serverApplicationService";
-import "@/models/Category"
-import "@/models/Job"
+// Ensure models are registered for population
+import "@/models/Category";
+import "@/models/Job";
+import "@/models/Committee";
+import "@/models/ApplicationCommittee";
 import mongoose from "mongoose";
 
 export async function GET(request, { params }) {
@@ -14,6 +17,15 @@ export async function GET(request, { params }) {
     await connectDB();
     const resolvedParams = await params;
     const { id } = resolvedParams;
+
+    // 🔒 Security Check
+    const { getServerSession } = await import("next-auth");
+    const { authOptions } = await import("@/lib/auth.config");
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // ✅ Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -27,8 +39,16 @@ export async function GET(request, { params }) {
     const application = await Application.findById(id)
       .populate({
         path: "jobId",
-        select: "title location category createdAt",
+        select: "title location category createdAt department", // Include department
         populate: { path: "category", select: "name" },
+      })
+      .populate({
+        path: "applicationCommitteeId",
+        select: "committeeId status votingResults",
+        populate: {
+          path: "committeeId",
+          select: "name"
+        }
       })
       .lean();
 
@@ -37,6 +57,18 @@ export async function GET(request, { params }) {
         { error: "طلب التوظيف غير موجود" },
         { status: 404 }
       );
+    }
+
+    // 👷 Department Manager Guard (Flow 11)
+    if (session.user.role === "department_manager") {
+      const jobDept = application.jobId?.department;
+      const userDept = session.user.department;
+      if (!jobDept || jobDept !== userDept) {
+        return NextResponse.json(
+          { error: "ليس لديك صلاحية لعرض هذا الطلب" },
+          { status: 403 }
+        );
+      }
     }
 
     const timeline = await Timeline.find({ applicationId: id })
@@ -98,6 +130,14 @@ export async function PUT(request, { params }) {
         path: "jobId",
         select: "title location category createdAt",
         populate: { path: "category", select: "name" },
+      })
+      .populate({
+        path: "applicationCommitteeId",
+        select: "committeeId status votingResults",
+        populate: {
+          path: "committeeId",
+          select: "name"
+        }
       })
       .lean();
 

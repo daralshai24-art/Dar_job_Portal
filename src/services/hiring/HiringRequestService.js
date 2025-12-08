@@ -33,6 +33,8 @@ class HiringRequestService {
 
         if (decision === "approved") {
             await request.approve(reviewerId, notes);
+            // [New] Auto-convert to job as per Flow 9
+            await this.convertToJob(requestId, reviewerId);
         } else if (decision === "rejected") {
             await request.reject(reviewerId, notes);
         }

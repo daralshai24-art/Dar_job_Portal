@@ -1,4 +1,4 @@
-import baseEmailTemplate from "../base/baseEmailTemplate.js";
+import baseEmailTemplate from "../base/baseTemplate.js";
 import {
     emailHeader,
     emailFooter,
@@ -56,7 +56,7 @@ export default function committeeCompletedTemplate({
                 committee.votingResults.recommendation === "reject" ? "warning" : "info",
             title: "التوصية النهائية",
             content: `بناءً على نتائج التصويت، التوصية هي: <strong>${committee.votingResults.recommendation === "hire" ? "تعيين ✅" :
-                    committee.votingResults.recommendation === "reject" ? "رفض ❌" : "معلق ⏳"
+                committee.votingResults.recommendation === "reject" ? "رفض ❌" : "معلق ⏳"
                 }</strong>`
         })}
 

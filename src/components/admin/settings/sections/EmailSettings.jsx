@@ -28,6 +28,10 @@ export default function EmailSettings({ settings, onUpdate }) {
         fromEmail: settings.email.fromEmail || "",
         fromName: settings.email.fromName || "",
         companyLogo: settings.email.companyLogo || "",
+        smtpHost: settings.email.smtpHost || "",
+        smtpPort: settings.email.smtpPort || 587,
+        smtpUsername: settings.email.smtpUsername || "",
+        smtpPassword: settings.email.smtpPassword || "",
         emailNotifications: settings.email.emailNotifications ?? true,
         applicationAlerts: settings.email.applicationAlerts ?? true
       });
@@ -132,98 +136,139 @@ export default function EmailSettings({ settings, onUpdate }) {
             </div>
           </div>
 
+          <input
+            type="url"
+            value={emailSettings.companyLogo}
+            onChange={(e) => setEmailSettings({ ...emailSettings, companyLogo: e.target.value })}
+            placeholder="https://example.com/logo.png"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dir-ltr text-left"
+          />
+        </div>
+
+        <hr className="border-gray-200" />
+
+        {/* SMTP Configuration */}
+        <div className="space-y-4 pt-4">
+          <h3 className="font-medium text-gray-800">إعدادات SMTP (اختياري)</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Host</label>
+              <input
+                type="text"
+                value={emailSettings.smtpHost || ""}
+                onChange={(e) => setEmailSettings({ ...emailSettings, smtpHost: e.target.value })}
+                placeholder="smtp.example.com"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg dir-ltr"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Port</label>
+              <input
+                type="number"
+                value={emailSettings.smtpPort || 587}
+                onChange={(e) => setEmailSettings({ ...emailSettings, smtpPort: parseInt(e.target.value) })}
+                placeholder="587"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg dir-ltr"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Username</label>
+              <input
+                type="text"
+                value={emailSettings.smtpUsername || ""}
+                onChange={(e) => setEmailSettings({ ...emailSettings, smtpUsername: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg dir-ltr"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Password</label>
+              <input
+                type="password"
+                value={emailSettings.smtpPassword || ""}
+                onChange={(e) => setEmailSettings({ ...emailSettings, smtpPassword: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg dir-ltr"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr className="border-gray-200" />
+
+      {/* Email Preferences */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              <ImageIcon className="w-4 h-4" />
-              رابط الشعار (Company Logo URL)
-            </label>
+            <h3 className="font-medium text-gray-800">الإشعارات البريدية</h3>
+            <p className="text-sm text-gray-600">تفعيل إرسال الإشعارات عبر البريد الإلكتروني بشكل عام</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
             <input
-              type="url"
-              value={emailSettings.companyLogo}
-              onChange={(e) => setEmailSettings({ ...emailSettings, companyLogo: e.target.value })}
-              placeholder="https://example.com/logo.png"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dir-ltr text-left"
+              type="checkbox"
+              checked={emailSettings.emailNotifications}
+              onChange={(e) => setEmailSettings({ ...emailSettings, emailNotifications: e.target.checked })}
+              className="sr-only peer"
             />
-          </div>
+            <div className="w-11 h-6 bg-gray-200 peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+          </label>
         </div>
 
-        <hr className="border-gray-200" />
-
-        {/* Email Preferences */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50">
-            <div>
-              <h3 className="font-medium text-gray-800">الإشعارات البريدية</h3>
-              <p className="text-sm text-gray-600">تفعيل إرسال الإشعارات عبر البريد الإلكتروني بشكل عام</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={emailSettings.emailNotifications}
-                onChange={(e) => setEmailSettings({ ...emailSettings, emailNotifications: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-            </label>
+        <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50">
+          <div>
+            <h3 className="font-medium text-gray-800">تنبيهات الطلبات الجديدة</h3>
+            <p className="text-sm text-gray-600">إرسال بريد للمسؤولين عند استلام طلب توظيف جديد</p>
           </div>
-
-          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50">
-            <div>
-              <h3 className="font-medium text-gray-800">تنبيهات الطلبات الجديدة</h3>
-              <p className="text-sm text-gray-600">إرسال بريد للمسؤولين عند استلام طلب توظيف جديد</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={emailSettings.applicationAlerts}
-                onChange={(e) => setEmailSettings({ ...emailSettings, applicationAlerts: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-            </label>
-          </div>
-        </div>
-
-        <hr className="border-gray-200" />
-
-        {/* Test Email Section */}
-        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-          <h3 className="font-medium text-blue-800 mb-3 flex items-center gap-2">
-            <TestTube className="w-4 h-4" />
-            اختبار الإعدادات
-          </h3>
-          <div className="flex gap-3">
+          <label className="relative inline-flex items-center cursor-pointer">
             <input
-              type="email"
-              value={testEmail}
-              onChange={(e) => setTestEmail(e.target.value)}
-              placeholder="أدخل بريدك الإلكتروني للتجربة"
-              className="flex-1 px-3 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              type="checkbox"
+              checked={emailSettings.applicationAlerts}
+              onChange={(e) => setEmailSettings({ ...emailSettings, applicationAlerts: e.target.checked })}
+              className="sr-only peer"
             />
-            <Button
-              onClick={sendTestEmail}
-              disabled={!testEmail}
-              loading={sendingTest}
-              variant="info"
-              className="whitespace-nowrap"
-            >
-              إرسال تجريبي
-            </Button>
-          </div>
+            <div className="w-11 h-6 bg-gray-200 peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+          </label>
         </div>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end pt-4 border-t border-gray-200">
+      <hr className="border-gray-200" />
+
+      {/* Test Email Section */}
+      <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+        <h3 className="font-medium text-blue-800 mb-3 flex items-center gap-2">
+          <TestTube className="w-4 h-4" />
+          اختبار الإعدادات
+        </h3>
+        <div className="flex gap-3">
+          <input
+            type="email"
+            value={testEmail}
+            onChange={(e) => setTestEmail(e.target.value)}
+            placeholder="أدخل بريدك الإلكتروني للتجربة"
+            className="flex-1 px-3 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
           <Button
-            onClick={handleSave}
-            variant="primary"
-            loading={saving}
-            className="flex items-center gap-2"
+            onClick={sendTestEmail}
+            disabled={!testEmail}
+            loading={sendingTest}
+            variant="info"
+            className="whitespace-nowrap"
           >
-            <Save className="w-4 h-4" />
-            حفظ الإعدادات
+            إرسال تجريبي
           </Button>
         </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex justify-end pt-4 border-t border-gray-200">
+        <Button
+          onClick={handleSave}
+          variant="primary"
+          loading={saving}
+          className="flex items-center gap-2"
+        >
+          <Save className="w-4 h-4" />
+          حفظ الإعدادات
+        </Button>
       </div>
     </div>
   );

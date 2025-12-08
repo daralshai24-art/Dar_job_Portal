@@ -1,7 +1,7 @@
 //src\components\admin\layouts\Sidebar.jsx
 "use client";
 
-import { LogOut, X, LayoutDashboard, Briefcase, Users, FileText, Settings } from "lucide-react";
+import { LogOut, X, LayoutDashboard, Briefcase, Users, FileText, Settings, UserCheck, Activity } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 
 export default function Sidebar({ currentUser, sidebarOpen, setSidebarOpen, onLogout }) {
@@ -31,11 +31,25 @@ export default function Sidebar({ currentUser, sidebarOpen, setSidebarOpen, onLo
       show: currentUser?.permissions?.applications?.view ?? true,
     },
     {
+      name: "لجان التوظيف",
+      href: "/admin/committees",
+      icon: UserCheck,
+      active: pathname.startsWith("/admin/committees"),
+      show: currentUser?.permissions?.committees?.view ?? true,
+    },
+    {
       name: "المستخدمون",
       href: "/admin/users",
       icon: Users,
       active: pathname.startsWith("/admin/users"),
       show: currentUser?.permissions?.users?.view ?? true,
+    },
+    {
+      name: "حالة النظام",
+      href: "/admin/system/status",
+      icon: Activity,
+      active: pathname.startsWith("/admin/system/status"),
+      show: currentUser?.role === "super_admin" || currentUser?.role === "admin",
     },
     {
       name: "الإعدادات",
@@ -114,9 +128,9 @@ export default function Sidebar({ currentUser, sidebarOpen, setSidebarOpen, onLo
         <div
           className="fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity lg:hidden z-40"
           onClick={() => setSidebarOpen(false)}
-          
+
         />
-        
+
       )}
     </>
   );

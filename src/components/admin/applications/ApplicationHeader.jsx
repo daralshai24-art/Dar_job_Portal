@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Edit, Clock, MessageSquare, MoreVertical } from "lucide-react";
+import { X, Edit, Clock, MoreVertical } from "lucide-react";
 import Button from "@/components/shared/ui/Button";
 import {
   DropdownMenu,
@@ -17,8 +17,6 @@ export const ApplicationHeader = ({
   onCancel,
   showTimeline,
   toggleTimeline,
-  showFeedback,
-  toggleFeedback,
 }) => {
   return (
     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
@@ -59,15 +57,6 @@ export const ApplicationHeader = ({
             >
               <Clock size={16} />
               {showTimeline ? "إخفاء سجل التقدم" : "عرض سجل التقدم"}
-            </DropdownMenuItem>
-
-            {/* Feedback toggle */}
-            <DropdownMenuItem
-              className="flex items-center gap-2"
-              onClick={toggleFeedback}
-            >
-              <MessageSquare size={16} />
-              {showFeedback ? "إخفاء ملاحظات المدير" : "عرض ملاحظات المدير"}
             </DropdownMenuItem>
 
             {/* Edit / Cancel */}

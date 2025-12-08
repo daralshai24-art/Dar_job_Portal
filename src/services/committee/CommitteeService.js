@@ -12,21 +12,22 @@ class CommitteeService {
             name,
             category,
             department,
-            members,
+            members = [], // Default to empty array
             settings,
             createdBy
         } = data;
 
         // Validate Members
         const userIds = members.map(m => m.userId);
-        const users = await User.find({ _id: { $in: userIds } });
-
-        if (users.length !== userIds.length) {
-            throw new Error("One or more users not found");
+        if (userIds.length > 0) {
+            const users = await User.find({ _id: { $in: userIds } });
+            if (users.length !== userIds.length) {
+                throw new Error("One or more users not found");
+            }
         }
 
         // Validate Roles (Basic check that roles are valid for committee context)
-        const allowedRoles = ["supervisor", "manager", "head_department", "department_manager"];
+        const allowedRoles = ["interviewer", "technical_reviewer", "hr_reviewer", "decision_maker"];
         for (const m of members) {
             if (!allowedRoles.includes(m.role)) {
                 throw new Error(`Invalid committee role: ${m.role}`);
@@ -99,7 +100,7 @@ class CommitteeService {
      * Remove Member from Committee
      */
     async removeMember(committeeId, userId) {
-        await dbConnect();
+        await connectDB();
         const committee = await Committee.findById(committeeId);
         if (!committee) throw new Error("Committee not found");
 
@@ -109,10 +110,28 @@ class CommitteeService {
     }
 
     /**
+     * Update Member in Committee
+     */
+    async updateMember(committeeId, userId, { role, isPrimary }) {
+        await connectDB();
+        const committee = await Committee.findById(committeeId);
+        if (!committee) throw new Error("Committee not found");
+
+        const memberIndex = committee.members.findIndex(m => m.userId.toString() === userId.toString());
+        if (memberIndex === -1) throw new Error("Member not found in committee");
+
+        if (role) committee.members[memberIndex].role = role;
+        if (isPrimary !== undefined) committee.members[memberIndex].isPrimary = isPrimary;
+
+        await committee.save();
+        return committee.populate("members.userId", "name email role department");
+    }
+
+    /**
      * Get Active Committees by Category
      */
     async findByCategory(categoryId) {
-        await dbConnect();
+        await connectDB();
         return Committee.findByCategory(categoryId);
     }
 
@@ -120,7 +139,7 @@ class CommitteeService {
      * Get Active Committees by Department
      */
     async findByDepartment(department) {
-        await dbConnect();
+        await connectDB();
         return Committee.findByDepartment(department);
     }
 
@@ -128,7 +147,7 @@ class CommitteeService {
      * Get Active Committees for a User
      */
     async findForUser(userId) {
-        await dbConnect();
+        await connectDB();
         return Committee.findForUser(userId);
     }
 
@@ -136,7 +155,7 @@ class CommitteeService {
      * Get All Active Committees
      */
     async getActiveCommittees() {
-        await dbConnect();
+        await connectDB();
         return Committee.find({ isActive: true })
             .populate("category", "name")
             .populate("members.userId", "name email role")
@@ -147,7 +166,7 @@ class CommitteeService {
      * Get by ID
      */
     async getById(id) {
-        await dbConnect();
+        await connectDB();
         return Committee.findById(id)
             .populate("category", "name")
             .populate("members.userId", "name email role department")
@@ -159,7 +178,7 @@ class CommitteeService {
      * Soft Delete
      */
     async deleteCommittee(id) {
-        await dbConnect();
+        await connectDB();
         const committee = await Committee.findById(id);
         if (!committee) throw new Error("Committee not found");
 

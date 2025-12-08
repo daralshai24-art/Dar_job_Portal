@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth.config";
 import hiringRequestService from "@/services/hiring/HiringRequestService";
 
-export async function PATCH(req, { params }) {
+export async function PATCH(req, props) {
+    const params = await props.params;
     try {
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -35,7 +36,8 @@ export async function PATCH(req, { params }) {
     }
 }
 
-export async function GET(req, { params }) {
+export async function GET(req, props) {
+    const params = await props.params;
     // Can implement single get if needed
     return NextResponse.json({ message: "Not implemented" });
 }

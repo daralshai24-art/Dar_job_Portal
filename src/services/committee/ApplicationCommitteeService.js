@@ -22,7 +22,13 @@ class ApplicationCommitteeService {
 
         // Link Application
         await Application.findByIdAndUpdate(applicationId, {
-            applicationCommitteeId: appCommittee._id
+            applicationCommitteeId: appCommittee._id,
+            committeeStatus: {
+                totalMembers: appCommittee.members.length,
+                feedbacksReceived: 0,
+                averageScore: 0,
+                recommendation: "pending"
+            }
         });
 
         return appCommittee.populate("members.userId", "name email role");
@@ -61,7 +67,13 @@ class ApplicationCommitteeService {
         await this.ensureHRManagerIncluded(appCommittee);
 
         await Application.findByIdAndUpdate(applicationId, {
-            applicationCommitteeId: appCommittee._id
+            applicationCommitteeId: appCommittee._id,
+            committeeStatus: {
+                totalMembers: appCommittee.members.length,
+                feedbacksReceived: 0,
+                averageScore: 0,
+                recommendation: "pending"
+            }
         });
 
         return appCommittee.populate("members.userId", "name email role");

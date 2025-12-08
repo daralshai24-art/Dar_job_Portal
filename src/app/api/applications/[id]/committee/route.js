@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth.config";
 import applicationCommitteeService from "@/services/committee/ApplicationCommitteeService";
 import feedbackOrchestratorService from "@/services/committee/FeedbackOrchestratorService";
 
-export async function POST(req, { params }) {
+export async function POST(req, props) {
+    const params = await props.params;
     try {
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
         const { role, id: userId } = session.user;
-        if (!["hr_manager", "admin", "hr_specialist"].includes(role)) {
+        if (!["hr_manager", "admin", "hr_specialist", "super_admin"].includes(role)) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
         }
 

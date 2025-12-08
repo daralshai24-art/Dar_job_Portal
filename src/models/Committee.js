@@ -6,13 +6,11 @@ const committeeSchema = new mongoose.Schema(
         category: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Category",
-            required: true,
             index: true,
         },
         department: {
             type: String,
             enum: ["HR", "IT", "Finance", "Operations", "Marketing", "Sales", "Other"],
-            required: true,
             index: true,
         },
 
@@ -22,7 +20,7 @@ const committeeSchema = new mongoose.Schema(
             userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
             role: {
                 type: String,
-                enum: ["supervisor", "manager", "head_department", "department_manager"],
+                enum: ["supervisor", "manager", "head_department", "department_manager", "interviewer", "technical_reviewer", "hr_reviewer", "decision_maker"],
                 required: true
             },
             isPrimary: { type: Boolean, default: true },
@@ -107,4 +105,6 @@ committeeSchema.statics.findForUser = function (userId) {
         .populate("category", "name");
 };
 
+// Prevent model overwrite warning and force basic hot reload in dev
+if (process.env.NODE_ENV !== 'production') delete mongoose.models.Committee;
 export default mongoose.models.Committee || mongoose.model("Committee", committeeSchema);

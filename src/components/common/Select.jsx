@@ -97,7 +97,7 @@ const filterSelectStyles = {
  * @param {boolean} isSearchable - Enable search
  * @param {string} className - Additional CSS classes
  */
-export const FilterSelect = ({ 
+export const FilterSelect = ({
   value,
   onChange,
   options = [],
@@ -126,7 +126,7 @@ export const FilterSelect = ({
     if (!value || (Array.isArray(value) && value.length === 0)) {
       return isMulti ? [] : null;
     }
-    
+
     if (isMulti) {
       const values = Array.isArray(value) ? value : [value];
       return normalizedOptions.filter(opt => values.includes(opt.value));
@@ -138,34 +138,41 @@ export const FilterSelect = ({
   const currentValue = getCurrentValue();
 
   return (
-    <div className={`relative ${className}`}>
-      {/* Filter Icon */}
-      <Filter 
-        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#D6B666] z-10 pointer-events-none" 
-        size={20} 
-      />
-      
-      {/* React Select */}
-      <ReactSelect
-        value={currentValue}
-        onChange={(selected) => {
-          if (isMulti) {
-            onChange(selected ? selected.map(item => item.value) : []);
-          } else {
-            onChange(selected?.value || '');
-          }
-        }}
-        options={normalizedOptions}
-        placeholder={placeholder}
-        styles={filterSelectStyles}
-        isSearchable={isSearchable}
-        isClearable={isClearable}
-        isMulti={isMulti}
-        noOptionsMessage={() => "لا توجد خيارات متاحة"}
-        loadingMessage={() => "جاري التحميل..."}
-        className="text-right"
-        {...props}
-      />
+    <div className={`space-y-2 ${className}`}>
+      {props.label && (
+        <label className="block text-sm font-medium text-gray-700">
+          {props.label}
+        </label>
+      )}
+      <div className="relative">
+        {/* Filter Icon */}
+        <Filter
+          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#D6B666] z-10 pointer-events-none"
+          size={20}
+        />
+
+        {/* React Select */}
+        <ReactSelect
+          value={currentValue}
+          onChange={(selected) => {
+            if (isMulti) {
+              onChange(selected ? selected.map(item => item.value) : []);
+            } else {
+              onChange(selected?.value || '');
+            }
+          }}
+          options={normalizedOptions}
+          placeholder={placeholder}
+          styles={filterSelectStyles}
+          isSearchable={isSearchable}
+          isClearable={isClearable}
+          isMulti={isMulti}
+          noOptionsMessage={() => "لا توجد خيارات متاحة"}
+          loadingMessage={() => "جاري التحميل..."}
+          className="text-right"
+          {...props}
+        />
+      </div>
     </div>
   );
 };

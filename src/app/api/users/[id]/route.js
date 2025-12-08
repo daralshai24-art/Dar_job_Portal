@@ -8,7 +8,8 @@ import { UserBusinessService } from "@/services/user/userBusinessService";
 /**
  * GET /api/users/[id] - Fetch single user
  */
-async function getUserHandler(req, { params }) {
+async function getUserHandler(req, props) {
+  const params = await props.params;
   try {
     await connectDB();
 
@@ -34,7 +35,8 @@ async function getUserHandler(req, { params }) {
 /**
  * PUT /api/users/[id] - Update user
  */
-async function updateUserHandler(req, { params }) {
+async function updateUserHandler(req, props) {
+  const params = await props.params;
   try {
     await connectDB();
 
@@ -85,7 +87,8 @@ async function updateUserHandler(req, { params }) {
 /**
  * DELETE /api/users/[id] - Delete user
  */
-async function deleteUserHandler(req, { params }) {
+async function deleteUserHandler(req, props) {
+  const params = await props.params;
   try {
     await connectDB();
 

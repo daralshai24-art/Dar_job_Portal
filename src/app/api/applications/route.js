@@ -113,14 +113,14 @@ export async function POST(request) {
     });
 
     // ==================== 🆕 SEND CONFIRMATION EMAIL ====================
-    
+
     if (emailService) {
       try {
         // Populate job details for email
         const populatedApp = await Application.findById(application._id)
           .populate({
             path: "jobId",
-            select: "title location category",
+            select: "title location category department", // Ensure department is selected
             populate: { path: "category", select: "name" }
           })
           .lean();
@@ -135,21 +135,43 @@ export async function POST(request) {
           } : null
         };
 
-        // Send confirmation email asynchronously
+        // 1. Send Applicant Confirmation
         emailService.sendApplicationReceived({
           application: appData,
           triggeredBy: null
-        })
-          .then(result => {
-            if (result.success) {
-              console.log(`✅ Confirmation email sent to ${appData.email}`);
-            } else {
-              console.warn(`⚠️ Email failed: ${result.error}`);
-            }
-          })
-          .catch(emailError => {
-            console.error("📧 Email error (non-critical):", emailError.message);
-          });
+        }).catch(err => console.error("Applicant email error:", err.message));
+
+        // 2. [New] Notify Department Managers (Flow 13)
+        // Check if job has a department
+        if (appData.jobId && appData.jobId.department) {
+          const emailRoutingService = require("@/services/email/EmailRoutingService").default;
+
+          // Get Dept Managers for this department
+          const deptManagers = await emailRoutingService.getRecipientsByRole(
+            "department_manager",
+            "new_dept_application",
+            { department: appData.jobId.department }
+          );
+
+          for (const manager of deptManagers) {
+            emailService.sendEmail({
+              to: manager.email,
+              subject: `طلب توظيف جديد: ${appData.jobId.title}`,
+              html: `
+                        <div dir="rtl">
+                            <h2>طلب توظيف جديد في قسمك</h2>
+                            <p>مرحباً ${manager.name}،</p>
+                            <p>تم استلام طلب توظيف جديد لوظيفة <strong>${appData.jobId.title}</strong> في قسم <strong>${appData.jobId.department}</strong>.</p>
+                            <p>اسم المتقدم: ${appData.name}</p>
+                            <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/applications/${appData._id}">عرض الطلب</a>
+                        </div>
+                    `,
+              emailType: "new_dept_application",
+              recipientType: "manager",
+              applicationId: appData._id
+            }).catch(err => console.error(`Failed to notify dept manager ${manager.email}`, err.message));
+          }
+        }
 
       } catch (emailError) {
         console.error("📧 Email notification error (non-critical):", emailError.message);
@@ -179,6 +201,15 @@ export async function GET(request) {
   try {
     await connectDB();
 
+    // 🔒 Security Check
+    const { getServerSession } = await import("next-auth");
+    const { authOptions } = await import("@/lib/auth.config");
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const jobId = searchParams.get("jobId");
     const status = searchParams.get("status");
@@ -187,8 +218,40 @@ export async function GET(request) {
     if (jobId) query.jobId = jobId;
     if (status) query.status = status;
 
+    // 👷 Department Manager Filtering (Flow 11)
+    if (session.user.role === "department_manager") {
+      // Filter by department
+      // 1. Find jobs in user's department
+      // (If user has no department, they see nothing)
+      if (!session.user.department) {
+        return NextResponse.json([]);
+      }
+
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+
+      // 2. Find jobs belonging to this department
+      // We only want applications for jobs in THIS department
+      const deptJobs = await Job.find({ department: session.user.department }).select("_id");
+      const deptJobIds = deptJobs.map(j => j._id);
+
+      // Add to query
+      // If jobId was already passed in query, ideally we check if it is in deptJobIds.
+      if (query.jobId) {
+        const isAllowed = deptJobIds.some(id => id.toString() === query.jobId);
+        if (!isAllowed) {
+          return NextResponse.json([]); // Explicitly return empty if searching for unauthorized job
+        }
+        // query.jobId is already set
+      } else {
+        // Filter by all allowed jobs
+        query.jobId = { $in: deptJobIds };
+      }
+    }
+    // Admin/HR see all (no extra filter needed)
+
     const applications = await Application.find(query)
-      .populate("jobId", "title category location")
+      .populate("jobId", "title category location department")
       .sort({ createdAt: -1 });
 
     return NextResponse.json(applications);

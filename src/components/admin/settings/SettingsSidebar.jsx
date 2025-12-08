@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function SettingsSidebar({ activeSection, onSectionChange, onSaveAll }) {
   const sections = [
     { id: "tools", label: "أدوات النظام", type: "internal" },
-    { id: "email", label: "البريد الإلكتروني", type: "internal" },
+    { id: "email", label: "البريد الإلكتروني", type: "link", href: "/admin/settings/email" },
     { id: "categories", label: "إدارة الفئات", type: "link", href: "/admin/settings/reference/categories" },
     // Future sections can be added here:
     // { id: "general", label: "عام", type: "internal" },
