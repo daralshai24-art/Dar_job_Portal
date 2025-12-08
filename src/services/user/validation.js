@@ -23,25 +23,25 @@ export function isValidPhone(phone) {
  */
 export function validatePassword(password) {
   const errors = [];
-  
+
   if (!password) {
     errors.push("كلمة المرور مطلوبة");
     return { isValid: false, errors };
   }
-  
+
   if (password.length < 6) {
     errors.push("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
   }
-  
+
   if (password.length > 128) {
     errors.push("كلمة المرور طويلة جداً");
   }
-  
+
   // Optional: Add strength requirements
   // if (!/[A-Z]/.test(password)) errors.push("يجب أن تحتوي على حرف كبير");
   // if (!/[a-z]/.test(password)) errors.push("يجب أن تحتوي على حرف صغير");
   // if (!/[0-9]/.test(password)) errors.push("يجب أن تحتوي على رقم");
-  
+
   return {
     isValid: errors.length === 0,
     errors
@@ -80,7 +80,7 @@ export function validateUserData(userData, isUpdate = false) {
     if (!passwordValidation.isValid) {
       errors.push(...passwordValidation.errors);
     }
-    
+
     // Confirm password match
     if (userData.confirmPassword !== userData.password) {
       errors.push("كلمة المرور غير متطابقة");
@@ -134,21 +134,26 @@ export function validateUserData(userData, isUpdate = false) {
  */
 export function sanitizeUserInput(userData) {
   const sanitized = { ...userData };
-  
+
   // Trim strings
   if (sanitized.name) sanitized.name = sanitized.name.trim();
   if (sanitized.email) sanitized.email = sanitized.email.trim().toLowerCase();
   if (sanitized.phone) sanitized.phone = sanitized.phone.replace(/\s+/g, "");
   if (sanitized.position) sanitized.position = sanitized.position.trim();
   if (sanitized.bio) sanitized.bio = sanitized.bio.trim();
-  
-  // Remove undefined/null values
+
+  // Boolean Flags (Maintain explicit boolean values)
+  if (userData.isDefaultCommitteeMember !== undefined) {
+    sanitized.isDefaultCommitteeMember = userData.isDefaultCommitteeMember;
+  }
+
+  // Remove undefined/null values but KEEP false/boolean/0
   Object.keys(sanitized).forEach(key => {
     if (sanitized[key] === undefined || sanitized[key] === null || sanitized[key] === "") {
       delete sanitized[key];
     }
   });
-  
+
   return sanitized;
 }
 
@@ -158,10 +163,10 @@ export function sanitizeUserInput(userData) {
 export function validateBulkUsers(users) {
   const results = [];
   const emails = new Set();
-  
+
   users.forEach((user, index) => {
     const validation = validateUserData(user, false);
-    
+
     // Check for duplicate emails in the batch
     if (user.email && emails.has(user.email.toLowerCase())) {
       validation.isValid = false;
@@ -169,14 +174,14 @@ export function validateBulkUsers(users) {
     } else if (user.email) {
       emails.add(user.email.toLowerCase());
     }
-    
+
     results.push({
       index: index + 1,
       user,
       ...validation
     });
   });
-  
+
   return {
     isValid: results.every(r => r.isValid),
     results,

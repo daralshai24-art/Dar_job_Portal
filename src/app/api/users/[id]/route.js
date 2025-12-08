@@ -1,4 +1,6 @@
 // app/api/users/[id]/route.js
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/models/user";
@@ -41,6 +43,7 @@ async function updateUserHandler(req, props) {
     await connectDB();
 
     const updateData = await req.json();
+    console.log("[API] Updating User:", params.id, updateData); // DEBUG LOG
     const currentUser = req.user; // From auth middleware
 
     // Check if user can manage target user

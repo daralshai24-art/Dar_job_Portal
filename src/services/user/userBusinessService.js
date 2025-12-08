@@ -19,10 +19,10 @@ export class UserBusinessService {
     }
 
     // Check if email exists
-    const existingUser = await User.findOne({ 
-      email: userData.email.toLowerCase() 
+    const existingUser = await User.findOne({
+      email: userData.email.toLowerCase()
     });
-    
+
     if (existingUser) {
       throw new Error("البريد الإلكتروني مستخدم بالفعل");
     }
@@ -53,8 +53,8 @@ export class UserBusinessService {
 
     // Check email uniqueness if changing
     if (updateData.email && updateData.email.toLowerCase() !== user.email) {
-      const existingUser = await User.findOne({ 
-        email: updateData.email.toLowerCase() 
+      const existingUser = await User.findOne({
+        email: updateData.email.toLowerCase()
       });
       if (existingUser) {
         throw new Error("البريد الإلكتروني مستخدم بالفعل");
@@ -66,16 +66,15 @@ export class UserBusinessService {
       updateData.permissions = getRolePermissions(updateData.role);
     }
 
-    // Update fields
-    Object.keys(updateData).forEach(key => {
-      if (updateData[key] !== undefined) {
-        user[key] = updateData[key];
-      }
-    });
+    // Use findByIdAndUpdate to bypass potential schema caching issues during dev hot-reloads
+    // This ensures new fields like isDefaultCommitteeMember are saved even if the instance schema is stale
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select("-password");
 
-    await user.save();
-
-    return await User.findById(user._id).select("-password");
+    return updatedUser;
   }
 
   /**
@@ -154,12 +153,12 @@ export class UserBusinessService {
     if (!isMatch) {
       // Increment attempts
       user.loginAttempts += 1;
-      
+
       // Lock after 5 attempts
       if (user.loginAttempts >= 5) {
         user.lockUntil = new Date(Date.now() + 30 * 60 * 1000);
       }
-      
+
       await user.save();
       throw new Error("البريد الإلكتروني أو كلمة المرور غير صحيحة");
     }

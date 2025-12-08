@@ -40,6 +40,12 @@ const userSchema = new mongoose.Schema(
       default: "Other",
     },
 
+    // Default member in all new committees (auto-added)
+    isDefaultCommitteeMember: {
+      type: Boolean,
+      default: false,
+    },
+
     // Stored as JSON - managed by service layer
     permissions: {
       type: mongoose.Schema.Types.Mixed,
@@ -114,4 +120,10 @@ userSchema.virtual("isActive").get(function () {
 });
 
 // ==================== EXPORT ====================
+// Prevent Mongoose Recompilation Error in Next.js (Hot Reload)
+// AND ensure schema changes like 'isDefaultCommitteeMember' are picked up instantly in dev
+if (process.env.NODE_ENV === "development" && mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
 export default mongoose.models.User || mongoose.model("User", userSchema);

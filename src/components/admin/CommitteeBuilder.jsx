@@ -6,6 +6,7 @@ import { FilterSelect } from "@/components/common/Select";
 import Button from "@/components/shared/ui/Button";
 import { toast } from "react-hot-toast";
 import { useConfirmationModal } from "@/components/shared/modals/ConfirmationModalContext";
+import { getRoleLabel as getUserRoleLabel } from "@/services/userService";
 
 export default function CommitteeBuilder({ committeeId, initialMembers = [], onUpdate }) {
     const [members, setMembers] = useState(initialMembers);
@@ -31,12 +32,39 @@ export default function CommitteeBuilder({ committeeId, initialMembers = [], onU
 
     const fetchUsers = async () => {
         try {
-            const res = await fetch("/api/users?role=interviewer,department_manager,hr_manager,technical_reviewer");
+            // Fetch ALL users to allow adding anyone to the committee
+            // Force no-store to ensure we get the latest 'isDefaultCommitteeMember' flags
+            const res = await fetch(`/api/users?t=${Date.now()}`, { cache: "no-store" });
             const data = await res.json();
-            // Ensure we handle both direct array or { users: [] } format
+
             if (res.ok) {
                 const userList = Array.isArray(data) ? data : (data.users || []);
                 setUsers(userList);
+
+                // Auto-add Default Members if creating a NEW committee (no ID) and list is empty
+                if (!committeeId && members.length === 0 && (!initialMembers || initialMembers.length === 0)) {
+                    const defaults = userList.filter(u => u.isDefaultCommitteeMember === true);
+
+
+                    if (defaults.length > 0) {
+                        const prefilledMembers = defaults.map(u => {
+                            // Smart Role Assignment
+                            let committeeRole = "decision_maker";
+                            if (u.role === "hr_manager" || u.role === "hr_specialist") committeeRole = "hr_reviewer";
+                            if (u.department === "HR") committeeRole = "hr_reviewer";
+                            if (u.role === "technical_lead" || u.role === "technical_reviewer") committeeRole = "technical_reviewer";
+
+                            return {
+                                userId: u, // Full user object for display
+                                role: committeeRole,
+                                isPrimary: true
+                            };
+                        });
+
+                        setMembers(prefilledMembers);
+                        toast.success(`تم إضافة ${defaults.length} أعضاء افتراضيين تلقائياً`);
+                    }
+                }
             }
         } catch (error) {
             console.error("Failed to fetch users", error);
@@ -132,7 +160,11 @@ export default function CommitteeBuilder({ committeeId, initialMembers = [], onU
         { value: "interviewer", label: "محاور" },
         { value: "technical_reviewer", label: "مقيم فني" },
         { value: "hr_reviewer", label: "مقيم HR" },
-        { value: "decision_maker", label: "صانع قرار" }
+        { value: "decision_maker", label: "صانع قرار" },
+        { value: "head_department", label: "مدير قسم" },
+        { value: "department_manager", label: "مدير إدارة" },
+        { value: "manager", label: "مدير" },
+        { value: "supervisor", label: "مشرف" }
     ];
 
     // Map users to options compatible with FilterSelect
@@ -222,6 +254,9 @@ export default function CommitteeBuilder({ committeeId, initialMembers = [], onU
                             <div>
                                 <div className="font-medium text-sm text-gray-900">
                                     {member.userId?.name || 'مستخدم غير معروف'}
+                                    <span className="text-xs text-gray-400 mr-2 font-normal">
+                                        ({getUserRoleLabel(member.userId?.role)})
+                                    </span>
                                 </div>
                                 <div className="text-xs text-gray-500 flex gap-2">
                                     <span>{getRoleLabel(member.role)}</span>
@@ -268,7 +303,11 @@ function getRoleLabel(role) {
         interviewer: "محاور",
         technical_reviewer: "مقيم فني",
         hr_reviewer: "مقيم HR",
-        decision_maker: "صانع قرار"
+        decision_maker: "صانع قرار",
+        head_department: "مدير قسم",
+        department_manager: "مدير إدارة",
+        manager: "مدير",
+        supervisor: "مشرف"
     };
     return roles[role] || role;
 }
