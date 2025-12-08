@@ -4,6 +4,8 @@ import { connectDB } from "@/lib/db";
 import FeedbackToken from "@/models/FeedbackToken";
 import Application from "@/models/Application";
 import Timeline from "@/models/Timeline";
+import emailRoutingService from "@/services/email/EmailRoutingService";
+import feedbackOrchestratorService from "@/services/committee/FeedbackOrchestratorService";
 
 /**
  * Submit manager feedback
@@ -57,7 +59,7 @@ export async function POST(request, { params }) {
 
     // Get application
     const application = await Application.findById(applicationId);
-    
+
     if (!application) {
       return NextResponse.json(
         { error: "طلب التوظيف غير موجود" },
@@ -81,7 +83,7 @@ export async function POST(request, { params }) {
     // Update application based on manager role
     if (feedbackToken.managerRole === "technical_reviewer") {
       application.technicalNotes = technicalNotes;
-      
+
       // Store full feedback in a new field (we'll add this to schema)
       if (!application.managerFeedbacks) {
         application.managerFeedbacks = [];
@@ -89,7 +91,7 @@ export async function POST(request, { params }) {
       application.managerFeedbacks.push(feedbackData);
     } else if (feedbackToken.managerRole === "hr_reviewer") {
       application.hrNotes = technicalNotes;
-      
+
       if (!application.managerFeedbacks) {
         application.managerFeedbacks = [];
       }
@@ -109,7 +111,7 @@ export async function POST(request, { params }) {
         application.strengths = [...(application.strengths || []), ...strengthsList];
       }
     }
-    
+
     if (weaknesses) {
       const weaknessesList = weaknesses.split('\n').filter(w => w.trim());
       if (weaknessesList.length > 0) {
@@ -122,6 +124,23 @@ export async function POST(request, { params }) {
 
     // Mark token as used
     await feedbackToken.markAsUsed();
+
+    // 🆕 Trigger Committee Logic if this feedback is part of a committee
+    if (feedbackToken.applicationCommitteeId) {
+      try {
+        await feedbackOrchestratorService.processFeedbackSubmission(
+          feedbackToken._id,
+          {
+            recommendation,
+            score: overallScore,
+            notes: technicalNotes
+          }
+        );
+      } catch (err) {
+        console.error("Failed to process committee feedback:", err);
+        // Don't fail the request, just log
+      }
+    }
 
     // Create timeline entry
     await Timeline.create({

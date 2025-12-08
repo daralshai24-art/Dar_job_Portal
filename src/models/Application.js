@@ -71,13 +71,23 @@ const applicationSchema = new mongoose.Schema(
     strengths: [String],
     weaknesses: [String],
 
+    // ==================== NEW: Committee Info (Denormalized) ====================
+    applicationCommitteeId: { type: mongoose.Schema.Types.ObjectId, ref: "ApplicationCommittee" },
+    committeeStatus: {
+      totalMembers: Number,
+      feedbacksReceived: Number,
+      averageScore: Number,
+      recommendation: String,
+      lastFeedbackAt: Date
+    },
+
     createdAt: { type: Date, default: Date.now }
   },
   { timestamps: true }
 );
 
 // Normalize before saving
-applicationSchema.pre("save", function(next) {
+applicationSchema.pre("save", function (next) {
   if (this.email) this.email = this.email.toLowerCase().trim();
   if (this.phone) this.phone = this.phone.replace(/\D/g, "");
   next();
@@ -89,21 +99,22 @@ applicationSchema.index({ jobId: 1, phone: 1 });
 applicationSchema.index({ jobId: 1, createdAt: -1 });
 applicationSchema.index({ status: 1 });
 applicationSchema.index({ interviewDate: 1 });
+applicationSchema.index({ applicationCommitteeId: 1 });
 
 // ==================== VIRTUAL FIELDS ====================
-applicationSchema.virtual("hasManagerFeedback").get(function() {
+applicationSchema.virtual("hasManagerFeedback").get(function () {
   return this.managerFeedbacks && this.managerFeedbacks.length > 0;
 });
 
-applicationSchema.virtual("averageFeedbackScore").get(function() {
+applicationSchema.virtual("averageFeedbackScore").get(function () {
   if (!this.managerFeedbacks || this.managerFeedbacks.length === 0) return null;
-  
+
   const scores = this.managerFeedbacks
     .map(f => f.overallScore)
     .filter(s => s !== null && s !== undefined);
-    
+
   if (scores.length === 0) return null;
-  
+
   return (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1);
 });
 

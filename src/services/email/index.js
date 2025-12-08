@@ -7,6 +7,8 @@
 // Import all methods
 import * as applicantEmails from "./methods/applicantEmails.js";
 import * as managerEmails from "./methods/managerEmails.js";
+import * as committeeEmails from "./methods/committeeEmails.js";
+import * as hiringEmails from "./methods/hiringEmails.js";
 
 // Import utilities
 import { sendEmail, sendEmailWithoutTracking } from "./emailSender.js";
@@ -20,7 +22,7 @@ import EMAIL_CONFIG from "./config/emailConfig.js";
  */
 class EmailService {
   // ==================== APPLICANT EMAILS ====================
-  
+
   sendApplicationReceived = applicantEmails.sendApplicationReceived;
   sendInterviewScheduled = applicantEmails.sendInterviewScheduled;
   sendInterviewRescheduled = applicantEmails.sendInterviewRescheduled;
@@ -28,11 +30,20 @@ class EmailService {
   sendApplicationAccepted = applicantEmails.sendApplicationAccepted;
 
   // ==================== MANAGER EMAILS ====================
-  
+
   sendManagerFeedbackRequest = managerEmails.sendManagerFeedbackRequest;
 
+  // ==================== COMMITTEE EMAILS ====================
+
+  sendCommitteeCompleted = committeeEmails.sendCommitteeCompleted;
+
+  // ==================== HIRING EMAILS ====================
+
+  sendNewHiringRequest = hiringEmails.sendNewHiringRequest;
+  sendHiringRequestDecision = hiringEmails.sendHiringRequestDecision;
+
   // ==================== UTILITIES ====================
-  
+
   // Core sending
   sendEmail = sendEmail;
   sendEmailWithoutTracking = sendEmailWithoutTracking;
@@ -59,17 +70,14 @@ export default emailService;
 
 // Also export individual functions for tree-shaking
 export {
-  // Applicant emails
   applicantEmails,
-  
-  // Manager emails
   managerEmails,
-  
-  // Core
+  committeeEmails,
+  hiringEmails,
+
   sendEmail,
   sendEmailWithoutTracking,
-  
-  // Utilities
+
   emailTracker,
   emailValidator,
   EMAIL_CONFIG,

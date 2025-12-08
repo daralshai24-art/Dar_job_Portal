@@ -2,16 +2,16 @@
 "use server";
 
 import Category from "@/models/Category";
-import dbConnect from "@/lib/dbConnect";
+import { connectDB } from "@/lib/db";
 
 export async function getCategories() {
   try {
-    await dbConnect();
-    
+    await connectDB();
+
     const categories = await Category.find({ isActive: true })
       .select("name nameEn")
       .sort({ name: 1 });
-    
+
     return { success: true, data: categories };
   } catch (error) {
     return { success: false, error: error.message };
@@ -20,8 +20,8 @@ export async function getCategories() {
 
 export async function createCategory(categoryData) {
   try {
-    await dbConnect();
-    
+    await connectDB();
+
     const category = await Category.create(categoryData);
     return { success: true, data: category };
   } catch (error) {

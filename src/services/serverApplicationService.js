@@ -1,6 +1,7 @@
 // src/services/serverApplicationService.js (SAFE UPDATE - Won't Break Anything)
 import Application from "@/models/Application";
 import { createTimelineEntry } from "@/services/timelineService";
+import emailRoutingService from "@/services/email/EmailRoutingService";
 
 // 🆕 ONLY import if emailService exists, otherwise skip
 let emailService = null;
@@ -92,7 +93,7 @@ export async function updateApplicationServer({ applicationId, user, updateData 
   // ==================== 🆕 EMAIL NOTIFICATION LOGIC ====================
   // This section is OPTIONAL and won't break if emailService doesn't exist
   // Emails are sent asynchronously and failures won't affect the update
-  
+
   if (emailService) {
     try {
       // Populate job details for emails
@@ -126,7 +127,7 @@ export async function updateApplicationServer({ applicationId, user, updateData 
           triggeredBy: userId
         });
       }
-      
+
       // Interview rescheduled
       else if (action === "interview_rescheduled" && hadInterview) {
         emailPromise = emailService.sendInterviewRescheduled({
@@ -134,7 +135,7 @@ export async function updateApplicationServer({ applicationId, user, updateData 
           triggeredBy: userId
         });
       }
-      
+
       // Application rejected
       else if (action === "rejected" && previousStatus !== "rejected") {
         emailPromise = emailService.sendApplicationRejected({
@@ -142,7 +143,7 @@ export async function updateApplicationServer({ applicationId, user, updateData 
           triggeredBy: userId
         });
       }
-      
+
       // Application accepted/hired
       else if (action === "hired" && previousStatus !== "hired") {
         emailPromise = emailService.sendApplicationAccepted({
