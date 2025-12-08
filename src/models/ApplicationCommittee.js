@@ -21,7 +21,7 @@ const applicationCommitteeSchema = new mongoose.Schema(
             userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
             role: {
                 type: String,
-                enum: ["supervisor", "manager", "head_department", "department_manager", "interviewer", "technical_reviewer", "hr_reviewer", "decision_maker"],
+                enum: ["supervisor", "manager", "head_department", "department_manager", "interviewer", "technical_reviewer", "hr_reviewer", "decision_maker", "hr_manager", "hr_specialist"],
                 required: true
             },
             status: {
@@ -258,4 +258,6 @@ applicationCommitteeSchema.statics.findNeedingReminders = function () {
     }).populate("members.userId applicationId");
 };
 
+// Prevent model overwrite warning and force basic hot reload in dev
+if (process.env.NODE_ENV !== 'production') delete mongoose.models.ApplicationCommittee;
 export default mongoose.models.ApplicationCommittee || mongoose.model("ApplicationCommittee", applicationCommitteeSchema);

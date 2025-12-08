@@ -12,7 +12,24 @@ class ApplicationCommitteeService {
 
         // Check if already assigned
         const existing = await ApplicationCommittee.findOne({ applicationId });
-        if (existing) throw new Error("Committee already assigned to this application");
+        const targetApp = await Application.findById(applicationId);
+
+        if (existing) {
+            // Case 1: Committee is cancelled -> Hard delete (Zombie)
+            if (existing.status === 'cancelled') {
+                await ApplicationCommittee.findByIdAndDelete(existing._id);
+            }
+            // Case 2: Committee is active BUT Application thinks it has none (Orphan/Phantom)
+            else if (!targetApp.applicationCommitteeId || targetApp.applicationCommitteeId.toString() !== existing._id.toString()) {
+                console.warn(`Found orphan committee ${existing._id} for app ${applicationId}. removing to allow new assignment.`);
+                await ApplicationCommittee.findByIdAndDelete(existing._id);
+            }
+            // Case 3: True duplicate assignment
+            else {
+                console.error("Blocker Committee Found:", existing);
+                throw new Error(`Committee already assigned to this application (Status: ${existing.status})`);
+            }
+        }
 
         // Create from Template
         const appCommittee = await ApplicationCommittee.createFromTemplate(applicationId, committeeId);
@@ -21,7 +38,7 @@ class ApplicationCommitteeService {
         await this.ensureHRManagerIncluded(appCommittee);
 
         // Link Application
-        await Application.findByIdAndUpdate(applicationId, {
+        const updatedApp = await Application.findByIdAndUpdate(applicationId, {
             applicationCommitteeId: appCommittee._id,
             committeeStatus: {
                 totalMembers: appCommittee.members.length,
@@ -29,7 +46,9 @@ class ApplicationCommitteeService {
                 averageScore: 0,
                 recommendation: "pending"
             }
-        });
+        }, { new: true });
+
+        if (!updatedApp) console.error("Failed to link committee to application", applicationId);
 
         return appCommittee.populate("members.userId", "name email role");
     }
@@ -41,7 +60,19 @@ class ApplicationCommitteeService {
         await connectDB();
 
         const existing = await ApplicationCommittee.findOne({ applicationId });
-        if (existing) throw new Error("Committee already assigned to this application");
+        const targetApp = await Application.findById(applicationId);
+
+        if (existing) {
+            if (existing.status === 'cancelled') {
+                await ApplicationCommittee.findByIdAndDelete(existing._id);
+            }
+            else if (!targetApp.applicationCommitteeId || targetApp.applicationCommitteeId.toString() !== existing._id.toString()) {
+                await ApplicationCommittee.findByIdAndDelete(existing._id);
+            }
+            else {
+                throw new Error("Committee already assigned to this application");
+            }
+        }
 
         const deadline = new Date();
         deadline.setDate(deadline.getDate() + (settings?.feedbackDeadlineDays || 7));
@@ -137,7 +168,7 @@ class ApplicationCommitteeService {
      * Get Committee Results
      */
     async calculateVotingResults(committeeId) {
-        await dbConnect();
+        await connectDB();
         const committee = await ApplicationCommittee.findById(committeeId);
         if (!committee) throw new Error("Committee not found");
 
@@ -148,13 +179,13 @@ class ApplicationCommitteeService {
     }
 
     async isComplete(committeeId) {
-        await dbConnect();
+        await connectDB();
         const committee = await ApplicationCommittee.findById(committeeId);
         return committee?.isComplete;
     }
 
     async getProgress(committeeId) {
-        await dbConnect();
+        await connectDB();
         const committee = await ApplicationCommittee.findById(committeeId)
             .populate("members.userId", "name email");
 
@@ -173,7 +204,7 @@ class ApplicationCommitteeService {
     }
 
     async getByApplicationId(applicationId) {
-        await dbConnect();
+        await connectDB();
         return ApplicationCommittee.findOne({ applicationId })
             .populate("committeeId", "name")
             .populate("members.userId", "name email role department")
@@ -184,16 +215,12 @@ class ApplicationCommitteeService {
     }
 
     async cancelCommittee(applicationCommitteeId, userId, reason) {
-        await dbConnect();
+        await connectDB();
         const committee = await ApplicationCommittee.findById(applicationCommitteeId);
         if (!committee) throw new Error("Committee not found");
 
-        committee.status = "cancelled";
-        committee.cancelledAt = new Date();
-        committee.cancelledBy = userId;
-        committee.cancellationReason = reason;
-
-        await committee.save();
+        // Hard delete to free up the unique index for future assignments
+        await ApplicationCommittee.findByIdAndDelete(applicationCommitteeId);
 
         // Reset Application link
         await Application.findByIdAndUpdate(committee.applicationId, {

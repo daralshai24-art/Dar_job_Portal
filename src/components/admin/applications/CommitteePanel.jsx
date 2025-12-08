@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Users, CheckCircle, Clock, AlertCircle, Trash2 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { useConfirmationModal } from "@/components/shared/modals/ConfirmationModalContext";
 
 export default function CommitteePanel({ applicationId, currentStatus, isAssigned, committeeName, onUpdate }) {
     // defined once at the top
@@ -65,6 +66,36 @@ export default function CommitteePanel({ applicationId, currentStatus, isAssigne
         }
     };
 
+    const { showConfirmation } = useConfirmationModal();
+
+    const removeCommittee = async () => {
+        showConfirmation({
+            title: "إزالة اللجنة",
+            message: "هل أنت متأكد من إزالة اللجنة الحالية؟ سيتم إلغاء جميع التقييمات المرتبطة.",
+            variant: "danger",
+            onConfirm: async () => {
+                const toastId = toast.loading("جاري الإزالة...");
+                try {
+                    const res = await fetch(`/api/applications/${applicationId}/committee`, {
+                        method: "DELETE"
+                    });
+
+                    if (res.ok) {
+                        toast.success("تم إزالة اللجنة", { id: toastId });
+                        if (onUpdate) onUpdate();
+                        else window.location.reload();
+                    } else {
+                        const errorData = await res.json();
+                        console.error("Delete Committee Error:", errorData);
+                        toast.error(errorData.message || "فشل إزالة اللجنة", { id: toastId });
+                    }
+                } catch (e) {
+                    toast.error("حدث خطأ", { id: toastId });
+                }
+            }
+        });
+    };
+
     if (hasCommittee) {
         return (
             <div className="bg-white p-6 rounded-lg shadow-sm border mt-6">
@@ -72,13 +103,24 @@ export default function CommitteePanel({ applicationId, currentStatus, isAssigne
                     <Users className="w-5 h-5 text-indigo-600" />
                     لجنة التوظيف
                 </h3>
-                <div className="p-4 bg-indigo-50 text-indigo-800 rounded-lg">
-                    <p className="font-semibold mb-1">
-                        تم تعيين اللجنة: {committeeName || "لجنة مخصصة"}
-                    </p>
-                    <p className="text-sm">
-                        تم تعيين اللجنة لهذا الطلب.
-                    </p>
+                <div className="flex justify-between items-center">
+                    <div className="p-4 bg-indigo-50 text-indigo-800 rounded-lg flex-1">
+                        <p className="font-semibold mb-1">
+                            تم تعيين اللجنة: {committeeName || "لجنة مخصصة"}
+                        </p>
+                        <p className="text-sm">
+                            تم تعيين اللجنة لهذا الطلب.
+                        </p>
+                    </div>
+                </div>
+                <div className="mt-4 flex justify-end">
+                    <button
+                        onClick={removeCommittee}
+                        className="text-red-500 text-sm hover:underline flex items-center gap-1"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                        إزالة اللجنة / إعادة تعيين
+                    </button>
                 </div>
             </div>
         );

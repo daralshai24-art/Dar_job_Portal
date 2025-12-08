@@ -20,7 +20,7 @@ const committeeSchema = new mongoose.Schema(
             userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
             role: {
                 type: String,
-                enum: ["supervisor", "manager", "head_department", "department_manager", "interviewer", "technical_reviewer", "hr_reviewer", "decision_maker"],
+                enum: ["supervisor", "manager", "head_department", "department_manager", "interviewer", "technical_reviewer", "hr_reviewer", "decision_maker", "hr_manager", "hr_specialist"],
                 required: true
             },
             isPrimary: { type: Boolean, default: true },

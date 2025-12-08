@@ -43,3 +43,30 @@ export async function POST(req, props) {
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }
+
+export async function DELETE(req, props) {
+    const params = await props.params;
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+        const { role, id: userId } = session.user;
+        if (!["hr_manager", "admin", "hr_specialist", "super_admin"].includes(role)) {
+            return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+        }
+
+        const { id: applicationId } = params;
+
+        // Find the active committee for this application
+        const appCommittee = await applicationCommitteeService.getByApplicationId(applicationId);
+        if (!appCommittee) {
+            return NextResponse.json({ message: "No active committee found" }, { status: 404 });
+        }
+
+        await applicationCommitteeService.cancelCommittee(appCommittee._id, userId, "Manual removal by admin");
+
+        return NextResponse.json({ message: "Committee removed successfully" });
+    } catch (error) {
+        return NextResponse.json({ message: error.message }, { status: 500 });
+    }
+}
