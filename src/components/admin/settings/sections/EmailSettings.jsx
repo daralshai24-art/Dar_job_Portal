@@ -38,9 +38,14 @@ export default function EmailSettings({ settings, onUpdate }) {
         smtpPassword: settings.email.smtpPassword || "",
         emailNotifications: settings.email.emailNotifications ?? true,
         applicationAlerts: settings.email.applicationAlerts ?? true,
-        notificationRules: settings.email.notificationRules || {
+        notificationRules: {
           new_application: ["admin", "hr_manager", "department_manager"],
-          hiring_request: ["admin", "hr_manager"]
+          hiring_request: ["admin", "hr_manager"],
+          interview_scheduled: [],
+          interview_rescheduled: [],
+          application_accepted: [],
+          application_rejected: [],
+          ...settings.email.notificationRules
         }
       });
     }
@@ -272,72 +277,57 @@ export default function EmailSettings({ settings, onUpdate }) {
             <thead className="text-xs text-gray-700 uppercase bg-gray-50">
               <tr>
                 <th scope="col" className="px-6 py-3 text-right">نوع التنبيه</th>
-                <th scope="col" className="px-6 py-3 text-center">Admin</th>
-                <th scope="col" className="px-6 py-3 text-center">HR Manager</th>
-                <th scope="col" className="px-6 py-3 text-center">Dept Manager</th>
-                <th scope="col" className="px-6 py-3 text-center">Hearing Manager</th>
+                {[
+                  { id: 'super_admin', label: 'Super Admin' },
+                  { id: 'admin', label: 'Admin' },
+                  { id: 'hr_manager', label: 'HR Mgr' },
+                  { id: 'hr_specialist', label: 'HR Spec' },
+                  { id: 'head_of_department', label: 'Dept Head' },
+                  { id: 'department_manager', label: 'Dept Mgr' },
+                  { id: 'direct_manager', label: 'Direct Mgr' },
+                  { id: 'interviewer', label: 'Interviewer' },
+                ].map(role => (
+                  <th key={role.id} scope="col" className="px-2 py-3 text-center whitespace-nowrap" title={role.label}>
+                    {role.label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {/* Row 1: New Application */}
-              <tr className="bg-white border-b hover:bg-gray-50">
-                <td className="px-6 py-4 font-medium text-gray-900 text-right">
-                  طلب توظيف جديد
-                  <p className="text-xs text-gray-500 font-normal">عند وصول طلب جديد عبر الموقع</p>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <input type="checkbox"
-                    checked={emailSettings.notificationRules?.new_application?.includes('admin')}
-                    onChange={() => handleRuleToggle('new_application', 'admin')}
-                    className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
-                  />
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <input type="checkbox"
-                    checked={emailSettings.notificationRules?.new_application?.includes('hr_manager')}
-                    onChange={() => handleRuleToggle('new_application', 'hr_manager')}
-                    className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
-                  />
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <input type="checkbox"
-                    checked={emailSettings.notificationRules?.new_application?.includes('department_manager')}
-                    onChange={() => handleRuleToggle('new_application', 'department_manager')}
-                    className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
-                  />
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <div className="w-4 h-4 mx-auto bg-gray-100 rounded-full" title="Not Applicable"></div>
-                </td>
-              </tr>
-
-              {/* Row 2: Hiring Request */}
-              <tr className="bg-white hover:bg-gray-50">
-                <td className="px-6 py-4 font-medium text-gray-900 text-right">
-                  طلب احتياج وظيفي
-                  <p className="text-xs text-gray-500 font-normal">عند إنشاء طلب جديد من مدير قسم</p>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <input type="checkbox"
-                    checked={emailSettings.notificationRules?.hiring_request?.includes('admin')}
-                    onChange={() => handleRuleToggle('hiring_request', 'admin')}
-                    className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
-                  />
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <input type="checkbox"
-                    checked={emailSettings.notificationRules?.hiring_request?.includes('hr_manager')}
-                    onChange={() => handleRuleToggle('hiring_request', 'hr_manager')}
-                    className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
-                  />
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <div className="w-4 h-4 mx-auto bg-gray-100 rounded-full" title="Not Applicable"></div>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <div className="w-4 h-4 mx-auto bg-gray-100 rounded-full" title="Not Applicable"></div>
-                </td>
-              </tr>
+              {[
+                { id: 'new_application', label: 'طلب توظيف جديد', description: 'عند وصول طلب جديد عبر الموقع' },
+                { id: 'hiring_request', label: 'طلب احتياج وظيفي', description: 'عند إنشاء طلب جديد من مدير قسم' },
+                { id: 'interview_scheduled', label: 'تم جدولة مقابلة', description: 'عند تحديد موعد مقابلة للمرشح' },
+                { id: 'interview_rescheduled', label: 'تم تغيير موعد المقابلة', description: 'عند تعديل موعد المقابلة' },
+                { id: 'application_accepted', label: 'تم قبول المرشح', description: 'عند قبول المرشح نهائياً' },
+                { id: 'application_rejected', label: 'تم رفض الطلب', description: 'عند رفض طلب التوظيف' }
+              ].map((alert) => (
+                <tr key={alert.id} className="bg-white border-b hover:bg-gray-50 last:border-0">
+                  <td className="px-6 py-4 font-medium text-gray-900 text-right">
+                    {alert.label}
+                    <p className="text-xs text-gray-500 font-normal">{alert.description}</p>
+                  </td>
+                  {[
+                    'super_admin',
+                    'admin',
+                    'hr_manager',
+                    'hr_specialist',
+                    'head_of_department',
+                    'department_manager',
+                    'direct_manager',
+                    'interviewer'
+                  ].map((role) => (
+                    <td key={role} className="px-2 py-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={emailSettings.notificationRules?.[alert.id]?.includes(role) || false}
+                        onChange={() => handleRuleToggle(alert.id, role)}
+                        className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

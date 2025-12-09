@@ -41,6 +41,10 @@ export const EMAIL_CONFIG = {
     // Internal emails
     NEW_APPLICATION_ALERT: "new_application_alert",
     HIRING_REQUEST_ALERT: "hiring_request_alert",
+    INTERVIEW_SCHEDULED_ALERT: "interview_scheduled_alert",
+    INTERVIEW_RESCHEDULED_ALERT: "interview_rescheduled_alert",
+    APPLICATION_ACCEPTED_ALERT: "application_accepted_alert",
+    APPLICATION_REJECTED_ALERT: "application_rejected_alert",
   },
 
   // Recipient types
@@ -61,6 +65,10 @@ export const EMAIL_CONFIG = {
       MANAGER_FEEDBACK_REQUEST: "طلب تقييم مرشح",
       NEW_APPLICATION_ALERT: "تنبيه: طلب توظيف جديد",
       HIRING_REQUEST_ALERT: "طلب احتياج وظيفي جديد",
+      INTERVIEW_SCHEDULED_ALERT: "تنبيه: تم جدولة مقابلة",
+      INTERVIEW_RESCHEDULED_ALERT: "تنبيه: تحديث موعد مقابلة",
+      APPLICATION_ACCEPTED_ALERT: "تنبيه: تم قبول مرشح",
+      APPLICATION_REJECTED_ALERT: "تنبيه: تم رفض طلب",
     },
     en: {
       APPLICATION_RECEIVED: "Application Received",
@@ -71,6 +79,10 @@ export const EMAIL_CONFIG = {
       MANAGER_FEEDBACK_REQUEST: "Candidate Feedback Request",
       NEW_APPLICATION_ALERT: "New Job Application",
       HIRING_REQUEST_ALERT: "New Hiring Request",
+      INTERVIEW_SCHEDULED_ALERT: "Interview Scheduled Alert",
+      INTERVIEW_RESCHEDULED_ALERT: "Interview Updated Alert",
+      APPLICATION_ACCEPTED_ALERT: "Candidate Hired Alert",
+      APPLICATION_REJECTED_ALERT: "Application Rejected Alert",
     },
   },
 

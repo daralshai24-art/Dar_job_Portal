@@ -140,7 +140,7 @@ export async function sendEmail({
     });
 
     if (!validation.valid) {
-      console.error("Email validation failed:", validation.errors);
+      console.error(`[EmailSender] ❌ VALIDATION FAILED for '${emailType}' to '${to}':`, validation.errors);
       return {
         success: false,
         error: `Validation failed: ${validation.errors.join(", ")}`,

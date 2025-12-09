@@ -52,7 +52,11 @@ const emailNotificationSchema = new mongoose.Schema(
 
         // Internal notifications
         "new_application_alert",
-        "hiring_request_alert"
+        "hiring_request_alert",
+        "interview_scheduled_alert",
+        "interview_rescheduled_alert",
+        "application_accepted_alert",
+        "application_rejected_alert"
       ],
       required: true,
       index: true

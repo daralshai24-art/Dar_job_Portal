@@ -1,11 +1,12 @@
 import User from "@/models/user";
 import EmailPreference from "@/models/EmailPreference";
 import Settings from "@/models/settings";
+import ApplicationCommittee from "@/models/ApplicationCommittee";
 import { connectDB } from "@/lib/db";
 
 class EmailRoutingService {
     /**
-     * Get list of recipients based on Global Rules + Individual Preference
+     * Get list of recipients based on Global Rules + Individual Preference + Committee Members
      * This is the main entry point for internal alerts
      */
     async getRecipientsForAlert(alertType, context = {}) {
@@ -15,48 +16,64 @@ class EmailRoutingService {
         const settings = await Settings.findOne();
         const rules = settings?.email?.notificationRules || {};
 
-        // Roles allowed to receive this alert (e.g. ["admin", "hr_manager"])
+        // Roles allowed to receive this alert
         const allowedRoles = rules[alertType] || [];
 
-        if (allowedRoles.length === 0) {
-            console.log(`[EmailRouting] No roles configured for alert: ${alertType}`);
-            return [];
-        }
-
-        // 2. Find Users with these roles
-        // Also respect department filter if provided (e.g. only HR Manager of "IT")
-        const query = {
+        // 2. Find Global Users (Admins/HR)
+        const globalQuery = {
             role: { $in: allowedRoles },
             status: "active"
         };
 
-        if (context.department) {
-            // If alert is scoped to a department (e.g. new HIT request), 
-            // we might want to filter users.
-            // BUT: Admins usually see all. HR Managers usually see all. 
-            // Department Managers see only their own.
-            // Strategy: simple role fetch first, then filter in memory/loop if needed or sophisticated query
-
-            // For simplicity in this architecture:
-            // We fetch all matching roles, then filter out Dept Managers who don't match the dept
-            // Admins/HR are typically global
+        let globalRecipients = [];
+        if (allowedRoles.length > 0) {
+            globalRecipients = await User.find(globalQuery).select("_id email name role department");
+            console.log(`[EmailRouting] 🌍 Global Rule ('${alertType}') matched roles: [${allowedRoles.join(", ")}] -> Found ${globalRecipients.length} users.`);
+        } else {
+            console.log(`[EmailRouting] ⚠️ No global roles configured for alert: ${alertType}`);
         }
 
-        const potentialRecipients = await User.find(query).select("_id email name role department");
+        // 3. Find Committee Members (if application context exists)
+        let committeeRecipients = [];
+        if (context.applicationId) {
+            const committee = await ApplicationCommittee.findOne({
+                applicationId: context.applicationId,
+                status: 'active'
+            }).populate("members.userId", "_id email name role");
 
-        // 3. Filter by Individual Preferences & Logic
+            if (committee && committee.members) {
+                committeeRecipients = committee.members
+                    .map(m => m.userId)
+                    .filter(u => u); // Filter nulls if user deleted
+
+                console.log(`[EmailRouting] 👥 Committee Lookup for App ${context.applicationId}: Found ${committeeRecipients.length} members.`);
+            } else {
+                console.log(`[EmailRouting] ℹ️ No active committee found for App ${context.applicationId}`);
+            }
+        }
+
+        // 4. Merge & Deduplicate
+        const allPotentialUsers = [...globalRecipients, ...committeeRecipients];
+        const uniqueUsersMap = new Map();
+        allPotentialUsers.forEach(u => {
+            if (u && u._id) uniqueUsersMap.set(u._id.toString(), u);
+        });
+
+        const uniquePotentialRecipients = Array.from(uniqueUsersMap.values());
+
+        // 5. Filter by Individual Preferences & Logic
         const validRecipients = [];
 
-        for (const user of potentialRecipients) {
-            // Special Check: Department Managers should only get alerts for their department
-            if (user.role === 'department_manager' && context.department) {
+        for (const user of uniquePotentialRecipients) {
+            // Special Check: Department Managers should only get alerts for their department (Global only)
+            const isGlobalOnly = !committeeRecipients.some(c => c._id.toString() === user._id.toString());
+
+            if (isGlobalOnly && user.role === 'department_manager' && context.department) {
                 if (user.department !== context.department) {
-                    continue;
+                    continue; // Skip mismatched dept manager
                 }
             }
 
-            // Check EmailPreference (Opt-out)
-            // We treat "alertType" as the emailType for preference checking
             const check = await this.shouldSendEmail(user._id, alertType, context);
 
             if (check.shouldSend) {
@@ -91,7 +108,7 @@ class EmailRoutingService {
             }
         }
 
-        // 2. Check Global Master Switch (if user disabled all notifications)
+        // 2. Check Global Master Switch
         if (!preference.emailNotificationsEnabled) {
             return { shouldSend: false, reason: "user_disabled_all" };
         }
@@ -107,8 +124,17 @@ class EmailRoutingService {
         // 5. Check Permission (Specific setting)
         let shouldSend = preference.shouldReceiveEmail(emailType, categoryId);
 
-        // Fallback for new email types if Mongoose model is stale during dev (HMR issue)
-        if (!shouldSend && !preference.adminEmails && ["new_application", "hiring_request"].includes(emailType)) {
+        // Fallback for new email types if Mongoose model is stale during dev
+        const newTypes = [
+            "new_application",
+            "hiring_request",
+            "interview_scheduled",
+            "interview_rescheduled",
+            "application_accepted",
+            "application_rejected"
+        ];
+
+        if (!shouldSend && !preference.adminEmails && newTypes.includes(emailType)) {
             shouldSend = true;
         }
 
@@ -118,11 +144,7 @@ class EmailRoutingService {
         };
     }
 
-    // Legacy methods kept for backward compatibility if needed, 
-    // but getRecipientsForAlert should be preferred for system alerts.
-
     async getRecipientsByRole(role, emailType, context = {}) {
-        // Re-implemented to be safe
         await connectDB();
         const users = await User.find({ role, status: "active" }).select("_id email name role");
         const validRecipients = [];

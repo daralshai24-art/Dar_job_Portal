@@ -117,53 +117,70 @@ export async function updateApplicationServer({ applicationId, user, updateData 
 
       const userId = user?.id || user?._id;
 
-      // Determine which email to send based on action
-      let emailPromise = null;
+      // Determine which emails to send
+      const emailPromises = [];
 
       // Interview scheduled (first time)
       if (action === "interview_scheduled" && !hadInterview) {
-        emailPromise = emailService.sendInterviewScheduled({
+        emailPromises.push(emailService.sendInterviewScheduled({
           application: appData,
           triggeredBy: userId
-        });
+        }));
+        emailPromises.push(emailService.sendInterviewScheduledAlert({
+          application: appData,
+          triggeredBy: userId
+        }));
       }
 
       // Interview rescheduled
       else if (action === "interview_rescheduled" && hadInterview) {
-        emailPromise = emailService.sendInterviewRescheduled({
+        emailPromises.push(emailService.sendInterviewRescheduled({
           application: appData,
           triggeredBy: userId
-        });
+        }));
+        emailPromises.push(emailService.sendInterviewRescheduledAlert({
+          application: appData,
+          triggeredBy: userId
+        }));
       }
 
       // Application rejected
       else if (action === "rejected" && previousStatus !== "rejected") {
-        emailPromise = emailService.sendApplicationRejected({
+        emailPromises.push(emailService.sendApplicationRejected({
           application: appData,
           triggeredBy: userId
-        });
+        }));
+        emailPromises.push(emailService.sendApplicationRejectedAlert({
+          application: appData,
+          triggeredBy: userId
+        }));
       }
 
       // Application accepted/hired
       else if (action === "hired" && previousStatus !== "hired") {
-        emailPromise = emailService.sendApplicationAccepted({
+        emailPromises.push(emailService.sendApplicationAccepted({
           application: appData,
           triggeredBy: userId
-        });
+        }));
+        emailPromises.push(emailService.sendApplicationAcceptedAlert({
+          application: appData,
+          triggeredBy: userId
+        }));
       }
 
       // Send email asynchronously (don't wait for it)
-      if (emailPromise) {
-        emailPromise
-          .then(result => {
-            if (result.success) {
-              console.log(`✅ Email sent successfully: ${action} to ${appData.email}`);
-            } else {
-              console.warn(`⚠️ Email failed: ${result.error}`);
-            }
-          })
-          .catch(emailError => {
-            console.error("📧 Email error (non-critical):", emailError.message);
+      // Send emails asynchronously
+      if (emailPromises.length > 0) {
+        Promise.allSettled(emailPromises)
+          .then(results => {
+            results.forEach(result => {
+              if (result.status === 'fulfilled' && result.value?.success) {
+                // success log
+              } else if (result.status === 'rejected') {
+                console.error("📧 Email error:", result.reason);
+              }
+            });
+            console.log(`✅ Processed ${emailPromises.length} email notifications from action: ${action}`);
           });
       }
     } catch (emailError) {

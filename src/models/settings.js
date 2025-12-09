@@ -25,7 +25,11 @@ const settingsSchema = new mongoose.Schema({
     applicationAlerts: { type: Boolean, default: true },
     notificationRules: {
       new_application: { type: [String], default: ["admin", "hr_manager", "department_manager"] },
-      hiring_request: { type: [String], default: ["admin", "hr_manager"] }
+      hiring_request: { type: [String], default: ["admin", "hr_manager"] },
+      interview_scheduled: { type: [String], default: ["admin", "hr_manager"] },
+      interview_rescheduled: { type: [String], default: ["admin", "hr_manager"] },
+      application_accepted: { type: [String], default: ["admin", "hr_manager"] },
+      application_rejected: { type: [String], default: ["admin", "hr_manager"] }
     }
   },
   jobs: {

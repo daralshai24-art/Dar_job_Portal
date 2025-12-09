@@ -47,6 +47,10 @@ class EmailService {
   // ==================== INTERNAL ALERTS ====================
 
   sendNewApplicationAlert = internalEmails.sendNewApplicationAlert;
+  sendInterviewScheduledAlert = internalEmails.sendInterviewScheduledAlert;
+  sendInterviewRescheduledAlert = internalEmails.sendInterviewRescheduledAlert;
+  sendApplicationAcceptedAlert = internalEmails.sendApplicationAcceptedAlert;
+  sendApplicationRejectedAlert = internalEmails.sendApplicationRejectedAlert;
 
   // ==================== UTILITIES ====================
 
