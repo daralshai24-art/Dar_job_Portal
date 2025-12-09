@@ -8,7 +8,9 @@
 import * as applicantEmails from "./methods/applicantEmails.js";
 import * as managerEmails from "./methods/managerEmails.js";
 import * as committeeEmails from "./methods/committeeEmails.js";
+
 import * as hiringEmails from "./methods/hiringEmails.js";
+import * as internalEmails from "./methods/internalEmails.js";
 
 // Import utilities
 import { sendEmail, sendEmailWithoutTracking } from "./emailSender.js";
@@ -42,6 +44,10 @@ class EmailService {
   sendNewHiringRequest = hiringEmails.sendNewHiringRequest;
   sendHiringRequestDecision = hiringEmails.sendHiringRequestDecision;
 
+  // ==================== INTERNAL ALERTS ====================
+
+  sendNewApplicationAlert = internalEmails.sendNewApplicationAlert;
+
   // ==================== UTILITIES ====================
 
   // Core sending
@@ -73,7 +79,9 @@ export {
   applicantEmails,
   managerEmails,
   committeeEmails,
+
   hiringEmails,
+  internalEmails,
 
   sendEmail,
   sendEmailWithoutTracking,

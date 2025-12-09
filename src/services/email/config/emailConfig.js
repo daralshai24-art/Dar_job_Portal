@@ -37,6 +37,10 @@ export const EMAIL_CONFIG = {
     // Manager emails
     MANAGER_FEEDBACK_REQUEST: "manager_feedback_request",
     MANAGER_FEEDBACK_REMINDER: "manager_feedback_reminder",
+
+    // Internal emails
+    NEW_APPLICATION_ALERT: "new_application_alert",
+    HIRING_REQUEST_ALERT: "hiring_request_alert",
   },
 
   // Recipient types
@@ -55,6 +59,8 @@ export const EMAIL_CONFIG = {
       APPLICATION_REJECTED: "تحديث حول طلبك",
       APPLICATION_ACCEPTED: "مبروك! تم قبول طلبك",
       MANAGER_FEEDBACK_REQUEST: "طلب تقييم مرشح",
+      NEW_APPLICATION_ALERT: "تنبيه: طلب توظيف جديد",
+      HIRING_REQUEST_ALERT: "طلب احتياج وظيفي جديد",
     },
     en: {
       APPLICATION_RECEIVED: "Application Received",
@@ -63,6 +69,8 @@ export const EMAIL_CONFIG = {
       APPLICATION_REJECTED: "Application Update",
       APPLICATION_ACCEPTED: "Congratulations!",
       MANAGER_FEEDBACK_REQUEST: "Candidate Feedback Request",
+      NEW_APPLICATION_ALERT: "New Job Application",
+      HIRING_REQUEST_ALERT: "New Hiring Request",
     },
   },
 

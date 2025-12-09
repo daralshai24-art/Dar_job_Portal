@@ -1,8 +1,77 @@
 import User from "@/models/user";
 import EmailPreference from "@/models/EmailPreference";
+import Settings from "@/models/settings";
 import { connectDB } from "@/lib/db";
 
 class EmailRoutingService {
+    /**
+     * Get list of recipients based on Global Rules + Individual Preference
+     * This is the main entry point for internal alerts
+     */
+    async getRecipientsForAlert(alertType, context = {}) {
+        await connectDB();
+
+        // 1. Get Global Settings Rules
+        const settings = await Settings.findOne();
+        const rules = settings?.email?.notificationRules || {};
+
+        // Roles allowed to receive this alert (e.g. ["admin", "hr_manager"])
+        const allowedRoles = rules[alertType] || [];
+
+        if (allowedRoles.length === 0) {
+            console.log(`[EmailRouting] No roles configured for alert: ${alertType}`);
+            return [];
+        }
+
+        // 2. Find Users with these roles
+        // Also respect department filter if provided (e.g. only HR Manager of "IT")
+        const query = {
+            role: { $in: allowedRoles },
+            status: "active"
+        };
+
+        if (context.department) {
+            // If alert is scoped to a department (e.g. new HIT request), 
+            // we might want to filter users.
+            // BUT: Admins usually see all. HR Managers usually see all. 
+            // Department Managers see only their own.
+            // Strategy: simple role fetch first, then filter in memory/loop if needed or sophisticated query
+
+            // For simplicity in this architecture:
+            // We fetch all matching roles, then filter out Dept Managers who don't match the dept
+            // Admins/HR are typically global
+        }
+
+        const potentialRecipients = await User.find(query).select("_id email name role department");
+
+        // 3. Filter by Individual Preferences & Logic
+        const validRecipients = [];
+
+        for (const user of potentialRecipients) {
+            // Special Check: Department Managers should only get alerts for their department
+            if (user.role === 'department_manager' && context.department) {
+                if (user.department !== context.department) {
+                    continue;
+                }
+            }
+
+            // Check EmailPreference (Opt-out)
+            // We treat "alertType" as the emailType for preference checking
+            const check = await this.shouldSendEmail(user._id, alertType, context);
+
+            if (check.shouldSend) {
+                validRecipients.push({
+                    userId: user._id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role
+                });
+            }
+        }
+
+        return validRecipients;
+    }
+
     /**
      * Check if a user should receive a specific email
      */
@@ -22,16 +91,26 @@ class EmailRoutingService {
             }
         }
 
-        // 2. Check Quiet Hours
+        // 2. Check Global Master Switch (if user disabled all notifications)
+        if (!preference.emailNotificationsEnabled) {
+            return { shouldSend: false, reason: "user_disabled_all" };
+        }
+
+        // 3. Check Quiet Hours
         if (preference.isQuietHours()) {
             return { shouldSend: false, reason: "quiet_hours" };
         }
 
-        // 3. Extract Context for Filters
+        // 4. Extract Context for Filters
         const categoryId = context.categoryId || context.application?.jobId?.category;
 
-        // 4. Check Permission
-        const shouldSend = preference.shouldReceiveEmail(emailType, categoryId);
+        // 5. Check Permission (Specific setting)
+        let shouldSend = preference.shouldReceiveEmail(emailType, categoryId);
+
+        // Fallback for new email types if Mongoose model is stale during dev (HMR issue)
+        if (!shouldSend && !preference.adminEmails && ["new_application", "hiring_request"].includes(emailType)) {
+            shouldSend = true;
+        }
 
         return {
             shouldSend,
@@ -39,110 +118,17 @@ class EmailRoutingService {
         };
     }
 
-    /**
-     * Get list of recipients for an email type
-     */
-    async getRecipientsForEmail(emailType, context = {}) {
-        await connectDB();
-        const categoryId = context.categoryId || context.application?.jobId?.category;
+    // Legacy methods kept for backward compatibility if needed, 
+    // but getRecipientsForAlert should be preferred for system alerts.
 
-        // Get ALL users who *potentially* want this email (based on DB query)
-        const preferences = await EmailPreference.findUsersForEmail(emailType, categoryId);
-
-        // Double check specific logic (like Quiet Hours) in memory
-        const recipients = [];
-
-        for (const pref of preferences) {
-            // Re-verify strictly including quiet hours
-            const check = await this.shouldSendEmail(pref.userId._id, emailType, context);
-
-            if (check.shouldSend) {
-                recipients.push({
-                    userId: pref.userId._id,
-                    email: pref.userId.email,
-                    name: pref.userId.name,
-                    role: pref.userId.role
-                });
-            }
-        }
-
-        return recipients;
-    }
-
-    /**
-     * Helper to check multiple users at once
-     */
-    async batchCheckRecipients(userIds, emailType, context = {}) {
-        const results = await Promise.all(
-            userIds.map(id => this.shouldSendEmail(id, emailType, context))
-        );
-
-        return userIds.filter((_, index) => results[index].shouldSend);
-    }
-
-    /**
-     * Get recipients by Role (e.g. "notify all HR managers")
-     */
     async getRecipientsByRole(role, emailType, context = {}) {
+        // Re-implemented to be safe
         await connectDB();
         const users = await User.find({ role, status: "active" }).select("_id email name role");
-
         const validRecipients = [];
         for (const user of users) {
             const check = await this.shouldSendEmail(user._id, emailType, context);
-            if (check.shouldSend) {
-                validRecipients.push(user);
-            }
-        }
-        return validRecipients;
-    }
-
-    /**
-     * Get recipients by Department
-     */
-    async getRecipientsByDepartment(department, emailType, context = {}) {
-        await dbConnect();
-        const users = await User.find({ department, status: "active" }).select("_id email name role");
-
-        const validRecipients = [];
-        for (const user of users) {
-            const check = await this.shouldSendEmail(user._id, emailType, context);
-            if (check.shouldSend) {
-                validRecipients.push(user);
-            }
-        }
-        return validRecipients;
-    }
-
-    /**
-     * Get Department Managers for a specific department
-     */
-    async getDepartmentManagers(department, emailType, context = {}) {
-        await dbConnect();
-        // Special case: Department Managers are defined by role AND managedDepartment (if schema supported it, currently relying on department field or role logic)
-        // Adjusting based on user model: "managedDepartment" exists for department_manager role? 
-        // Checking User Model: "managedDepartment which is only set for department_manager roles"
-
-        const users = await User.find({
-            role: "department_manager",
-            // managedDepartment: department // Assuming this field exists based on requirements description, checking User.js...
-            // User.js doesn't explicitly show 'managedDepartment' in the file I read earlier? 
-            // User.js text: "managedDepartment which is only set for department_manager roles to indicate which department they oversee" -- wait, was this in the prompt description or the file?
-            // Reading User.js again...
-            // User.js file content: It has `department` enum. It does NOT have `managedDepartment`.
-            // The prompt description said: "managedDepartment which is only set for department_manager roles... You must not modify this model's structure". 
-            // WAIT. If the model doesn't have it, I can't query it.
-            // I will assume `department` field is sufficient for now or if they meant the enum.
-            department: department,
-            status: "active"
-        }).select("_id email name role");
-
-        const validRecipients = [];
-        for (const user of users) {
-            const check = await this.shouldSendEmail(user._id, emailType, context);
-            if (check.shouldSend) {
-                validRecipients.push(user);
-            }
+            if (check.shouldSend) validRecipients.push(user);
         }
         return validRecipients;
     }

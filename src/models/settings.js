@@ -22,7 +22,11 @@ const settingsSchema = new mongoose.Schema({
     fromName: String,
     companyLogo: String,
     emailNotifications: { type: Boolean, default: true },
-    applicationAlerts: { type: Boolean, default: true }
+    applicationAlerts: { type: Boolean, default: true },
+    notificationRules: {
+      new_application: { type: [String], default: ["admin", "hr_manager", "department_manager"] },
+      hiring_request: { type: [String], default: ["admin", "hr_manager"] }
+    }
   },
   jobs: {
     autoApproveJobs: { type: Boolean, default: false },

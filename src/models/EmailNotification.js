@@ -15,7 +15,7 @@ const emailNotificationSchema = new mongoose.Schema(
       required: true,
       index: true
     },
-    
+
     // ==================== EMAIL DETAILS ====================
     recipientEmail: {
       type: String,
@@ -32,7 +32,7 @@ const emailNotificationSchema = new mongoose.Schema(
       enum: ["applicant", "manager", "admin"],
       required: true
     },
-    
+
     // ==================== EMAIL CONTENT ====================
     emailType: {
       type: String,
@@ -45,10 +45,14 @@ const emailNotificationSchema = new mongoose.Schema(
         "interview_reminder",
         "application_rejected",
         "application_accepted",
-        
+
         // Manager notifications
         "manager_feedback_request",
-        "manager_feedback_reminder"
+        "manager_feedback_reminder",
+
+        // Internal notifications
+        "new_application_alert",
+        "hiring_request_alert"
       ],
       required: true,
       index: true
@@ -57,7 +61,7 @@ const emailNotificationSchema = new mongoose.Schema(
       type: String,
       required: true
     },
-    
+
     // ==================== DELIVERY STATUS ====================
     status: {
       type: String,
@@ -74,7 +78,7 @@ const emailNotificationSchema = new mongoose.Schema(
     errorMessage: {
       type: String
     },
-    
+
     // ==================== PROVIDER INFO ====================
     provider: {
       type: String,
@@ -83,21 +87,21 @@ const emailNotificationSchema = new mongoose.Schema(
     providerMessageId: {
       type: String  // Resend's message ID for tracking
     },
-    
+
     // ==================== METADATA ====================
     metadata: {
       type: mongoose.Schema.Types.Mixed,
       default: {}
     },
-    
+
     // Who triggered this email
     triggeredBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"
     }
   },
-  { 
-    timestamps: true 
+  {
+    timestamps: true
   }
 );
 
@@ -111,9 +115,9 @@ emailNotificationSchema.index({ status: 1, emailType: 1 });
 /**
  * Check if a specific email type was already sent
  */
-emailNotificationSchema.statics.wasAlreadySent = async function(
-  applicationId, 
-  emailType, 
+emailNotificationSchema.statics.wasAlreadySent = async function (
+  applicationId,
+  emailType,
   recipientEmail
 ) {
   const sent = await this.findOne({
@@ -128,14 +132,14 @@ emailNotificationSchema.statics.wasAlreadySent = async function(
 /**
  * Get failed emails that need retry
  */
-emailNotificationSchema.statics.getFailedEmails = async function(limit = 100) {
+emailNotificationSchema.statics.getFailedEmails = async function (limit = 100) {
   return this.find({
     status: "failed",
     createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Last 24h
   })
-  .limit(limit)
-  .sort({ createdAt: -1 });
+    .limit(limit)
+    .sort({ createdAt: -1 });
 };
 
-export default mongoose.models.EmailNotification || 
+export default mongoose.models.EmailNotification ||
   mongoose.model("EmailNotification", emailNotificationSchema);

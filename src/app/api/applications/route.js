@@ -141,37 +141,11 @@ export async function POST(request) {
           triggeredBy: null
         }).catch(err => console.error("Applicant email error:", err.message));
 
-        // 2. [New] Notify Department Managers (Flow 13)
-        // Check if job has a department
-        if (appData.jobId && appData.jobId.department) {
-          const emailRoutingService = require("@/services/email/EmailRoutingService").default;
-
-          // Get Dept Managers for this department
-          const deptManagers = await emailRoutingService.getRecipientsByRole(
-            "department_manager",
-            "new_dept_application",
-            { department: appData.jobId.department }
-          );
-
-          for (const manager of deptManagers) {
-            emailService.sendEmail({
-              to: manager.email,
-              subject: `طلب توظيف جديد: ${appData.jobId.title}`,
-              html: `
-                        <div dir="rtl">
-                            <h2>طلب توظيف جديد في قسمك</h2>
-                            <p>مرحباً ${manager.name}،</p>
-                            <p>تم استلام طلب توظيف جديد لوظيفة <strong>${appData.jobId.title}</strong> في قسم <strong>${appData.jobId.department}</strong>.</p>
-                            <p>اسم المتقدم: ${appData.name}</p>
-                            <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/applications/${appData._id}">عرض الطلب</a>
-                        </div>
-                    `,
-              emailType: "new_dept_application",
-              recipientType: "manager",
-              applicationId: appData._id
-            }).catch(err => console.error(`Failed to notify dept manager ${manager.email}`, err.message));
-          }
-        }
+        // 2. [New] Internal Team Alerts (Managed by Rules)
+        await emailService.sendNewApplicationAlert({
+          application: appData,
+          triggeredBy: null
+        });
 
       } catch (emailError) {
         console.error("📧 Email notification error (non-critical):", emailError.message);

@@ -51,6 +51,12 @@ const emailPreferenceSchema = new mongoose.Schema(
             committee_completed: { type: Boolean, default: true }
         },
 
+        // Admin/HR General Alerts
+        adminEmails: {
+            new_application: { type: Boolean, default: true },
+            hiring_request: { type: Boolean, default: true }
+        },
+
         // Category Filtering
         categoryFilters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }], // Empty = All
 
@@ -94,6 +100,13 @@ emailPreferenceSchema.methods.shouldReceiveEmail = function (emailType, category
     // Dept Manager Emails
     if (emailType in this.departmentManagerEmails) return this.departmentManagerEmails[emailType];
 
+    // Admin Emails
+    // Fallback: If adminEmails is undefined (schema update not applied to old doc), use defaults
+    const adminDefaults = { new_application: true, hiring_request: true };
+    const adminPrefs = this.adminEmails || adminDefaults;
+
+    if (emailType in adminPrefs) return adminPrefs[emailType];
+
     return false;
 };
 
@@ -128,7 +141,13 @@ emailPreferenceSchema.statics.getDefaultsByRole = function (role) {
     const base = { emailNotificationsEnabled: true };
 
     if (role === "super_admin" || role === "admin") {
-        return { ...base }; // All true by default
+        return {
+            ...base,
+            adminEmails: {
+                new_application: true,
+                hiring_request: true
+            }
+        }; // All true by default
     }
 
     if (role === "hr_manager") {
@@ -142,6 +161,10 @@ emailPreferenceSchema.statics.getDefaultsByRole = function (role) {
                 application_rejected: false,
                 application_hired: true
             },
+            adminEmails: {
+                new_application: true,
+                hiring_request: true
+            }
             // ... others default to true/defined schema defaults
         };
     }

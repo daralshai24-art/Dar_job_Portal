@@ -13,7 +13,11 @@ export default function EmailSettings({ settings, onUpdate }) {
     fromName: "",
     companyLogo: "",
     emailNotifications: true,
-    applicationAlerts: true
+    applicationAlerts: true,
+    notificationRules: {
+      new_application: [],
+      hiring_request: []
+    }
   });
 
   const [testEmail, setTestEmail] = useState("");
@@ -33,7 +37,11 @@ export default function EmailSettings({ settings, onUpdate }) {
         smtpUsername: settings.email.smtpUsername || "",
         smtpPassword: settings.email.smtpPassword || "",
         emailNotifications: settings.email.emailNotifications ?? true,
-        applicationAlerts: settings.email.applicationAlerts ?? true
+        applicationAlerts: settings.email.applicationAlerts ?? true,
+        notificationRules: settings.email.notificationRules || {
+          new_application: ["admin", "hr_manager", "department_manager"],
+          hiring_request: ["admin", "hr_manager"]
+        }
       });
     }
   }, [settings]);
@@ -48,6 +56,26 @@ export default function EmailSettings({ settings, onUpdate }) {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleRuleToggle = (alertType, role) => {
+    const currentRules = emailSettings.notificationRules[alertType] || [];
+    const isEnabled = currentRules.includes(role);
+
+    let newRules;
+    if (isEnabled) {
+      newRules = currentRules.filter(r => r !== role);
+    } else {
+      newRules = [...currentRules, role];
+    }
+
+    setEmailSettings({
+      ...emailSettings,
+      notificationRules: {
+        ...emailSettings.notificationRules,
+        [alertType]: newRules
+      }
+    });
   };
 
   const sendTestEmail = async () => {
@@ -231,6 +259,89 @@ export default function EmailSettings({ settings, onUpdate }) {
       </div>
 
       <hr className="border-gray-200" />
+
+      <hr className="border-gray-200" />
+
+      {/* Notification Rules Matrix */}
+      <div className="space-y-4">
+        <h3 className="font-medium text-gray-800">قواعد التنبيهات (Notification Rules)</h3>
+        <p className="text-sm text-gray-600 mb-4">حدد الأدوار التي يجب أن تتلقى إشعارات لكل نوع من أنواع الأحداث.</p>
+
+        <div className="overflow-x-auto border rounded-lg">
+          <table className="w-full text-sm text-left text-gray-500">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-right">نوع التنبيه</th>
+                <th scope="col" className="px-6 py-3 text-center">Admin</th>
+                <th scope="col" className="px-6 py-3 text-center">HR Manager</th>
+                <th scope="col" className="px-6 py-3 text-center">Dept Manager</th>
+                <th scope="col" className="px-6 py-3 text-center">Hearing Manager</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Row 1: New Application */}
+              <tr className="bg-white border-b hover:bg-gray-50">
+                <td className="px-6 py-4 font-medium text-gray-900 text-right">
+                  طلب توظيف جديد
+                  <p className="text-xs text-gray-500 font-normal">عند وصول طلب جديد عبر الموقع</p>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <input type="checkbox"
+                    checked={emailSettings.notificationRules?.new_application?.includes('admin')}
+                    onChange={() => handleRuleToggle('new_application', 'admin')}
+                    className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                  />
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <input type="checkbox"
+                    checked={emailSettings.notificationRules?.new_application?.includes('hr_manager')}
+                    onChange={() => handleRuleToggle('new_application', 'hr_manager')}
+                    className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                  />
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <input type="checkbox"
+                    checked={emailSettings.notificationRules?.new_application?.includes('department_manager')}
+                    onChange={() => handleRuleToggle('new_application', 'department_manager')}
+                    className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                  />
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <div className="w-4 h-4 mx-auto bg-gray-100 rounded-full" title="Not Applicable"></div>
+                </td>
+              </tr>
+
+              {/* Row 2: Hiring Request */}
+              <tr className="bg-white hover:bg-gray-50">
+                <td className="px-6 py-4 font-medium text-gray-900 text-right">
+                  طلب احتياج وظيفي
+                  <p className="text-xs text-gray-500 font-normal">عند إنشاء طلب جديد من مدير قسم</p>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <input type="checkbox"
+                    checked={emailSettings.notificationRules?.hiring_request?.includes('admin')}
+                    onChange={() => handleRuleToggle('hiring_request', 'admin')}
+                    className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                  />
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <input type="checkbox"
+                    checked={emailSettings.notificationRules?.hiring_request?.includes('hr_manager')}
+                    onChange={() => handleRuleToggle('hiring_request', 'hr_manager')}
+                    className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                  />
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <div className="w-4 h-4 mx-auto bg-gray-100 rounded-full" title="Not Applicable"></div>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <div className="w-4 h-4 mx-auto bg-gray-100 rounded-full" title="Not Applicable"></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Test Email Section */}
       <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
