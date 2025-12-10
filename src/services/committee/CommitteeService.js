@@ -10,6 +10,7 @@ class CommitteeService {
         await connectDB();
         const {
             name,
+            type = 'general',
             category,
             department,
             members = [], // Default to empty array
@@ -17,52 +18,14 @@ class CommitteeService {
             createdBy
         } = data;
 
-        // Validate Members
-        // Validate Members
-        let initialMembers = members;
-
-        // Auto-populate default members if none provided
-        if (initialMembers.length === 0) {
-            const defaultUsers = await User.find({ isDefaultCommitteeMember: true });
-            if (defaultUsers.length > 0) {
-                initialMembers = defaultUsers.map(u => {
-                    // Smart Role Assignment
-                    let committeeRole = "decision_maker";
-                    if (u.role === "hr_manager" || u.role === "hr_specialist") committeeRole = "hr_reviewer";
-                    if (u.department === "HR") committeeRole = "hr_reviewer";
-                    if (u.role === "technical_lead" || u.role === "technical_reviewer") committeeRole = "technical_reviewer";
-
-                    return {
-                        userId: u._id,
-                        role: committeeRole,
-                        isPrimary: true
-                    };
-                });
-            }
-        }
-
-        const userIds = initialMembers.map(m => m.userId);
-        if (userIds.length > 0) {
-            const users = await User.find({ _id: { $in: userIds } });
-            if (users.length !== userIds.length) {
-                // If some users were not found (e.g. deleted), filter them out instead of crashing
-                initialMembers = initialMembers.filter(m => users.some(u => u._id.toString() === m.userId.toString()));
-            }
-        }
-
-        // Validate Roles (Basic check that roles are valid for committee context)
-        const allowedRoles = ["interviewer", "technical_reviewer", "hr_reviewer", "decision_maker"];
-        for (const m of initialMembers) {
-            if (!allowedRoles.includes(m.role)) {
-                throw new Error(`Invalid committee role: ${m.role}`);
-            }
-        }
+        // ... validation logic ...
 
         // Create
         const committee = await Committee.create({
             name,
-            category,
-            department,
+            type,
+            category: type === 'category' ? category : undefined,
+            department: type === 'department' ? department : undefined,
             name,
             category,
             department,

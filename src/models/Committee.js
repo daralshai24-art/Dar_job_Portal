@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const committeeSchema = new mongoose.Schema(
     {
         name: { type: String, required: true, trim: true },
+        type: { type: String, enum: ['department', 'category', 'general'], default: 'general', index: true },
         category: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Category",

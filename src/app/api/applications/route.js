@@ -14,6 +14,8 @@ try {
 } catch (e) {
   console.log("Email service not available yet - emails will be skipped");
 }
+import Committee from "@/models/Committee";
+import applicationCommitteeService from "@/services/committee/ApplicationCommitteeService";
 
 export async function POST(request) {
   try {
@@ -111,6 +113,47 @@ export async function POST(request) {
       $inc: { applicationsCount: 1 },
       lastApplicationDate: new Date(),
     });
+
+    // ==================== 🆕 AUTOMATIC COMMITTEE ASSIGNMENT ====================
+    try {
+      // 1. Try to find a committee for the Department
+      let matchedCommittee = await Committee.findOne({
+        department: job.department,
+        isActive: true,
+        "settings.autoAssignToApplications": true
+      });
+
+      // 2. Fallback: Try to find a committee for the Category
+      if (!matchedCommittee) {
+        matchedCommittee = await Committee.findOne({
+          category: job.category,
+          isActive: true,
+          "settings.autoAssignToApplications": true
+        });
+      }
+
+      // 3. Assign if found
+      if (matchedCommittee) {
+        console.log(`[AutoAssign] Assigning committee "${matchedCommittee.name}" to application ${application._id}`);
+        await applicationCommitteeService.assignCommittee(application._id, matchedCommittee._id);
+
+        // Add timeline entry
+        await Timeline.create({
+          applicationId: application._id,
+          action: "status_changed", // or a specific action if available
+          status: "pending", // Application status doesn't strictly change, but we add a note
+          notes: `تم تعيين لجنة "${matchedCommittee.name}" تلقائياً للنظر في الطلب`,
+          performedBy: null,
+          performedByName: "System",
+        });
+      } else {
+        console.log(`[AutoAssign] No matching auto-assign committee found for Job: ${job.title} (Dept: ${job.department})`);
+      }
+    } catch (assignError) {
+      console.error("[AutoAssign] Failed to assign committee:", assignError);
+      // We do not block the response, just log the error
+    }
+    // ==================== END COMMITTEE ASSIGNMENT ====================
 
     // ==================== 🆕 SEND CONFIRMATION EMAIL ====================
 
