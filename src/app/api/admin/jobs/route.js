@@ -17,6 +17,7 @@ const validateJobInput = (body) => {
   if (!body.description?.trim()) errors.push("Description is required");
   if (!body.location?.trim()) errors.push("Location is required");
   if (!body.category) errors.push("Category is required");
+  if (!body.department) errors.push("Department is required");
 
   if (body.title?.length > 100) errors.push("Title must be less than 100 characters");
   if (body.description?.length > 2000) errors.push("Description must be less than 2000 characters");
@@ -24,6 +25,11 @@ const validateJobInput = (body) => {
   const validStatus = ["draft", "active", "inactive", "closed"];
   if (body.status && !validStatus.includes(body.status)) {
     errors.push(`Status must be one of: ${validStatus.join(", ")}`);
+  }
+
+  const validDepartments = ["HR", "IT", "Finance", "Operations", "Marketing", "Sales", "Other"];
+  if (body.department && !validDepartments.includes(body.department)) {
+    errors.push(`Department must be one of: ${validDepartments.join(", ")}`);
   }
 
   const validJobTypes = ["Full-time", "Part-time", "Contract", "Freelance", "Internship"];
@@ -47,6 +53,7 @@ const prepareJobData = (body) => {
     salary: body.salary?.trim() || "",
     status: body.status || "draft",
     category: body.category,
+    department: body.department,
     jobType: body.jobType || "Full-time",
     experience: body.experience || "Entry Level",
     requirements: body.requirements?.trim() || ""
@@ -66,6 +73,8 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+
+    console.log("API Received Job Body:", body); // DEBUG LOG
 
     const validationErrors = validateJobInput(body);
     if (validationErrors.length > 0) {
@@ -98,7 +107,7 @@ export async function POST(request) {
 
     if (error.name === "ValidationError") {
       return NextResponse.json(
-        { 
+        {
           error: "Database validation failed",
           details: Object.values(error.errors).map((e) => e.message)
         },

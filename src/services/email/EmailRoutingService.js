@@ -60,6 +60,7 @@ class EmailRoutingService {
         });
 
         const uniquePotentialRecipients = Array.from(uniqueUsersMap.values());
+        console.log(`[EmailRouting] 🔄 Merged Recipients: ${allPotentialUsers.length} -> Unique: ${uniquePotentialRecipients.length}`);
 
         // 5. Filter by Individual Preferences & Logic
         const validRecipients = [];

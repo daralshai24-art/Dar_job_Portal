@@ -1,14 +1,15 @@
-import { 
-  Briefcase, 
-  MapPin, 
-  Users, 
+import {
+  Briefcase,
+  MapPin,
+  Users,
   Award,
   FileText,
   Clock,
   Save,
   Send,
   Edit,
-  X
+  X,
+  Building // Added icon for Department
 } from "lucide-react";
 
 /**
@@ -23,10 +24,26 @@ export const formFields = {
     required: true
   },
   location: {
-    label: "الموقع ", 
+    label: "الموقع ",
     placeholder: "اختر الموقع",
     icon: MapPin,
     type: "select",
+    required: true
+  },
+  department: {
+    label: "القسم",
+    placeholder: "اختر القسم",
+    icon: Building,
+    type: "select",
+    options: [
+      { value: "HR", label: "الموارد البشرية" },
+      { value: "IT", label: "تقنية المعلومات" },
+      { value: "Finance", label: "المالية" },
+      { value: "Operations", label: "العمليات" },
+      { value: "Marketing", label: "التسويق" },
+      { value: "Sales", label: "المبيعات" },
+      { value: "Other", label: "أخرى" },
+    ],
     required: true
   },
   category: {
@@ -36,7 +53,7 @@ export const formFields = {
     required: true
   },
   jobType: {
-    label: "نوع الوظيفة", 
+    label: "نوع الوظيفة",
     icon: Clock,
     type: "select",
     options: [
@@ -51,7 +68,7 @@ export const formFields = {
   experience: {
     label: "مستوى الخبرة",
     icon: Award,
-    type: "select", 
+    type: "select",
     options: [
       { value: "Entry Level", label: "مبتدئ" },
       { value: "Mid Level", label: "متوسط" },
@@ -81,16 +98,13 @@ export const formFields = {
   },
   requirements: {
     label: "المتطلبات والمهارات",
-    placeholder: "اذكر متطلبات الوظيفة والمهارات المطلوبة...", 
+    placeholder: "اذكر متطلبات الوظيفة والمهارات المطلوبة...",
     icon: Award,
     type: "textarea",
     required: false
   }
 };
 
-/**
- * Button configuration with icons
- */
 /**
  * Button configuration with icons
  */
@@ -107,7 +121,7 @@ export const buttonConfig = {
       variant: "default" // This maps to 'light' 
     },
     publish: {
-      label: "نشر الوظيفة", 
+      label: "نشر الوظيفة",
       icon: Send,
       variant: "primary" // This maps to 'primary' in 
     }
@@ -125,7 +139,7 @@ export const buttonConfig = {
 export const getStatusExplanation = (status) => {
   const explanations = {
     draft: "⚠️ الوظيفة محفوظة ولكن غير منشورة للعموم",
-    active: "✅ الوظيفة منشورة ومتاحة للتقديم", 
+    active: "✅ الوظيفة منشورة ومتاحة للتقديم",
     inactive: "⏸️ الوظيفة متوقفة مؤقتاً عن استقبال الطلبات",
     closed: "❌ الوظيفة مغلقة ولم تعد تقبل الطلبات"
   };

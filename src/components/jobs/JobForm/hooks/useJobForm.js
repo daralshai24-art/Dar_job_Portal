@@ -30,6 +30,7 @@ export const useJobForm = (initialData, mode, formActionsRef) => {
         description: initialData.description || "",
         location: initialData.location || "",
         category: initialData.category?._id || initialData.category || "",
+        department: initialData.department || "HR",
         jobType: initialData.jobType || "Full-time",
         experience: initialData.experience || "Entry Level",
         requirements: initialData.requirements || "",
@@ -174,11 +175,14 @@ export const useJobForm = (initialData, mode, formActionsRef) => {
         description: formData.description.trim(),
         location: formData.location.trim(),
         category: formData.category,
+        department: formData.department,
         jobType: formData.jobType,
         experience: formData.experience,
         requirements: formData.requirements.trim(),
         status: formData.status,
       };
+
+      console.log("Submitting Job Data:", submitData); // DEBUG LOG
 
       const res = await fetch(url, {
         method,

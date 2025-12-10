@@ -124,6 +124,20 @@ emailNotificationSchema.statics.wasAlreadySent = async function (
   emailType,
   recipientEmail
 ) {
+  /*
+   * Allow specific types to be sent multiple times (e.g. Rescheduling)
+   */
+  const repeatableTypes = [
+    "interview_rescheduled",
+    "interview_rescheduled_alert",
+    "manager_feedback_reminder",
+    "interview_reminder"
+  ];
+
+  if (repeatableTypes.includes(emailType)) {
+    return false; // Always allow sending these
+  }
+
   const sent = await this.findOne({
     applicationId,
     emailType,

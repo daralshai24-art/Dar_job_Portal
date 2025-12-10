@@ -18,7 +18,26 @@ class CommitteeService {
             createdBy
         } = data;
 
-        // ... validation logic ...
+        // 1. Resolve members (Use provided members OR find defaults)
+        let membersList = members;
+
+        // If no members provided, try to find default members from Users
+        if (!membersList || membersList.length === 0) {
+            const defaultUsers = await User.find({ isDefaultCommitteeMember: true });
+            if (defaultUsers && defaultUsers.length > 0) {
+                membersList = defaultUsers.map(u => {
+                    let role = "decision_maker";
+                    if (u.role === "hr_manager" || u.role === "hr_specialist" || u.department === "HR") role = "hr_reviewer";
+                    if (u.role === "technical_lead" || u.role === "technical_reviewer") role = "technical_reviewer";
+
+                    return {
+                        userId: u._id,
+                        role: role,
+                        isPrimary: true
+                    };
+                });
+            }
+        }
 
         // Create
         const committee = await Committee.create({
@@ -26,12 +45,9 @@ class CommitteeService {
             type,
             category: type === 'category' ? category : undefined,
             department: type === 'department' ? department : undefined,
-            name,
-            category,
-            department,
-            members: initialMembers.map((m, index) => ({
-                userId: m.userId,
-                role: m.role,
+            members: (membersList || []).map((m, index) => ({
+                userId: m.userId._id || m.userId, // Handle populated or ID
+                role: m.role || "interviewer",
                 isPrimary: m.isPrimary ?? true,
                 order: index,
                 addedBy: createdBy,
@@ -59,7 +75,7 @@ class CommitteeService {
         const committee = await Committee.findById(id);
         if (!committee) throw new Error("Committee not found");
 
-        const allowedFields = ["name", "description", "settings", "isActive"];
+        const allowedFields = ["name", "type", "department", "category", "description", "settings", "isActive"];
 
         allowedFields.forEach(field => {
             if (updates[field] !== undefined) {

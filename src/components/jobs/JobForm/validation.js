@@ -7,6 +7,7 @@ export const jobFormInitialData = {
   description: "",
   location: "",
   category: "", // Now stores category ID
+  department: "HR", // Default department
   jobType: "Full-time",
   experience: "Entry Level",
   requirements: "",
@@ -35,6 +36,10 @@ export const validateJobForm = (formData) => {
     errors.category = "التصنيف مطلوب";
   }
 
+  if (!formData.department?.trim()) {
+    errors.department = "القسم مطلوب";
+  }
+
   return errors;
 };
 
@@ -43,7 +48,7 @@ export const validateJobForm = (formData) => {
  */
 export const hasFormChanges = (formData, initialData) => {
   if (!initialData) return true; // Create mode always has "changes"
-  
+
   return Object.keys(jobFormInitialData).some(key => {
     return formData[key] !== initialData[key];
   });
@@ -58,6 +63,7 @@ export const prepareJobData = (formData, userId) => {
     description: formData.description?.trim() || "",
     location: formData.location?.trim() || "",
     category: formData.category, // This is now the category ID
+    department: formData.department,
     jobType: formData.jobType || "Full-time",
     experience: formData.experience || "Entry Level",
     requirements: formData.requirements?.trim() || "",

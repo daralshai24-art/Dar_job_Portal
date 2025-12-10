@@ -82,7 +82,7 @@ const selectStyles = {
 const JobForm = ({ initialData = null, mode = "create" }) => {
   const router = useRouter();
   const formActionsRef = useRef(null);
-  
+
   const {
     formData,
     loading,
@@ -139,6 +139,23 @@ const JobForm = ({ initialData = null, mode = "create" }) => {
 
       {/* Grid Layout for Multiple Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        {/* Department Field - NEW */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            {formFields.department.label}
+          </label>
+          <Select
+            value={formFields.department.options.find(opt => opt.value === formData.department)}
+            onChange={(selected) => handleChange("department", selected?.value || '')}
+            options={formFields.department.options}
+            placeholder={formFields.department.placeholder}
+            styles={selectStyles}
+            isSearchable={false}
+            isClearable={false}
+            className="text-right"
+          />
+        </div>
+
         {/* Location Field */}
         <DynamicSelectWithAdd
           label={formFields.location.label}
@@ -220,7 +237,7 @@ const JobForm = ({ initialData = null, mode = "create" }) => {
             isClearable={false}
             className="text-right"
           />
-          
+
           <div className="text-xs text-gray-500 mt-2 px-1">
             {getStatusExplanation(formData.status)}
           </div>
@@ -251,10 +268,10 @@ const JobForm = ({ initialData = null, mode = "create" }) => {
         className="text-sm md:text-base"
       />
 
-      <FormActions 
-        loading={loading} 
-        mode={mode} 
-        formData={formData} 
+      <FormActions
+        loading={loading}
+        mode={mode}
+        formData={formData}
         onCancel={handleCancel}
         ref={formActionsRef}
       />
