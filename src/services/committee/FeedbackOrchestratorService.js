@@ -173,10 +173,22 @@ class FeedbackOrchestratorService {
                 .populate("applicationId"); // Ensure app is available
 
             // Notify HR about this specific feedback
-            const recipients = await emailRoutingService.getRecipientsByRole("hr_manager", "feedback_received");
-            console.log(`[FeedbackOrchestrator] Found ${recipients.length} HR recipients for feedback notification.`);
+            // Broaden scope to HR Managers, Admins, and Super Admins
+            const hrRecipients = await emailRoutingService.getRecipientsByRole("hr_manager", "feedback_received");
+            const adminRecipients = await emailRoutingService.getRecipientsByRole("admin", "feedback_received");
+            const superAdminRecipients = await emailRoutingService.getRecipientsByRole("super_admin", "feedback_received");
 
-            for (const recipient of recipients) {
+            // Merge and deduplicate by email
+            const allRecipients = [...hrRecipients, ...adminRecipients, ...superAdminRecipients];
+            const uniqueRecipients = Array.from(new Map(allRecipients.map(u => [u.email, u])).values());
+
+            console.log(`[FeedbackOrchestrator] Notification Targets: HR(${hrRecipients.length}), Admin(${adminRecipients.length}), SuperAdmin(${superAdminRecipients.length}). Total Unique: ${uniqueRecipients.length}`);
+
+            if (uniqueRecipients.length === 0) {
+                console.warn("[FeedbackOrchestrator] WARNING: No valid recipients found for feedback notification!");
+            }
+
+            for (const recipient of uniqueRecipients) {
                 try {
                     const emailResult = await emailService.sendFeedbackReceivedNotification({
                         recipientEmail: recipient.email,

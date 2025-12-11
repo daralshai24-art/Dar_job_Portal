@@ -115,14 +115,23 @@ applicationCommitteeSchema.virtual("progress").get(function () {
 
 // Methods
 applicationCommitteeSchema.methods.recordFeedback = async function (userId, feedbackData) {
+    console.log(`[ApplicationCommittee] recordFeedback called for committee ${this._id}, user ${userId}`);
+
     // 1. Validate membership
     const memberIndex = this.members.findIndex(m => m.userId.toString() === userId.toString());
-    if (memberIndex === -1) throw new Error("User is not a member of this committee");
+    if (memberIndex === -1) {
+        console.error(`[ApplicationCommittee] User ${userId} not found in members:`, this.members.map(m => m.userId));
+        throw new Error("User is not a member of this committee");
+    }
 
     const member = this.members[memberIndex];
-    if (member.status === "submitted") throw new Error("Feedback already submitted");
+    if (member.status === "submitted") {
+        console.warn(`[ApplicationCommittee] Feedback already submitted for user ${userId}`);
+        // throw new Error("Feedback already submitted");
+    }
 
     // 2. Atomic Update to persist status safely
+    console.log(`[ApplicationCommittee] Executing findOneAndUpdate...`);
     const freshCommittee = await this.constructor.findOneAndUpdate(
         { _id: this._id, "members.userId": userId },
         {
@@ -134,26 +143,30 @@ applicationCommitteeSchema.methods.recordFeedback = async function (userId, feed
         { new: true }
     );
 
-    if (!freshCommittee) throw new Error("Update failed: Committee or Member not found in DB");
+    if (!freshCommittee) {
+        console.error(`[ApplicationCommittee] Update failed. freshCommittee is null.`);
+        throw new Error("Update failed: Committee or Member not found in DB");
+    }
+    console.log(`[ApplicationCommittee] Atomic update successful. Status: submitted`);
 
-    // 3. Calculate with fresh data
+    // 3. Calculate with fresh data (in memory)
     await freshCommittee.calculateVotingResults();
 
-    // FAILSAFE: Ensure status is submitted in memory before final save
-    const memberToFix = freshCommittee.members.find(m =>
-        (m.userId._id || m.userId).toString() === userId.toString()
+    // 4. Persist Results ONLY (Do NOT call save() on the full doc)
+    const updates = {
+        votingResults: freshCommittee.votingResults,
+        // If calculation marked it complete, persist that too
+        status: freshCommittee.status
+    };
+    if (freshCommittee.completedAt) updates.completedAt = freshCommittee.completedAt;
+
+    await this.constructor.updateOne(
+        { _id: this._id },
+        { $set: updates }
     );
+    console.log(`[ApplicationCommittee] Results persisted via updateOne.`);
 
-    if (memberToFix) {
-        memberToFix.status = "submitted";
-        memberToFix.submittedAt = new Date();
-    }
-
-    if (freshCommittee.isComplete) {
-        await freshCommittee.markComplete();
-    }
-
-    return freshCommittee.save();
+    return freshCommittee;
 };
 
 applicationCommitteeSchema.methods.calculateVotingResults = async function () {

@@ -157,7 +157,7 @@ feedbackTokenSchema.statics.verifyToken = async function (token) {
       select: "title location category",
       populate: { path: "category", select: "name" }
     }
-  });
+  }).populate("applicationCommitteeId");
 
   if (!feedbackToken) {
     return { valid: false, reason: "invalid_or_expired" };
