@@ -115,24 +115,45 @@ applicationCommitteeSchema.virtual("progress").get(function () {
 
 // Methods
 applicationCommitteeSchema.methods.recordFeedback = async function (userId, feedbackData) {
+    // 1. Validate membership
     const memberIndex = this.members.findIndex(m => m.userId.toString() === userId.toString());
     if (memberIndex === -1) throw new Error("User is not a member of this committee");
 
     const member = this.members[memberIndex];
     if (member.status === "submitted") throw new Error("Feedback already submitted");
 
-    // Update member status
-    member.status = "submitted";
-    member.submittedAt = new Date();
+    // 2. Atomic Update to persist status safely
+    const freshCommittee = await this.constructor.findOneAndUpdate(
+        { _id: this._id, "members.userId": userId },
+        {
+            $set: {
+                "members.$.status": "submitted",
+                "members.$.submittedAt": new Date()
+            }
+        },
+        { new: true }
+    );
 
-    // Recalculate will be called by service, or we can trigger here
-    await this.calculateVotingResults();
+    if (!freshCommittee) throw new Error("Update failed: Committee or Member not found in DB");
 
-    if (this.isComplete) {
-        await this.markComplete();
+    // 3. Calculate with fresh data
+    await freshCommittee.calculateVotingResults();
+
+    // FAILSAFE: Ensure status is submitted in memory before final save
+    const memberToFix = freshCommittee.members.find(m =>
+        (m.userId._id || m.userId).toString() === userId.toString()
+    );
+
+    if (memberToFix) {
+        memberToFix.status = "submitted";
+        memberToFix.submittedAt = new Date();
     }
 
-    return this.save();
+    if (freshCommittee.isComplete) {
+        await freshCommittee.markComplete();
+    }
+
+    return freshCommittee.save();
 };
 
 applicationCommitteeSchema.methods.calculateVotingResults = async function () {
@@ -140,20 +161,9 @@ applicationCommitteeSchema.methods.calculateVotingResults = async function () {
     await this.populate("applicationId");
 
     const feedbacks = this.applicationId.managerFeedbacks || [];
-    const committeeUserIds = this.members.map(m => m.userId.toString());
-
-    // Filter feedbacks relevant to this committee
-    const relevantFeedbacks = feedbacks.filter(f => {
-        // We need to match feedbacks to members. Ideally feedback records store userId or we check email/name
-        // Assuming feedbacks have managerEmail matching User email
-        // This part requires Application to be populated with ManagerFeedbacks
-        return true; // Simplified for now, logic continues below
-    });
-
-    // In a real scenario, we would match emails. 
-    // For this model logic, let's assume the service passes the calculated stats or we query.
-    // BUT the requirement says "populate the applicationId to access managerFeedbacks...".
-    // Let's implement robust matching.
+    // We need to match feedbacks to members. Ideally feedback records store userId or we check email/name
+    // Assuming feedbacks have managerEmail matching User email
+    // This part requires Application to be populated with ManagerFeedbacks
 
     // NOTE: Application model `managerFeedbacks` has `managerEmail`. We should match that with member User email.
     // This requires populating members.userId to get emails.

@@ -148,10 +148,14 @@ export async function sendEmail({
     }
 
     // Step 2: Check for duplicates
-    const alreadySent = await wasEmailAlreadySent(applicationId, emailType, to);
-    if (alreadySent) {
-      console.log(`✓ Email already sent: ${emailType} to ${to}`);
-      return { success: true, duplicate: true };
+    if (!metadata?.forceSend) {
+      const alreadySent = await wasEmailAlreadySent(applicationId, emailType, to);
+      if (alreadySent) {
+        console.log(`✓ Email already sent: ${emailType} to ${to}`);
+        return { success: true, duplicate: true };
+      }
+    } else {
+      console.log(`[EmailSender] Force send enabled for ${emailType} to ${to} - Bypassing duplicate check`);
     }
 
     // Step 3: Create tracking record

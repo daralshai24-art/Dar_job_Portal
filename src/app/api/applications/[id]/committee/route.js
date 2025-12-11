@@ -21,7 +21,7 @@ export async function POST(req, props) {
 
         let appCommittee;
         if (committeeId) {
-            appCommittee = await applicationCommitteeService.assignCommittee(applicationId, committeeId);
+            appCommittee = await applicationCommitteeService.assignCommittee(applicationId, committeeId, userId);
         } else if (members && members.length > 0) {
             appCommittee = await applicationCommitteeService.createCustomCommittee(applicationId, members, settings);
         } else {
@@ -34,9 +34,8 @@ export async function POST(req, props) {
         // For now, let's just create it. The UI can have a separate "Send Requests" button 
         // OR we trigger it if `autoSend: true` is passed.
 
-        if (body.autoSend) {
-            await feedbackOrchestratorService.sendFeedbackRequests(appCommittee._id, userId);
-        }
+        // Automation is now handled inside ApplicationCommitteeService
+        // if (body.autoSend) { ... }
 
         return NextResponse.json({ message: "Committee assigned successfully", data: appCommittee });
     } catch (error) {
@@ -66,6 +65,53 @@ export async function DELETE(req, props) {
         await applicationCommitteeService.cancelCommittee(appCommittee._id, userId, "Manual removal by admin");
 
         return NextResponse.json({ message: "Committee removed successfully" });
+    } catch (error) {
+        return NextResponse.json({ message: error.message }, { status: 500 });
+    }
+}
+
+export async function GET(req, props) {
+    const params = await props.params;
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+        // Allow any authenticated user to view committee assignment? 
+        // Or restrict to HR/Admin + Committee Members?
+        // For now, let's allow HR/Admins as per other methods.
+        const { role, id: userId } = session.user;
+        if (!["hr_manager", "admin", "hr_specialist", "super_admin"].includes(role)) {
+            // Also allow if the user is a member of the committee? 
+            // For now, stick to admin roles as this is admin UI.
+            return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+        }
+
+        const { id: applicationId } = params;
+
+        const appCommittee = await applicationCommitteeService.getByApplicationId(applicationId);
+
+        // If no committee, we return null or empty object, but 200 OK so frontend doesn't crash on .json()
+        // If we return 404, we must ensure frontend handles it. 
+        // Best to return { committee: null } if not found.
+
+        if (!appCommittee) {
+            return NextResponse.json({ committee: null });
+        }
+
+        // We might want to populate members user details if not already done by service
+        // The service might retun Mongoose document. 
+        // Let's ensure it's populated. 
+        // applicationCommitteeService.getByApplicationId uses 'findOne'
+        // Let's modify service or just populate here? 
+        // Service should probably handle it, but let's check what it returns or just populate here if needed.
+        // Assuming service returns basic doc. We can populate.
+        // But appCommittee is likely a POJO if service uses .lean(), or a Document.
+        // Let's rely on service or if it's a doc, we can't populate after await. 
+        // Let's assume service does enough or we might need to fix it.
+        // Actually, let's use the model directly to be sure or check logic.
+        // But better practice: Use the service. 
+
+        return NextResponse.json({ committee: appCommittee });
     } catch (error) {
         return NextResponse.json({ message: error.message }, { status: 500 });
     }

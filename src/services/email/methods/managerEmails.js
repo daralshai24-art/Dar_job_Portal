@@ -21,6 +21,7 @@ export async function sendManagerFeedbackRequest({
   message = "",
   expiresInDays = 7,
   triggeredBy,
+  metadata = {}
 }) {
   try {
     await connectDB();
@@ -64,6 +65,7 @@ export async function sendManagerFeedbackRequest({
       recipientType: EMAIL_CONFIG.recipientTypes.MANAGER,
       triggeredBy,
       metadata: {
+        ...metadata, // Mix in passed metadata (like forceSend)
         tokenId: tokenDoc._id,
         managerRole,
         expiresAt: tokenDoc.expiresAt,

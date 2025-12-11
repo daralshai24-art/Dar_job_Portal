@@ -41,7 +41,7 @@ const feedbackTokenSchema = new mongoose.Schema(
     },
     managerRole: {
       type: String,
-      enum: ["technical_reviewer", "hr_reviewer", "hiring_manager", "department_head"],
+      enum: ["technical_reviewer", "hr_reviewer", "hiring_manager", "department_head", "hr_manager", "decision_maker", "member"],
       default: "technical_reviewer"
     },
 

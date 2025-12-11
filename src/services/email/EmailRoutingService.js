@@ -148,8 +148,10 @@ class EmailRoutingService {
     async getRecipientsByRole(role, emailType, context = {}) {
         await connectDB();
         const users = await User.find({ role, status: "active" }).select("_id email name role");
+        console.log(`[EmailRouting] getRecipientsByRole('${role}') found ${users.length} active users.`);
         const validRecipients = [];
         for (const user of users) {
+            // ... existing check
             const check = await this.shouldSendEmail(user._id, emailType, context);
             if (check.shouldSend) validRecipients.push(user);
         }

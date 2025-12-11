@@ -16,6 +16,7 @@ export async function POST(request, { params }) {
     await connectDB();
     const resolvedParams = await params;
     const { token } = resolvedParams;
+    console.log(`[FeedbackSubmit] Receiving submission for Token: ${token}`);
 
     if (!token) {
       return NextResponse.json(
@@ -27,6 +28,7 @@ export async function POST(request, { params }) {
     // Get feedback data
     const body = await request.json();
     const { technicalNotes, strengths, weaknesses, recommendation, overallScore } = body;
+    console.log(`[FeedbackSubmit] Data: Score=${overallScore}, Rec=${recommendation}`);
 
     if (!technicalNotes || !technicalNotes.trim()) {
       return NextResponse.json(
@@ -39,6 +41,7 @@ export async function POST(request, { params }) {
     const result = await FeedbackToken.verifyToken(token);
 
     if (!result.valid) {
+      console.warn(`[FeedbackSubmit] Invalid Token: ${token}`);
       return NextResponse.json(
         { error: "رابط غير صالح أو منتهي الصلاحية" },
         { status: 400 }
@@ -46,9 +49,11 @@ export async function POST(request, { params }) {
     }
 
     const feedbackToken = result.token;
+    console.log(`[FeedbackSubmit] Token Verified. Manager: ${feedbackToken.managerEmail} (${feedbackToken.managerRole})`);
 
     // Check if already submitted
     if (feedbackToken.feedbackSubmitted) {
+      console.warn(`[FeedbackSubmit] Token already used: ${token}`);
       return NextResponse.json(
         { error: "تم إرسال التقييم مسبقاً" },
         { status: 400 }
@@ -56,6 +61,7 @@ export async function POST(request, { params }) {
     }
 
     const applicationId = feedbackToken.applicationId._id;
+    console.log(`[FeedbackSubmit] Updating Application: ${applicationId}`);
 
     // Get application
     const application = await Application.findById(applicationId);
@@ -80,47 +86,18 @@ export async function POST(request, { params }) {
       submittedAt: new Date()
     };
 
-    // Update application based on manager role
-    if (feedbackToken.managerRole === "technical_reviewer") {
-      application.technicalNotes = technicalNotes;
+    // Update application - ONLY update managerFeedbacks (Data Integrity Fix)
+    // We no longer overwrite top-level technicalNotes/hrNotes/strengths/weaknesses
+    // to prevent race conditions and data loss with multiple reviewers.
 
-      // Store full feedback in a new field (we'll add this to schema)
-      if (!application.managerFeedbacks) {
-        application.managerFeedbacks = [];
-      }
-      application.managerFeedbacks.push(feedbackData);
-    } else if (feedbackToken.managerRole === "hr_reviewer") {
-      application.hrNotes = technicalNotes;
-
-      if (!application.managerFeedbacks) {
-        application.managerFeedbacks = [];
-      }
-      application.managerFeedbacks.push(feedbackData);
-    } else {
-      // For other roles, just add to feedbacks array
-      if (!application.managerFeedbacks) {
-        application.managerFeedbacks = [];
-      }
-      application.managerFeedbacks.push(feedbackData);
+    if (!application.managerFeedbacks) {
+      application.managerFeedbacks = [];
     }
-
-    // Update strengths and weaknesses if provided
-    if (strengths) {
-      const strengthsList = strengths.split('\n').filter(s => s.trim());
-      if (strengthsList.length > 0) {
-        application.strengths = [...(application.strengths || []), ...strengthsList];
-      }
-    }
-
-    if (weaknesses) {
-      const weaknessesList = weaknesses.split('\n').filter(w => w.trim());
-      if (weaknessesList.length > 0) {
-        application.weaknesses = [...(application.weaknesses || []), ...weaknessesList];
-      }
-    }
+    application.managerFeedbacks.push(feedbackData);
 
     // Save application
     await application.save();
+    console.log(`[FeedbackSubmit] Application Saved.`);
 
     // Mark token as used
     await feedbackToken.markAsUsed();
@@ -128,6 +105,7 @@ export async function POST(request, { params }) {
     // 🆕 Trigger Committee Logic if this feedback is part of a committee
     if (feedbackToken.applicationCommitteeId) {
       try {
+        console.log(`[FeedbackSubmit] Triggering Committee Logic for ${feedbackToken.applicationCommitteeId}`);
         await feedbackOrchestratorService.processFeedbackSubmission(
           feedbackToken._id,
           {
@@ -157,6 +135,8 @@ export async function POST(request, { params }) {
       performedByName: feedbackToken.managerName,
       performedBy: null // No user ID since this is external
     });
+
+    console.log(`[FeedbackSubmit] Success.`);
 
     return NextResponse.json({
       message: "تم إرسال التقييم بنجاح",

@@ -1,7 +1,7 @@
 import { sendEmail } from "../emailSender.js";
 import committeeCompletedTemplate from "../templates/committee/committeeCompleted.js";
-import { getEmailSettings } from "../../../models/settings.js"; // or wherever it is
-import Settings from "../../../models/settings.js"; // Direct model access if helper not available
+import feedbackReceivedTemplate from "../templates/committee/feedbackReceived.js";
+import Settings from "../../../models/settings.js";
 
 /**
  * Fetch settings helper
@@ -43,3 +43,34 @@ export async function sendCommitteeCompleted({
         recipientType: "hr"
     });
 }
+
+/**
+ * Send Feedback Received Notification (To HR)
+ */
+export async function sendFeedbackReceivedNotification({
+    recipientEmail,
+    application,
+    managerName,
+    role
+}) {
+    const settings = await getSettings();
+
+    const html = feedbackReceivedTemplate({
+        settings,
+        application,
+        managerName,
+        role,
+        feedbackUrl: `${settings.appUrl}/admin/applications/${application._id}/reviews`
+    });
+
+    return sendEmail({
+        to: recipientEmail,
+        subject: `تقييم جديد مستلم - ${application.name}`,
+        html,
+        applicationId: application._id,
+        emailType: "feedback_received_alert",
+        recipientType: "hr"
+    });
+}
+
+

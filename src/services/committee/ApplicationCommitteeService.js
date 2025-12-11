@@ -2,12 +2,14 @@ import ApplicationCommittee from "@/models/ApplicationCommittee";
 import Application from "@/models/Application";
 import User from "@/models/user";
 import { connectDB } from "@/lib/db";
+import feedbackOrchestratorService from "./FeedbackOrchestratorService";
 
 class ApplicationCommitteeService {
     /**
      * Assign a Committee Template to an Application
      */
-    async assignCommittee(applicationId, committeeId) {
+    async assignCommittee(applicationId, committeeId, assignedBy) {
+        console.log(`[AppCommitteeService] Assigning Committee ${committeeId} to App ${applicationId} (By: ${assignedBy?._id || assignedBy})`);
         await connectDB();
 
         // Check if already assigned
@@ -17,22 +19,25 @@ class ApplicationCommitteeService {
         if (existing) {
             // Case 1: Committee is cancelled -> Hard delete (Zombie)
             if (existing.status === 'cancelled') {
+                console.log(`[AppCommitteeService] Found cancelled committee ${existing._id}, removing...`);
                 await ApplicationCommittee.findByIdAndDelete(existing._id);
             }
             // Case 2: Committee is active BUT Application thinks it has none (Orphan/Phantom)
             else if (!targetApp.applicationCommitteeId || targetApp.applicationCommitteeId.toString() !== existing._id.toString()) {
-                console.warn(`Found orphan committee ${existing._id} for app ${applicationId}. removing to allow new assignment.`);
+                console.warn(`[AppCommitteeService] Found orphan committee ${existing._id} for app ${applicationId}. removing to allow new assignment.`);
                 await ApplicationCommittee.findByIdAndDelete(existing._id);
             }
             // Case 3: True duplicate assignment
             else {
-                console.error("Blocker Committee Found:", existing);
+                console.error("[AppCommitteeService] Blocker Committee Found:", existing);
                 throw new Error(`Committee already assigned to this application (Status: ${existing.status})`);
             }
         }
 
         // Create from Template
+        console.log(`[AppCommitteeService] Creating from template...`);
         const appCommittee = await ApplicationCommittee.createFromTemplate(applicationId, committeeId);
+        console.log(`[AppCommitteeService] Created AppCommittee ${appCommittee._id}`);
 
         // Ensure HR Manager is included (Policy requirement often implies HR oversight)
         await this.ensureHRManagerIncluded(appCommittee);
@@ -49,6 +54,17 @@ class ApplicationCommitteeService {
         }, { new: true });
 
         if (!updatedApp) console.error("Failed to link committee to application", applicationId);
+
+        // 🚀 AUTOMATION: Send Feedback Requests to all members immediately
+        // We run this in background (no await) or await if we want to ensure it works
+        try {
+            console.log(`[Automation] Sending feedback requests for app ${applicationId}`);
+            // Note: assignedBy is passed as 3rd arg now
+            await feedbackOrchestratorService.sendFeedbackRequests(appCommittee._id, assignedBy?._id || assignedBy);
+        } catch (error) {
+            console.error("[Automation] Failed to send initial feedback requests:", error);
+            // We don't throw here to avoid rolling back the assignment, but we should log it
+        }
 
         return appCommittee.populate("members.userId", "name email role");
     }

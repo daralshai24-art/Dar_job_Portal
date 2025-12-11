@@ -31,8 +31,12 @@ const applicationSchema = new mongoose.Schema(
     rejectionReason: { type: String, trim: true },
 
     // feedback & notes
+    // feedback & notes
+    // @deprecated - Use managerFeedbacks array instead
     hrNotes: String,
+    // @deprecated - Use managerFeedbacks array instead
     technicalNotes: String,
+    // @deprecated - Use managerFeedbacks array instead
     finalFeedback: String,
 
     // ==================== NEW: Manager Feedbacks ====================
@@ -41,7 +45,7 @@ const applicationSchema = new mongoose.Schema(
       managerEmail: String,
       managerRole: {
         type: String,
-        enum: ["technical_reviewer", "hr_reviewer", "hiring_manager", "department_head"]
+        enum: ["technical_reviewer", "hr_reviewer", "hiring_manager", "department_head", "hr_manager", "decision_maker", "member"]
       },
       technicalNotes: String,
       strengths: [String],

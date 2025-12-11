@@ -13,10 +13,10 @@ import mongoose from "mongoose";
 export async function POST(request, { params }) {
   try {
     await connectDB();
-    
+
     // Get authenticated user
     const currentUser = await getAuthUser(request);
-    
+
     if (!currentUser) {
       return NextResponse.json(
         { error: "غير مصرح" },
@@ -37,12 +37,13 @@ export async function POST(request, { params }) {
 
     // Get request body
     const body = await request.json();
-    const { 
-      managerEmail, 
-      managerName, 
+    const {
+      managerEmail,
+      managerName,
       managerRole = "technical_reviewer",
       message = "",
-      expiresInDays = 7
+      expiresInDays = 7,
+      resend = false // New flag
     } = body;
 
     // Validate required fields
@@ -89,7 +90,8 @@ export async function POST(request, { params }) {
       managerRole,
       message,
       expiresInDays,
-      triggeredBy: currentUser.id || currentUser._id
+      triggeredBy: currentUser.id || currentUser._id,
+      metadata: { forceSend: resend } // Pass forceSend flag via metadata logic added to emailSender
     });
 
     if (!result.success) {

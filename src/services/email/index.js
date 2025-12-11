@@ -38,6 +38,7 @@ class EmailService {
   // ==================== COMMITTEE EMAILS ====================
 
   sendCommitteeCompleted = committeeEmails.sendCommitteeCompleted;
+  sendFeedbackReceivedNotification = committeeEmails.sendFeedbackReceivedNotification;
 
   // ==================== HIRING EMAILS ====================
 

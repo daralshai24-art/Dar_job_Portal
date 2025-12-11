@@ -6,7 +6,7 @@ export const COLORS = {
     dark: '#1D3D1E',
     medium: '#2A5A2C',
     light: '#B38025',
-    accent: '#D6B666', 
+    accent: '#D6B666',
     gold: '#F1DD8C'
   },
   text: {
@@ -33,11 +33,24 @@ export const JOB_STATUS = {
 // Job actions
 export const JOB_ACTIONS = {
   VIEW: 'view',
-  EDIT: 'edit', 
+  EDIT: 'edit',
   DELETE: 'delete',
   VIEW_APPLICATIONS: 'view_applications',
   TOGGLE_STATUS: 'toggle_status'
 };
+
+// Committee Roles
+export const COMMITTEE_ROLES = [
+  { value: "interviewer", label: "محاور" },
+  { value: "technical_reviewer", label: "مقيم فني" },
+  { value: "hr_reviewer", label: "مقيم HR" },
+  { value: "decision_maker", label: "صانع قرار" },
+  { value: "head_department", label: "مدير قسم" },
+  { value: "department_manager", label: "مدير إدارة" },
+  { value: "manager", label: "مدير" },
+  { value: "supervisor", label: "مشرف" },
+  { value: "hiring_manager", label: "مدير التوظيف" } // Added hiring_manager as it was in reviews page
+];
 
 // Table columns
 export const TABLE_COLUMNS = {
@@ -62,33 +75,33 @@ export const ANIMATIONS = {
 
 // Application status config (Moved from component)
 export const APPLICATION_STATUS_CONFIG = {
-  pending: { 
-    label: "قيد الانتظار", 
-    className: "bg-yellow-100 text-yellow-800 border-yellow-200" 
+  pending: {
+    label: "قيد الانتظار",
+    className: "bg-yellow-100 text-yellow-800 border-yellow-200"
   },
-  reviewing: { 
-    label: "قيد المراجعة", 
-    className: "bg-blue-100 text-blue-800 border-blue-200" 
+  reviewing: {
+    label: "قيد المراجعة",
+    className: "bg-blue-100 text-blue-800 border-blue-200"
   },
-  interview_scheduled: { 
-    label: "مقابلة مجدولة", 
-    className: "bg-purple-100 text-purple-800 border-purple-200" 
+  interview_scheduled: {
+    label: "مقابلة مجدولة",
+    className: "bg-purple-100 text-purple-800 border-purple-200"
   },
-  interview_completed: { 
-    label: "اكتملت المقابلة", 
-    className: "bg-indigo-100 text-indigo-800 border-indigo-200" 
+  interview_completed: {
+    label: "اكتملت المقابلة",
+    className: "bg-indigo-100 text-indigo-800 border-indigo-200"
   },
-  accepted: { 
-    label: "مقبول", 
-    className: "bg-green-100 text-green-800 border-green-200" 
+  accepted: {
+    label: "مقبول",
+    className: "bg-green-100 text-green-800 border-green-200"
   },
-  rejected: { 
-    label: "مرفوض", 
-    className: "bg-red-100 text-red-800 border-red-200" 
+  rejected: {
+    label: "مرفوض",
+    className: "bg-red-100 text-red-800 border-red-200"
   },
-  withdrawn: { 
-    label: "منسحب", 
-    className: "bg-gray-100 text-gray-800 border-gray-200" 
+  withdrawn: {
+    label: "منسحب",
+    className: "bg-gray-100 text-gray-800 border-gray-200"
   },
 };
 
@@ -101,14 +114,14 @@ export const fetchCategories = async () => {
         'Content-Type': 'application/json',
       }
     });
-    
+
     if (!response.ok) {
       console.error('Categories API response not OK:', response.status);
       throw new Error(`Failed to fetch categories: ${response.status}`);
     }
-    
+
     const result = await response.json();
-    
+
     if (result.success) {
       return [DEFAULT_CATEGORY, ...result.data];
     } else {

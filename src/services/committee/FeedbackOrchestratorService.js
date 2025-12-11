@@ -12,6 +12,7 @@ class FeedbackOrchestratorService {
      * Send Feedback Requests to all pending committee members
      */
     async sendFeedbackRequests(applicationCommitteeId, triggeredBy) {
+        console.log(`[FeedbackOrchestrator] Starting feedback requests for Committee: ${applicationCommitteeId}`);
         await connectDB();
         const committee = await ApplicationCommittee.findById(applicationCommitteeId)
             .populate("members.userId")
@@ -20,19 +21,39 @@ class FeedbackOrchestratorService {
                 populate: { path: "jobId", populate: { path: "category" } }
             });
 
-        if (!committee) throw new Error("Committee not found");
+        if (!committee) {
+            console.error(`[FeedbackOrchestrator] Committee ${applicationCommitteeId} not found!`);
+            throw new Error("Committee not found");
+        }
         const application = committee.applicationId;
+        console.log(`[FeedbackOrchestrator] Found Application: ${application._id} (${application.name})`);
 
         let sentCount = 0;
         let failedCount = 0;
         const results = [];
 
+        console.log(`[FeedbackOrchestrator] Processing ${committee.members.length} members...`);
+
         for (let member of committee.members) {
-            if (member.status !== "pending") continue;
-            if (member.feedbackTokenId) continue; // Already sent
+            console.log(`[FeedbackOrchestrator] Checking member: ${member.userId?._id || 'Unknown'} (Role: ${member.role}, Status: ${member.status})`);
+
+            if (member.status !== "pending") {
+                console.log(`[FeedbackOrchestrator] Skipping member ${member.userId?.email} - Status is ${member.status}`);
+                continue;
+            }
+            if (member.feedbackTokenId) {
+                console.log(`[FeedbackOrchestrator] Skipping member ${member.userId?.email} - Already has token`);
+                continue;
+            }
 
             try {
                 const user = member.userId;
+                if (!user) {
+                    console.warn(`[FeedbackOrchestrator] Member user not found/populated`);
+                    continue;
+                }
+
+                console.log(`[FeedbackOrchestrator] Sending to: ${user.email} (${user.name})`);
 
                 // 1. Check Preferences
                 const { shouldSend } = await emailRoutingService.shouldSendEmail(
@@ -42,6 +63,7 @@ class FeedbackOrchestratorService {
                 );
 
                 if (!shouldSend) {
+                    console.log(`[FeedbackOrchestrator] Email preference disabled for ${user.email}`);
                     results.push({ email: user.email, success: false, reason: "preference_disabled" });
                     continue;
                 }
@@ -51,6 +73,8 @@ class FeedbackOrchestratorService {
                 let tokenRole = "technical_reviewer";
                 if (member.role === "hr_manager") tokenRole = "hr_reviewer";
                 if (member.role === "manager") tokenRole = "hiring_manager";
+
+                console.log(`[FeedbackOrchestrator] Creating token with role: ${tokenRole}`);
 
                 const token = await FeedbackToken.createToken({
                     applicationId: application._id,
@@ -66,6 +90,7 @@ class FeedbackOrchestratorService {
                 await token.save();
 
                 // 3. Send Email
+                console.log(`[FeedbackOrchestrator] Dispatching email to ${user.email}...`);
                 await emailService.sendManagerFeedbackRequest({ // Using existing email function
                     application,
                     managerEmail: user.email,
@@ -82,15 +107,17 @@ class FeedbackOrchestratorService {
 
                 sentCount++;
                 results.push({ email: user.email, success: true, tokenId: token._id });
+                console.log(`[FeedbackOrchestrator] Success for ${user.email}`);
 
             } catch (error) {
-                console.error(`Failed to send feedback request to ${member.userId.email}`, error);
+                console.error(`[FeedbackOrchestrator] Failed to send feedback request to ${member.userId?.email}`, error);
                 failedCount++;
-                results.push({ email: member.userId.email, success: false, error: error.message });
+                results.push({ email: member.userId?.email, success: false, error: error.message });
             }
         }
 
         await committee.save();
+        console.log(`[FeedbackOrchestrator] Finished. Sent: ${sentCount}, Failed: ${failedCount}`);
 
         // Timeline Record
         await Timeline.create({
@@ -142,7 +169,27 @@ class FeedbackOrchestratorService {
                 feedbackData
             );
 
-            const committee = await ApplicationCommittee.findById(token.applicationCommitteeId._id);
+            const committee = await ApplicationCommittee.findById(token.applicationCommitteeId._id)
+                .populate("applicationId"); // Ensure app is available
+
+            // Notify HR about this specific feedback
+            const recipients = await emailRoutingService.getRecipientsByRole("hr_manager", "feedback_received");
+            console.log(`[FeedbackOrchestrator] Found ${recipients.length} HR recipients for feedback notification.`);
+
+            for (const recipient of recipients) {
+                try {
+                    const emailResult = await emailService.sendFeedbackReceivedNotification({
+                        recipientEmail: recipient.email,
+                        application: committee.applicationId,
+                        managerName: user.name,
+                        role: token.committeeRole || "reviewer"
+                    });
+                    console.log(`[FeedbackOrchestrator] Notification sent to ${recipient.email}:`, emailResult.success);
+                } catch (error) {
+                    console.error("Failed to send feedback received notification:", error);
+                }
+            }
+
             if (committee.isComplete) {
                 await this.handleCommitteeCompletion(committee._id);
             }
