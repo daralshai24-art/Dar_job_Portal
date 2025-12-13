@@ -87,14 +87,14 @@ class HiringRequestService {
         const request = await HiringRequest.findById(requestId).populate("requestedBy");
         if (!request) return;
 
-        const recipients = await emailRoutingService.getRecipientsByRole("hr_manager", "new_hiring_request");
+        const recipients = await emailRoutingService.getRecipientsByRole("hr_manager", "hiring_request");
 
         // Also notify Admins
-        const adminRecipients = await emailRoutingService.getRecipientsByRole("admin", "new_hiring_request", { request });
+        const adminRecipients = await emailRoutingService.getRecipientsByRole("admin", "hiring_request", { request });
 
         // Combine and dedup
         const allRecipients = [...recipients, ...adminRecipients].filter(
-            (user, index, self) => index === self.findIndex((t) => t.userId.toString() === user.userId.toString())
+            (user, index, self) => index === self.findIndex((t) => t._id.toString() === user._id.toString())
         );
 
         // Import inside method to avoid circular deps if any, or assume global import
@@ -114,29 +114,42 @@ class HiringRequestService {
 
     async notifyRequestDecision(requestId) {
         const request = await HiringRequest.findById(requestId).populate("requestedBy jobId");
-        if (!request) return;
+        if (!request || !request.requestedBy) return;
 
         // Notify the manager who requested it
         const emailService = (await import("@/services/email")).default;
 
-        // Check if they want this email
-        const { shouldSend } = await emailRoutingService.shouldSendEmail(
-            request.requestedBy._id,
-            "hiring_request_decision" // Ensure this map key exists in EmailPreference
-        );
-
-        // Assuming hiring_request_decision maps to departmentManagerEmails.hiring_request_approved/rejected logic
-        // But for simplicity, we send if enabled.
-
         try {
-            await emailService.sendHiringRequestDecision({
-                recipientEmail: request.requestedBy.email,
-                request,
-                decision: request.status // "approved" or "rejected"
-            });
+            // Check if they want this email
+            const { shouldSend } = await emailRoutingService.shouldSendEmail(
+                request.requestedBy._id,
+                "hiring_request_decision"
+            );
+
+            if (shouldSend) {
+                await emailService.sendHiringRequestDecision({
+                    recipientEmail: request.requestedBy.email,
+                    request,
+                    decision: request.status
+                });
+                console.log(`[HiringRequest] Decision email sent to ${request.requestedBy.email} (${request.status})`);
+            } else {
+                console.log(`[HiringRequest] Skipped decision email for ${request.requestedBy.email} (Preference disabled)`);
+            }
         } catch (error) {
             console.error("Failed to send hiring decision notification:", error);
         }
+    }
+    async deleteRequests(ids) {
+        await connectDB();
+        // Option A: Hard Delete
+        // return HiringRequest.deleteMany({ _id: { $in: ids } });
+
+        // Option B: Soft Delete (if schema supports it, assuming hard delete for now as per user request 'delete')
+        // Check if any request is 'approved' and linked to a job? 
+        // For simplicity, we allow deleting any request for now, or restrict active ones.
+
+        return HiringRequest.deleteMany({ _id: { $in: ids } });
     }
 }
 

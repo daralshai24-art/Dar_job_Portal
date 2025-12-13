@@ -50,3 +50,28 @@ export async function GET(req) {
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }
+
+export async function DELETE(req) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+        const { role } = session.user;
+        if (!["admin", "super_admin", "hr_manager"].includes(role)) {
+            return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+        }
+
+        const body = await req.json();
+        const { ids } = body;
+
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            return NextResponse.json({ message: "No IDs provided" }, { status: 400 });
+        }
+
+        await hiringRequestService.deleteRequests(ids);
+
+        return NextResponse.json({ message: "Requests deleted successfully" }, { status: 200 });
+    } catch (error) {
+        return NextResponse.json({ message: error.message }, { status: 500 });
+    }
+}

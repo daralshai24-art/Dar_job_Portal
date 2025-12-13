@@ -74,11 +74,16 @@ export async function sendHiringRequestDecision({
     </div>
     `;
 
+    const recipientType = request.requestedBy?.role || 'user';
+    const toName = request.requestedBy?.name || 'Manager';
+
     return sendEmail({
         to: recipientEmail,
+        toName: toName,
         subject,
         html,
         emailType: "hiring_request_decision",
+        recipientType: recipientType,
         triggeredBy,
         metadata: {
             requestId: request._id,

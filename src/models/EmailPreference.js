@@ -100,6 +100,21 @@ emailPreferenceSchema.methods.shouldReceiveEmail = function (emailType, category
     // Dept Manager Emails
     if (emailType in this.departmentManagerEmails) return this.departmentManagerEmails[emailType];
 
+    // Map new composite types to schema fields
+    if (emailType === "hiring_request_decision") {
+        // We don't know the decision here without context, so we return true 
+        // OR we check both approved/rejected.
+        // Ideally pass context.decision but for now let's assume if any is enabled, we send.
+        // Better: Map to specific keys if the caller passed "hiring_request_approved"
+        // But the caller passes "hiring_request_decision".
+        // Let's rely on the caller passing "hiring_request_approved" or "hiring_request_rejected" 
+        // OR just enable it by default if untracked.
+
+        // Actually, let's map it to 'hiring_request_approved' as a proxy for "decision made" 
+        // or check if either is enabled.
+        return this.departmentManagerEmails.hiring_request_approved !== false || this.departmentManagerEmails.hiring_request_rejected !== false;
+    }
+
     // Admin Emails
     // Fallback: If adminEmails is undefined (schema update not applied to old doc), use defaults
     const adminDefaults = { new_application: true, hiring_request: true };

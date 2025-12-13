@@ -145,6 +145,7 @@ class EmailRoutingService {
         }
 
         return {
+            shouldSend,
             reason: shouldSend ? "preference_enabled" : "preference_disabled"
         };
     }
@@ -156,14 +157,17 @@ class EmailRoutingService {
         }
         return true; // Default to true, rely on preferences
     }
+
     async getRecipientsByRole(role, emailType, context = {}) {
         await connectDB();
         const users = await User.find({ role, status: "active" }).select("_id email name role");
-        console.log(`[EmailRouting] getRecipientsByRole('${role}') found ${users.length} active users.`);
+
         const validRecipients = [];
         for (const user of users) {
             const check = await this.shouldSendEmail(user._id, emailType, context);
-            if (check.shouldSend) validRecipients.push(user);
+            if (check.shouldSend) {
+                validRecipients.push(user);
+            }
         }
         return validRecipients;
     }

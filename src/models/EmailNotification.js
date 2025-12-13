@@ -12,7 +12,7 @@ const emailNotificationSchema = new mongoose.Schema(
     applicationId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Application",
-      required: true,
+      required: false, // Changed from true to false to support hiring requests
       index: true
     },
 
@@ -29,7 +29,7 @@ const emailNotificationSchema = new mongoose.Schema(
     },
     recipientType: {
       type: String,
-      enum: ["applicant", "manager", "admin"],
+      enum: ["applicant", "manager", "admin", "user"], // Added 'user' fallback
       required: true
     },
 
@@ -52,7 +52,9 @@ const emailNotificationSchema = new mongoose.Schema(
 
         // Internal notifications
         "new_application_alert",
-        "hiring_request_alert",
+        "hiring_request_alert", // keeping old one just in case
+        "hiring_request",       // [NEW]
+        "hiring_request_decision", // [NEW]
         "interview_scheduled_alert",
         "interview_rescheduled_alert",
         "application_accepted_alert",
