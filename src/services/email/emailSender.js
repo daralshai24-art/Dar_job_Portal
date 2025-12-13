@@ -148,6 +148,8 @@ export async function sendEmail({
     }
 
     // Step 2: Check for duplicates
+    // [MODIFIED] Unlimited emails requested by user - bypassing duplicate check
+    /*
     if (!metadata?.forceSend) {
       const alreadySent = await wasEmailAlreadySent(applicationId, emailType, to);
       if (alreadySent) {
@@ -157,6 +159,7 @@ export async function sendEmail({
     } else {
       console.log(`[EmailSender] Force send enabled for ${emailType} to ${to} - Bypassing duplicate check`);
     }
+    */
 
     // Step 3: Create tracking record
     const notification = await createEmailNotification({
