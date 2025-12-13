@@ -53,8 +53,22 @@ export default function HiringRequestList({ requests, onApprove, onReject, role 
 
                     <div className="flex items-center justify-between pt-4 border-t mt-2">
                         <div className="text-xs text-gray-400">
-                            طلب بواسطة: {req.requestedBy?.name || 'غير معروف'} <br />
-                            {new Date(req.createdAt).toLocaleDateString('ar-EG')}
+                            {req.status === 'approved' && req.reviewedBy ? (
+                                <>
+                                    تمت المراجعة بواسطة: {req.reviewedBy.name} <br />
+                                </>
+                            ) : (
+                                <>
+                                    تاريخ الطلب: {new Date(req.createdAt).toLocaleDateString('ar-EG')}
+                                </>
+                            )}
+
+                            {/* Review Notes Display */}
+                            {req.status !== 'pending' && req.reviewNotes && (
+                                <div className="mt-2 text-xs text-gray-600 bg-gray-50 p-2 rounded border border-gray-100">
+                                    <span className="font-semibold text-gray-900">ملاحظات:</span> {req.reviewNotes}
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex gap-2">
@@ -77,7 +91,7 @@ export default function HiringRequestList({ requests, onApprove, onReject, role 
                             )}
 
                             {req.status === 'approved' && req.jobId && (
-                                <a href={`/jobs/${req.jobId._id}`} className="text-xs text-indigo-600 hover:underline">
+                                <a href={`/jobs/${req.jobId?._id || req.jobId}`} className="text-xs text-indigo-600 hover:underline">
                                     عرض الوظيفة المنشورة
                                 </a>
                             )}

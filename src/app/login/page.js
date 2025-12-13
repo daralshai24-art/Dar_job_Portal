@@ -14,16 +14,20 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const { login, isAuthenticated, isLoading } = useAuth();
+  const { login, isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/admin");
+    if (isAuthenticated && user) {
+      if (["department_manager", "head_of_department", "direct_manager"].includes(user.role)) {
+        router.push("/dashboard");
+      } else {
+        router.push("/admin");
+      }
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   // Check for error messages from URL
   useEffect(() => {
@@ -116,7 +120,7 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 disabled={loading}
                 autoComplete="current-password"
-                icon={Lock} 
+                icon={Lock}
               />
 
               {/* Eye Toggle Button (absolute on the left) */}
@@ -129,7 +133,7 @@ export default function LoginPage() {
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
-           </div>
+            </div>
             {/* Submit Button */}
             <button
               type="submit"

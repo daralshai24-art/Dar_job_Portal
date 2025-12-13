@@ -58,6 +58,7 @@ class HiringRequestService {
             jobType: request.employmentType,
             experience: request.experience,
             requirements: request.requiredSkills.join('\n'),
+            department: request.department, // Map department from request
             status: "active",
             createdBy
         });
@@ -78,6 +79,7 @@ class HiringRequestService {
             .populate("requestedBy", "name email department")
             .populate("category", "name")
             .populate("reviewedBy", "name")
+            .populate("jobId", "_id title")
             .sort({ createdAt: -1 });
     }
 

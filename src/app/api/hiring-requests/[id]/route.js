@@ -38,6 +38,35 @@ export async function PATCH(req, props) {
 
 export async function GET(req, props) {
     const params = await props.params;
-    // Can implement single get if needed
-    return NextResponse.json({ message: "Not implemented" });
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+        const { id } = params;
+
+        // Use service or model directly if service doesn't have getById
+        // Importing model dynamically to avoid top-level issues if any
+        const HiringRequest = (await import("@/models/HiringRequest")).default;
+
+        const request = await HiringRequest.findById(id)
+            .populate("requestedBy", "name email department")
+            .populate("category", "name")
+            .populate("reviewedBy", "name")
+            .populate("jobId", "title status");
+
+        if (!request) return NextResponse.json({ message: "Request not found" }, { status: 404 });
+
+        // Access Check
+        const { role, id: userId } = session.user;
+        const isHR = ["admin", "super_admin", "hr_manager"].includes(role);
+        const isOwner = request.requestedBy._id.toString() === userId;
+
+        if (!isHR && !isOwner) {
+            return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+        }
+
+        return NextResponse.json({ data: request });
+    } catch (error) {
+        return NextResponse.json({ message: error.message }, { status: 500 });
+    }
 }

@@ -31,6 +31,13 @@ export default function Sidebar({ currentUser, sidebarOpen, setSidebarOpen, onLo
       show: currentUser?.permissions?.applications?.view ?? true,
     },
     {
+      name: "طلبات التوظيف",
+      href: "/admin/hiring-requests",
+      icon: Briefcase,
+      active: pathname.startsWith("/admin/hiring-requests"),
+      show: currentUser?.role === "admin" || currentUser?.role === "super_admin" || currentUser?.role === "hr_manager" || currentUser?.role === "department_manager",
+    },
+    {
       name: "لجان التوظيف",
       href: "/admin/committees",
       icon: UserCheck,

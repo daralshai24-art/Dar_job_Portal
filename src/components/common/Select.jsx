@@ -163,7 +163,11 @@ export const FilterSelect = ({
           }}
           options={normalizedOptions}
           placeholder={placeholder}
-          styles={filterSelectStyles}
+          styles={{
+            ...filterSelectStyles,
+            menuPortal: (base) => ({ ...base, zIndex: 9999 })
+          }}
+          menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
           isSearchable={isSearchable}
           isClearable={isClearable}
           isMulti={isMulti}

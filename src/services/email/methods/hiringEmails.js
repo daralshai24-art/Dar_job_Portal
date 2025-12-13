@@ -1,34 +1,49 @@
-import { sendEmail } from "../emailSender.js";
-import newHiringRequestTemplate from "../templates/hiring/newHiringRequest.js";
-import requestDecisionTemplate from "../templates/hiring/requestDecision.js";
-import Settings from "../../../models/settings.js";
+/**
+ * Hiring Request Email Methods
+ */
 
-async function getSettings() {
-    const settings = await Settings.findOne();
-    return {
-        appUrl: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-        ...settings?.toObject()?.general,
-        logoUrl: settings?.email?.logoUrl,
-        companyName: settings?.general?.name || "Company"
-    };
-}
+import { sendEmail, getEmailSettings } from "../emailSender.js";
+import EMAIL_CONFIG from "../config/emailConfig.js";
+import { hiringRequestTemplate } from "../templates/internal/hiringRequest.js";
+// We don't have a specific decision template yet, using a simple HTML fallback or we can add one later.
+// For now, I'll keep the import but comment it out or leave it if I create it.
+// To avoid errors, I'll implement a basic decision logical here or create a template.
+// Let's create a basic inline HTML for decision for now to save time, or use the existing placeholder if valid.
 
 /**
  * Send New Hiring Request Notification (to HR)
  */
 export async function sendNewHiringRequest({
     recipientEmail,
-    request // Populated
+    request,
+    triggeredBy
 }) {
-    const settings = await getSettings();
-    const html = newHiringRequestTemplate({ settings, request });
+    const settings = await getEmailSettings();
+
+    const html = hiringRequestTemplate({
+        requesterName: request.requestedBy.name,
+        positionTitle: request.positionTitle,
+        department: request.department,
+        requestUrl: `${settings.appUrl}/admin/hiring-requests?id=${request._id}`,
+        justification: request.justification,
+        urgency: request.urgency,
+        logoUrl: settings.companyLogo
+    });
+
+    const subject = `${EMAIL_CONFIG.subjects.ar.HIRING_REQUEST_ALERT || "طلب توظيف جديد"} - ${EMAIL_CONFIG.subjects.en.HIRING_REQUEST_ALERT || "New Hiring Request"}`;
 
     return sendEmail({
         to: recipientEmail,
-        subject: `طلب توظيف جديد - ${request.positionTitle} - New Hiring Request`,
+        toName: "HR Team",
+        subject,
         html,
-        emailType: "new_hiring_request",
-        recipientType: "hr"
+        emailType: "hiring_request", // Updated to match likely config
+        recipientType: "admin",
+        triggeredBy,
+        metadata: {
+            requestId: request._id,
+            department: request.department
+        }
     });
 }
 
@@ -37,17 +52,42 @@ export async function sendNewHiringRequest({
  */
 export async function sendHiringRequestDecision({
     recipientEmail,
-    request, // Populated
-    decision
+    request,
+    decision,
+    triggeredBy
 }) {
-    const settings = await getSettings();
-    const html = requestDecisionTemplate({ settings, request, decision });
+    const settings = await getEmailSettings();
+    const subject = decision === 'approved'
+        ? "تم الموافقة على طلب التوظيف - Hiring Request Approved"
+        : "تم رفض طلب التوظيف - Hiring Request Rejected";
+
+    const color = decision === 'approved' ? '#10b981' : '#ef4444';
+    const statusText = decision === 'approved' ? 'Approved - تمت الموافقة' : 'Rejected - تم الرفض';
+
+    const html = `
+    <div style="font-family: sans-serif; padding: 20px;">
+        <h2 style="color: ${color}">${statusText}</h2>
+        <p>طلب الاحتياج الوظيفي الخاص بك: <strong>${request.positionTitle}</strong></p>
+        <p>الحالة الجديدة: <strong>${decision}</strong></p>
+        ${request.reviewNotes ? `<p>ملاحظات: ${request.reviewNotes}</p>` : ''}
+        <p><a href="${settings.appUrl}/dashboard/hiring-requests">عرض التفاصيل</a></p>
+    </div>
+    `;
 
     return sendEmail({
         to: recipientEmail,
-        subject: `تحديث حالة طلب التوظيف - ${request.positionTitle} - Hiring Request Update`,
+        subject,
         html,
         emailType: "hiring_request_decision",
-        recipientType: "manager"
+        triggeredBy,
+        metadata: {
+            requestId: request._id,
+            decision
+        }
     });
 }
+
+export default {
+    sendNewHiringRequest,
+    sendHiringRequestDecision
+};

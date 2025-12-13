@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Modal from "@/components/common/Modal";
+import Modal from "@/components/shared/ui/Modal";
 import { Loader2 } from "lucide-react";
 import { FilterSelect } from "@/components/common/Select";
 

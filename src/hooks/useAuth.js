@@ -35,7 +35,6 @@ export const useAuth = () => {
 
       if (result?.ok) {
         toast.success("تم تسجيل الدخول بنجاح");
-        router.push("/admin");
         router.refresh();
         return { success: true };
       }

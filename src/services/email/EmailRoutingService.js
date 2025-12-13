@@ -123,6 +123,11 @@ class EmailRoutingService {
         const categoryId = context.categoryId || context.application?.jobId?.category;
 
         // 5. Check Permission (Specific setting)
+        const user = await User.findById(userId); // re-fetch to be safe or pass full user obj
+        if (!this.isRoleEligibleForAlert(user?.role, emailType)) {
+            return { shouldSend: false, reason: "role_not_eligible" };
+        }
+
         let shouldSend = preference.shouldReceiveEmail(emailType, categoryId);
 
         // Fallback for new email types if Mongoose model is stale during dev
@@ -140,18 +145,23 @@ class EmailRoutingService {
         }
 
         return {
-            shouldSend,
             reason: shouldSend ? "preference_enabled" : "preference_disabled"
         };
     }
 
+    // [NEW] Helper to check if role matches alert type
+    isRoleEligibleForAlert(role, alertType) {
+        if (alertType === 'hiring_request_alert') {
+            return ['hr_manager', 'super_admin'].includes(role);
+        }
+        return true; // Default to true, rely on preferences
+    }
     async getRecipientsByRole(role, emailType, context = {}) {
         await connectDB();
         const users = await User.find({ role, status: "active" }).select("_id email name role");
         console.log(`[EmailRouting] getRecipientsByRole('${role}') found ${users.length} active users.`);
         const validRecipients = [];
         for (const user of users) {
-            // ... existing check
             const check = await this.shouldSendEmail(user._id, emailType, context);
             if (check.shouldSend) validRecipients.push(user);
         }

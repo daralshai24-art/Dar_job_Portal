@@ -3,7 +3,8 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, ArrowRight } from "lucide-react";
+import Link from "next/link";
 import HiringRequestList from "@/components/hiring/HiringRequestList";
 import CreateRequestModal from "@/components/hiring/CreateRequestModal";
 import { FiltersContainer } from "@/components/shared/FiltersContainer";
@@ -27,7 +28,6 @@ export default function HiringRequestsPage() {
         try {
             setLoading(true);
             let url = "/api/hiring-requests";
-            // Support basic filtering query
             if (filter !== "all") url += `?status=${filter}`;
 
             const res = await fetch(url);
@@ -40,10 +40,9 @@ export default function HiringRequestsPage() {
         }
     };
 
-    // Client-side search filtering
+    // Client-side search filtering (Title only)
     const filteredRequests = requests.filter(r =>
-        r.positionTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.department.toLowerCase().includes(searchTerm.toLowerCase())
+        r.positionTitle.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const handleApprove = async (id) => {
@@ -97,8 +96,12 @@ export default function HiringRequestsPage() {
         <div className="container mx-auto p-6 max-w-6xl">
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">طلبات التوظيف</h1>
-                    <p className="text-gray-500 mt-1">إدارة طلبات التوظيف وعمليات الموافقة</p>
+                    <Link href="/dashboard" className="flex items-center text-gray-500 hover:text-gray-900 mb-2 transition-colors">
+                        <ArrowRight size={20} className="ml-1" />
+                        <span>لوحة التحكم</span>
+                    </Link>
+                    <h1 className="text-2xl font-bold text-gray-900">سجل طلباتي</h1>
+                    <p className="text-gray-500 mt-1">متابعة حالة طلبات التوظيف التي قمت بتقديمها</p>
                 </div>
 
                 {canCreate && (
@@ -116,7 +119,7 @@ export default function HiringRequestsPage() {
                 >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <SearchInput
-                            placeholder="بحث بالمسمى الوظيفي أو القسم..."
+                            placeholder="بحث بالمسمى الوظيفي..."
                             value={searchTerm}
                             onChange={setSearchTerm}
                         />

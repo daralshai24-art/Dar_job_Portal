@@ -18,6 +18,9 @@ export { applicationAcceptedTemplate } from "./applicant/applicationAccepted.js"
 // Manager templates
 export { feedbackRequestTemplate } from "./manager/feedbackRequest.js";
 
+// Internal templates
+export { hiringRequestTemplate } from "./internal/hiringRequest.js";
+
 // Default export with all templates organized
 export default {
   base: {
@@ -33,5 +36,8 @@ export default {
   },
   manager: {
     feedbackRequest: require("./manager/feedbackRequest.js").feedbackRequestTemplate,
+  },
+  internal: {
+    hiringRequest: require("./internal/hiringRequest.js").hiringRequestTemplate,
   },
 };

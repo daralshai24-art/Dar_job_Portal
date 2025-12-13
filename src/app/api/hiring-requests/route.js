@@ -30,10 +30,15 @@ export async function GET(req) {
         const { searchParams } = new URL(req.url);
         const status = searchParams.get("status");
 
-        let filters = { status };
+        let filters = {};
+        if (status && status !== "all") {
+            filters.status = status;
+        }
 
-        if (role === "department_manager") {
-            filters.requestedBy = userId; // or department based
+        const managerRoles = ["department_manager", "head_of_department", "direct_manager"];
+
+        if (managerRoles.includes(role)) {
+            filters.requestedBy = userId;
         } else if (!["admin", "super_admin", "hr_manager"].includes(role)) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
         }
