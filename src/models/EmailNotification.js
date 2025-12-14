@@ -29,7 +29,7 @@ const emailNotificationSchema = new mongoose.Schema(
     },
     recipientType: {
       type: String,
-      enum: ["applicant", "manager", "admin", "user"], // Added 'user' fallback
+      enum: ["applicant", "manager", "admin", "user", "super_admin", "hr_manager"], // Added 'user' fallback
       required: true
     },
 
