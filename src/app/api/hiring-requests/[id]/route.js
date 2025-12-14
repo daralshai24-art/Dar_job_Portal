@@ -16,19 +16,19 @@ export async function PATCH(req, props) {
 
         const { id } = params;
         const body = await req.json();
-        const { decision, notes } = body;
+        const { decision, notes, jobDetails } = body;
 
         if (!decision) {
             return NextResponse.json({ message: "Decision required" }, { status: 400 });
         }
 
-        const request = await hiringRequestService.reviewRequest(id, userId, decision, notes);
+        // Pass jobDetails (containing overrides and createJob flag) to service
+        const request = await hiringRequestService.reviewRequest(id, userId, decision, notes, jobDetails);
 
-        // If approved, maybe convert to job if flag sent?
-        if (decision === "approved" && body.createJob) {
-            const { job } = await hiringRequestService.convertToJob(id, userId);
-            return NextResponse.json({ message: "Request approved and job created", data: { request, job } });
-        }
+        // Service handles job creation if needed, returning request (and maybe job if we refactored service to return object, but service returns request currently. 
+        // Ideally service returns { request, job } if job created, but let's stick to returning success message)
+
+        return NextResponse.json({ message: "Request updated", data: request });
 
         return NextResponse.json({ message: "Request updated", data: request });
     } catch (error) {

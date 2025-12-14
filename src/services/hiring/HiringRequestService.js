@@ -23,7 +23,7 @@ class HiringRequestService {
         return request.populate("requestedBy category");
     }
 
-    async reviewRequest(requestId, reviewerId, decision, notes) {
+    async reviewRequest(requestId, reviewerId, decision, notes, jobData = null) {
         await connectDB();
         const reviewer = await User.findById(reviewerId);
         // Validate role...
@@ -33,8 +33,16 @@ class HiringRequestService {
 
         if (decision === "approved") {
             await request.approve(reviewerId, notes);
-            // [New] Auto-convert to job as per Flow 9
-            await this.convertToJob(requestId, reviewerId);
+            // [New] Auto-convert to job as per Flow 9, allowing overrides
+            if (jobData && jobData.createJob) {
+                await this.convertToJob(requestId, reviewerId, jobData);
+            } else {
+                // Fallback or explicit separate step if needed, but assuming approve always tries to create unless strictly decoupled
+                // For now, if no jobData but approved, we might still want to create exact copy or wait.
+                // The Prompt implies we want to control it. Let's assume if jobData is passed we use it. 
+                // If not, we behave as before (auto-create exact copy) OR we strictly rely on the flag.
+                await this.convertToJob(requestId, reviewerId, {});
+            }
         } else if (decision === "rejected") {
             await request.reject(reviewerId, notes);
         }
@@ -45,21 +53,21 @@ class HiringRequestService {
         return request;
     }
 
-    async convertToJob(requestId, createdBy) {
+    async convertToJob(requestId, createdBy, jobData = {}) {
         await connectDB();
         const request = await HiringRequest.findById(requestId);
         if (request.status !== "approved") throw new Error("Request must be approved first");
 
         const job = await Job.create({
-            title: request.positionTitle,
-            description: request.positionDescription,
-            location: request.location,
-            category: request.category,
-            jobType: request.employmentType,
-            experience: request.experience,
-            requirements: request.requiredSkills.join('\n'),
-            department: request.department, // Map department from request
-            status: "active",
+            title: jobData.title || request.positionTitle,
+            description: jobData.description || request.positionDescription,
+            location: jobData.location || request.location,
+            category: jobData.category || request.category, // Assuming ID is passed if changed
+            jobType: jobData.jobType || request.employmentType,
+            experience: jobData.experience || request.experience,
+            requirements: jobData.requirements || (Array.isArray(request.requiredSkills) ? request.requiredSkills.join('\n') : request.requiredSkills),
+            department: jobData.department || request.department,
+            status: "draft",
             createdBy
         });
 
