@@ -175,7 +175,7 @@ export default function ReviewModal({ request, isOpen, onClose, onUpdate }) {
                         </div>
                     </div>
                 )}
-            </div>
+                </div>
         </div>
     );
 }
