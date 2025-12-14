@@ -123,7 +123,6 @@ export default function HiringRequestList() {
     };
 
     const columns = [
-        { key: "checkbox", label: "" }, // Checkbox column
         { key: "position", label: "المسمى الوظيفي" },
         { key: "department", label: "القسم" },
         { key: "requester", label: "مقدم الطلب" },
