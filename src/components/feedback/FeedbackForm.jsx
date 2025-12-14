@@ -1,7 +1,8 @@
 //src\components\feedback\FeedbackForm.jsx
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Loader2, Star } from "lucide-react";
 import Button from "@/components/shared/ui/Button";
 
 export default function FeedbackForm({
@@ -99,27 +100,38 @@ function FormTextArea({ label, onChange, value, required, ...props }) {
 }
 
 function ScoreInput({ value, onChange }) {
+  const [hoveredStar, setHoveredStar] = useState(0);
+
   return (
     <div className="mb-6">
       <label className="block text-sm font-medium text-gray-700 mb-2">
-        التقييم العام (من 1 إلى 10)
+        التقييم العام
       </label>
 
-      <div className="flex items-center gap-4">
-        <input
-          type="range"
-          min="1"
-          max="10"
-          value={value}
-          onChange={(e) => onChange(parseInt(e.target.value))}
-          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-        />
-        <span className="text-2xl font-bold text-blue-600 w-12 text-center">
-          {value}
+      <div className="flex items-center gap-2">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onChange(star)}
+            onMouseEnter={() => setHoveredStar(star)}
+            onMouseLeave={() => setHoveredStar(0)}
+            className="focus:outline-none transition-transform hover:scale-110"
+          >
+            <Star
+              className={`w-8 h-8 ${star <= (hoveredStar || value)
+                ? "fill-yellow-400 text-yellow-400"
+                : "fill-gray-100 text-gray-300"
+                }`}
+            />
+          </button>
+        ))}
+        <span className="mr-4 text-sm font-medium text-gray-600">
+          {value > 0 ? `${value} من 5` : "بدون تقييم"}
         </span>
       </div>
 
-      <div className="flex justify-between text-xs text-gray-500 mt-1">
+      <div className="flex justify-between text-xs text-gray-500 mt-2 max-w-[200px]">
         <span>ضعيف</span>
         <span>ممتاز</span>
       </div>
@@ -146,11 +158,10 @@ function RecommendationSelector({ value, onChange }) {
             key={opt.id}
             type="button"
             onClick={() => onChange(opt.id)}
-            className={`p-4 border-2 rounded-lg text-center transition-all ${
-              value === opt.id
-                ? `border-${opt.color}-500 bg-${opt.color}-50 text-${opt.color}-700`
-                : "border-gray-300 hover:border-gray-400"
-            }`}
+            className={`p-4 border-2 rounded-lg text-center transition-all ${value === opt.id
+              ? `border-${opt.color}-500 bg-${opt.color}-50 text-${opt.color}-700`
+              : "border-gray-300 hover:border-gray-400"
+              }`}
           >
             <div className="text-2xl mb-1">{opt.icon}</div>
             <div className="font-medium">{opt.label}</div>

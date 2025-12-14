@@ -288,8 +288,9 @@ export default function ApplicationReviewsPage() {
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                        <span className="bg-white px-2 py-1 rounded border text-sm font-bold shadow-sm">
-                          {feedback.overallScore}/10
+                        <span className="bg-white px-2 py-1 rounded border text-sm font-bold shadow-sm flex items-center gap-1">
+                          <span className="text-yellow-500">★</span>
+                          {feedback.overallScore}/5
                         </span>
                         <span className="text-xs text-gray-400">
                           {new Date(feedback.submittedAt).toLocaleDateString(
