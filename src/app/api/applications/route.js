@@ -29,11 +29,12 @@ export async function POST(request) {
       email: formData.get("email"),
       phone: formData.get("phone"),
       city: formData.get("city"),
-      nationality: formData.get("nationality")
+      nationality: formData.get("nationality"),
+      dataConfirmation: formData.get("dataConfirmation") === "true",
     };
 
     // ✅ Validate required fields
-    if (!applicationData.jobId || !applicationData.name || !applicationData.email || !applicationData.nationality) {
+    if (!applicationData.jobId || !applicationData.name || !applicationData.email || !applicationData.nationality || !applicationData.phone) {
       return NextResponse.json(
         { error: "جميع الحقول المطلوبة يجب ملؤها" },
         { status: 400 }

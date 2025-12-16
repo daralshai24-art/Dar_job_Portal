@@ -6,7 +6,7 @@ const applicationSchema = new mongoose.Schema(
     jobId: { type: mongoose.Schema.Types.ObjectId, ref: "Job", required: true },
     name: { type: String, required: true },
     email: { type: String, required: true },
-    phone: { type: String },
+    phone: { type: String, required: true },
     city: { type: String, required: true },
     nationality: { type: String, required: true },
     cv: {
@@ -21,6 +21,7 @@ const applicationSchema = new mongoose.Schema(
       path: String,
       size: Number
     },
+    dataConfirmation: { type: Boolean, required: true, default: false },
 
     // status & rejection
     status: {

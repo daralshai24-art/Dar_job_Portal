@@ -56,7 +56,10 @@ export const useJobApplication = (job) => {
   }, []);
 
   const validatePhone = useCallback((phone) => {
-    if (!phone) return true; // Phone is optional
+    if (!phone) {
+      setErrors((prev) => ({ ...prev, phone: ERROR_MESSAGES.PHONE_REQUIRED }));
+      return false;
+    }
 
     // Remove any non-numeric characters
     const numericPhone = phone.replace(/\D/g, "");
@@ -107,9 +110,9 @@ export const useJobApplication = (job) => {
       }
     }
 
-    // Phone validation (optional but must be valid if provided)
-    if (formData.phone && !validatePhone(formData.phone)) {
-      newErrors.phone = errors.phone;
+    // Phone validation
+    if (!validatePhone(formData.phone)) {
+      newErrors.phone = errors.phone || ERROR_MESSAGES.PHONE_REQUIRED;
     }
 
     // CV validation
@@ -125,6 +128,12 @@ export const useJobApplication = (job) => {
     if (!formData.city || formData.city.trim() === "") {
       newErrors.city = "المدينة مطلوبة";
     }
+
+    // Confirmation validation
+    if (!formData.dataConfirmation) {
+      newErrors.dataConfirmation = ERROR_MESSAGES.CONFIRMATION_REQUIRED;
+    }
+
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
@@ -153,7 +162,7 @@ export const useJobApplication = (job) => {
 
   const handleInputChange = useCallback(
     (e) => {
-      const { name, value, files } = e.target;
+      const { name, value, files, type, checked } = e.target;
 
       if ((name === "cv" || name === "experience") && files?.[0]) {
         const file = files[0];
@@ -175,6 +184,8 @@ export const useJobApplication = (job) => {
           // Clear phone error if field is empty
           setErrors((prev) => ({ ...prev, phone: "" }));
         }
+      } else if (type === "checkbox") {
+        updateFormField(name, checked);
       } else {
         updateFormField(name, value);
       }
@@ -210,6 +221,8 @@ export const useJobApplication = (job) => {
       if (formData.experience) {
         formDataToSend.append("experience", formData.experience);
       }
+
+      formDataToSend.append("dataConfirmation", formData.dataConfirmation);
 
       const response = await fetch("/api/applications", {
         method: "POST",
