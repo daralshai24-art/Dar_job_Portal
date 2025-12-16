@@ -2,16 +2,16 @@
 import { FileText } from "lucide-react";
 import { FORM_CONFIG } from "../constants/formConfig";
 
-const FileContent = ({ file, error }) => (
+const FileContent = ({ file, error, description, maxSizeText }) => (
   <div className="text-gray-600 mb-2">
     <FileText size={24} className="mx-auto mb-2 text-[#B38025]" />
     {file ? (
       <span className="text-green-600 font-medium">{file.name}</span>
     ) : (
       <>
-        <p className="font-medium">اضغط لرفع السيرة الذاتية</p>
+        <p className="font-medium">اضغط لرفع الملف</p>
         <p className="text-sm text-gray-500">
-          PDF, DOC, DOCX (حد أقصى {FORM_CONFIG.FILE.MAX_SIZE_READABLE})
+          {description} (حد أقصى {maxSizeText})
         </p>
       </>
     )}
@@ -21,26 +21,40 @@ const FileContent = ({ file, error }) => (
   </div>
 );
 
-const FileUpload = ({ file, onChange, required = false, error }) => {
+const FileUpload = ({
+  file,
+  onChange,
+  required = false,
+  error,
+  label = "السيرة الذاتية *",
+  name = "cv",
+  accept = FORM_CONFIG.FILE.ALLOWED_EXTENSIONS,
+  maxSizeText = FORM_CONFIG.FILE.MAX_SIZE_READABLE,
+  description = "PDF, DOC, DOCX"
+}) => {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">
-        السيرة الذاتية *
+        {label}
       </label>
-      <div className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
-        error ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-[#B38025]"
-      }`}>
+      <div className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${error ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-[#B38025]"
+        }`}>
         <input
           type="file"
-          name="cv"
+          name={name}
           onChange={onChange}
-          accept={FORM_CONFIG.FILE.ALLOWED_EXTENSIONS}
+          accept={accept}
           className="hidden"
-          id="cv-upload"
+          id={`${name}-upload`}
           required={required}
         />
-        <label htmlFor="cv-upload" className="cursor-pointer block">
-          <FileContent file={file} error={error} />
+        <label htmlFor={`${name}-upload`} className="cursor-pointer block">
+          <FileContent
+            file={file}
+            error={error}
+            description={description}
+            maxSizeText={maxSizeText}
+          />
         </label>
       </div>
     </div>

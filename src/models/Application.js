@@ -8,7 +8,14 @@ const applicationSchema = new mongoose.Schema(
     email: { type: String, required: true },
     phone: { type: String },
     city: { type: String, required: true },
+    nationality: { type: String, required: true },
     cv: {
+      filename: String,
+      originalName: String,
+      path: String,
+      size: Number
+    },
+    experience: {
       filename: String,
       originalName: String,
       path: String,

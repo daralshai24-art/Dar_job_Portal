@@ -7,23 +7,23 @@ import FileUpload from "./components/FileUpload";
 import SubmitButton from "./components/SubmitButton";
 import PrivacyNotice from "./components/PrivacyNotice";
 import CitySelect from "./components/CitySelect";
-import { SAUDI_CITIES } from "./constants/formConfig";
+import { SAUDI_CITIES, FORM_CONFIG } from "./constants/formConfig";
 import { useJobApplication } from "./hooks/useJobApplicationForm";
 
 const JobApplicationForm = ({ job }) => {
-  const { 
-    formData, 
-    submitting, 
+  const {
+    formData,
+    submitting,
     errors,
-    handleInputChange, 
-    handleSubmit 
+    handleInputChange,
+    handleSubmit
   } = useJobApplication(job);
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden sticky top-8">
       <FormHeader />
-      
-      <form onSubmit={handleSubmit} className="p-6 space-y-6">
+
+      <form onSubmit={handleSubmit} className="p-6 space-y-6" noValidate>
         <FormInput
           label="الاسم الكامل *"
           name="name"
@@ -56,17 +56,44 @@ const JobApplicationForm = ({ job }) => {
           required
         />
         <CitySelect
-        value={formData.city}
-        onChange={handleInputChange}
-        error={errors.city}
-        required
+          value={formData.city}
+          onChange={handleInputChange}
+          error={errors.city}
+          required
+        />
+
+        <FormInput
+          label="الجنسية *"
+          name="nationality"
+          value={formData.nationality}
+          onChange={handleInputChange}
+          placeholder="أدخل جنسيتك"
+          error={errors.nationality}
+          required
         />
 
         <FileUpload
+          label="السيرة الذاتية *"
+          name="cv"
           file={formData.cv}
           onChange={handleInputChange}
           error={errors.cv}
-          required
+          required={true}
+          accept={FORM_CONFIG.FILE.ALLOWED_EXTENSIONS}
+          maxSizeText={FORM_CONFIG.FILE.MAX_SIZE_READABLE}
+          description="PDF, DOC, DOCX"
+        />
+
+        <FileUpload
+          label="الخبرات *"
+          name="experience"
+          file={formData.experience}
+          onChange={handleInputChange}
+          error={errors.experience}
+          required={true}
+          accept={FORM_CONFIG.EXPERIENCE.ALLOWED_EXTENSIONS}
+          maxSizeText={FORM_CONFIG.EXPERIENCE.MAX_SIZE_READABLE}
+          description="PDF, Word, JPG, PNG"
         />
 
         <SubmitButton
