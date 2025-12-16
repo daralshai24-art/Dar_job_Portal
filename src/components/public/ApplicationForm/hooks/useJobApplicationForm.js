@@ -19,35 +19,47 @@ export const useJobApplication = (job) => {
     [errors]
   );
 
-  const validateFile = useCallback((file) => {
+  const validateFile = useCallback((file, fieldName = "cv") => {
+    // Determine config based on field name
+    const config = fieldName === "experience" ? FORM_CONFIG.EXPERIENCE : FORM_CONFIG.FILE;
+    const requiredError = fieldName === "experience" ? ERROR_MESSAGES.EXPERIENCE_REQUIRED : ERROR_MESSAGES.FILE_REQUIRED;
+
     if (!file) {
-      setErrors((prev) => ({ ...prev, cv: ERROR_MESSAGES.FILE_REQUIRED }));
-      return false;
+      if (fieldName === "cv" || fieldName === "experience") {
+        setErrors((prev) => ({ ...prev, [fieldName]: requiredError }));
+        return false;
+      }
+      return true; // Experience is optional by default unless we decide otherwise
     }
 
-    if (file.size > FORM_CONFIG.FILE.MAX_SIZE) {
-      setErrors((prev) => ({ ...prev, cv: ERROR_MESSAGES.FILE_TOO_LARGE }));
-      toast.error(ERROR_MESSAGES.FILE_TOO_LARGE);
+    if (file.size > config.MAX_SIZE) {
+      const msg = fieldName === "experience" ? ERROR_MESSAGES.EXPERIENCE_FILE_TOO_LARGE : ERROR_MESSAGES.FILE_TOO_LARGE;
+      setErrors((prev) => ({ ...prev, [fieldName]: msg }));
+      toast.error(msg);
       return false;
     }
 
     const fileExtension = "." + file.name.split(".").pop().toLowerCase();
-    if (!FORM_CONFIG.FILE.ALLOWED_TYPES.includes(fileExtension)) {
+    if (!config.ALLOWED_TYPES.includes(fileExtension)) {
+      const msg = fieldName === "experience" ? ERROR_MESSAGES.EXPERIENCE_FILE_TYPE_NOT_SUPPORTED : ERROR_MESSAGES.FILE_TYPE_NOT_SUPPORTED;
       setErrors((prev) => ({
         ...prev,
-        cv: ERROR_MESSAGES.FILE_TYPE_NOT_SUPPORTED,
+        [fieldName]: msg,
       }));
-      toast.error(ERROR_MESSAGES.FILE_TYPE_NOT_SUPPORTED);
+      toast.error(msg);
       return false;
     }
 
     // Clear file error if validation passes
-    setErrors((prev) => ({ ...prev, cv: "" }));
+    setErrors((prev) => ({ ...prev, [fieldName]: "" }));
     return true;
   }, []);
 
   const validatePhone = useCallback((phone) => {
-    if (!phone) return true; // Phone is optional
+    if (!phone) {
+      setErrors((prev) => ({ ...prev, phone: ERROR_MESSAGES.PHONE_REQUIRED }));
+      return false;
+    }
 
     // Remove any non-numeric characters
     const numericPhone = phone.replace(/\D/g, "");
@@ -83,6 +95,11 @@ export const useJobApplication = (job) => {
       newErrors.name = "الاسم الكامل مطلوب";
     }
 
+    // Nationality validation
+    if (!formData.nationality.trim()) {
+      newErrors.nationality = ERROR_MESSAGES.NATIONALITY_REQUIRED;
+    }
+
     // Email validation
     if (!formData.email.trim()) {
       newErrors.email = "البريد الإلكتروني مطلوب";
@@ -93,19 +110,30 @@ export const useJobApplication = (job) => {
       }
     }
 
-    // Phone validation (optional but must be valid if provided)
-    if (formData.phone && !validatePhone(formData.phone)) {
-      newErrors.phone = errors.phone;
+    // Phone validation
+    if (!validatePhone(formData.phone)) {
+      newErrors.phone = errors.phone || ERROR_MESSAGES.PHONE_REQUIRED;
     }
 
     // CV validation
     if (!formData.cv) {
       newErrors.cv = ERROR_MESSAGES.FILE_REQUIRED;
     }
+
+    // Experience validation
+    if (!formData.experience) {
+      newErrors.experience = ERROR_MESSAGES.EXPERIENCE_REQUIRED;
+    }
     // City validation
     if (!formData.city || formData.city.trim() === "") {
       newErrors.city = "المدينة مطلوبة";
     }
+
+    // Confirmation validation
+    if (!formData.dataConfirmation) {
+      newErrors.dataConfirmation = ERROR_MESSAGES.CONFIRMATION_REQUIRED;
+    }
+
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
@@ -119,8 +147,11 @@ export const useJobApplication = (job) => {
   const resetForm = useCallback(() => {
     setFormData(FORM_CONFIG.INITIAL_STATE);
     setErrors({});
-    const fileInput = document.querySelector('input[type="file"]');
-    if (fileInput) fileInput.value = "";
+    setFormData(FORM_CONFIG.INITIAL_STATE);
+    setErrors({});
+    // Reset all file inputs
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => input.value = "");
   }, []);
 
   const formatPhoneNumber = useCallback((phone) => {
@@ -131,11 +162,11 @@ export const useJobApplication = (job) => {
 
   const handleInputChange = useCallback(
     (e) => {
-      const { name, value, files } = e.target;
+      const { name, value, files, type, checked } = e.target;
 
-      if (name === "cv" && files?.[0]) {
+      if ((name === "cv" || name === "experience") && files?.[0]) {
         const file = files[0];
-        if (validateFile(file)) {
+        if (validateFile(file, name)) {
           updateFormField(name, file);
         } else {
           // Reset file input if validation fails
@@ -153,6 +184,8 @@ export const useJobApplication = (job) => {
           // Clear phone error if field is empty
           setErrors((prev) => ({ ...prev, phone: "" }));
         }
+      } else if (type === "checkbox") {
+        updateFormField(name, checked);
       } else {
         updateFormField(name, value);
       }
@@ -180,6 +213,16 @@ export const useJobApplication = (job) => {
       if (formData.cv) {
         formDataToSend.append("cv", formData.cv);
       }
+
+      if (formData.nationality) {
+        formDataToSend.append("nationality", formData.nationality.trim());
+      }
+
+      if (formData.experience) {
+        formDataToSend.append("experience", formData.experience);
+      }
+
+      formDataToSend.append("dataConfirmation", formData.dataConfirmation);
 
       const response = await fetch("/api/applications", {
         method: "POST",

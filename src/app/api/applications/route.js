@@ -28,11 +28,13 @@ export async function POST(request) {
       name: formData.get("name"),
       email: formData.get("email"),
       phone: formData.get("phone"),
-      city: formData.get("city")
+      city: formData.get("city"),
+      nationality: formData.get("nationality"),
+      dataConfirmation: formData.get("dataConfirmation") === "true",
     };
 
     // ✅ Validate required fields
-    if (!applicationData.jobId || !applicationData.name || !applicationData.email) {
+    if (!applicationData.jobId || !applicationData.name || !applicationData.email || !applicationData.nationality || !applicationData.phone) {
       return NextResponse.json(
         { error: "جميع الحقول المطلوبة يجب ملؤها" },
         { status: 400 }
@@ -93,6 +95,26 @@ export async function POST(request) {
       originalName: cvFile.name,
       path: `/uploads/${filename}`,
       size: cvFile.size,
+    };
+
+    // ✅ Handle Experience File upload (Required)
+    const experienceFile = formData.get("experience");
+    if (!experienceFile || experienceFile.size === 0) {
+      return NextResponse.json({ error: "يرجى رفع ملف الخبرات" }, { status: 400 });
+    }
+
+    const expBytes = await experienceFile.arrayBuffer();
+    const expBuffer = Buffer.from(expBytes);
+    // Use same uploads directory
+    const expFilename = `exp-${Date.now()}-${experienceFile.name}`;
+    const expUploadPath = path.join(uploadsDir, expFilename);
+    await writeFile(expUploadPath, expBuffer);
+
+    applicationData.experience = {
+      filename: expFilename,
+      originalName: experienceFile.name,
+      path: `/uploads/${expFilename}`,
+      size: experienceFile.size,
     };
 
     // ✅ Create application
