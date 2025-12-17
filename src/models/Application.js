@@ -78,6 +78,11 @@ const applicationSchema = new mongoose.Schema(
     interviewNotes: String,
     interviewFeedback: String,
 
+    // online meeting info
+    meetingLink: String,
+    meetingId: String,
+    meetingProvider: String,
+
     // interview results
     interviewScore: Number,
     strengths: [String],

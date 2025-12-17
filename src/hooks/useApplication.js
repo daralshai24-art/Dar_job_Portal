@@ -51,7 +51,10 @@ export const useApplication = (applicationId) => {
       interviewDate: data.interviewDate ? new Date(data.interviewDate).toISOString().split("T")[0] : "",
       interviewTime: data.interviewTime || "",
       interviewType: data.interviewType || "in_person",
-      interviewLocation: data.interviewLocation || "",
+      // Pre-fill location with meeting link if it works online
+      interviewLocation: (data.interviewType === "online" && data.meetingLink)
+        ? data.meetingLink
+        : (data.interviewLocation || ""),
       interviewNotes: data.interviewNotes || "",
       interviewFeedback: data.interviewFeedback || "",
       interviewScore: data.interviewScore || "",
