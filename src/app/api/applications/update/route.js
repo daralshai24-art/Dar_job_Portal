@@ -54,6 +54,7 @@ export async function PUT(req) {
     }
   }
 
-  const result = await updateApplication(applicationId, userId, updateData);
+  // FIX: updateApplication signature is (id, data), userId is handled by session/headers in the called API
+  const result = await updateApplication(applicationId, updateData);
   return NextResponse.json(result);
 }

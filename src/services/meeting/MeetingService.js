@@ -1,12 +1,24 @@
 import { MockMeetingProvider } from "./providers/MockMeetingProvider";
 import { JitsiMeetingProvider } from "./providers/JitsiMeetingProvider";
-// import { GoogleMeetProvider } from "./providers/GoogleMeetProvider"; // Future
+import { GoogleMeetProvider } from "./providers/GoogleMeetProvider";
 
 /**
  * Factory to get the active provider instance
  */
 const getProvider = () => {
-    // Use Jitsi for real video meetings
+    // Check if Google Credentials exist
+    const email = process.env.GOOGLE_CLIENT_EMAIL;
+    const key = process.env.GOOGLE_PRIVATE_KEY;
+
+    // DEBUG: Log the status of credentials (first few chars only for security)
+    console.log(`[MeetingService] Env Check -> Email: '${email ? email.substring(0, 5) + '...' : 'MISSING'}', Key: '${key ? 'PRESENT (len=' + key.length + ')' : 'MISSING'}'`);
+
+    if (email && key) {
+        console.log("[MeetingService] Using GoogleMeetProvider");
+        return new GoogleMeetProvider();
+    }
+
+    console.warn("[MeetingService] Google Credentials missing, falling back to Jitsi");
     return new JitsiMeetingProvider();
 };
 
