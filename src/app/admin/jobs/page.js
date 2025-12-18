@@ -29,7 +29,7 @@ export default function AdminJobsPage() {
   const fetchJobs = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/jobs");
+      const res = await fetch("/api/jobs", { cache: "no-store" });
       const data = await res.json();
       setJobs(data);
     } catch {

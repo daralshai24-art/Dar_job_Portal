@@ -13,7 +13,7 @@ export default function AdminOverview() {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        
+
         const [jobsRes, applicationsRes, usersRes] = await Promise.all([
           fetch('/api/jobs'),
           fetch('/api/applications?limit=10'),
@@ -56,7 +56,7 @@ export default function AdminOverview() {
   }, []);
 
   return (
-    <DashboardOverview 
+    <DashboardOverview
       data={dashboardData}
       loading={loading}
     />

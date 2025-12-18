@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import Job from "../../../../models/Job";
 import Category from "@/models/Category";
 import Application from "@/models/Application";
+import { JOB_DEPARTMENTS, JOB_TYPES, JOB_LEVELS } from "@/lib/constants";
 
 
 /**
@@ -27,19 +28,16 @@ const validateJobInput = (body) => {
     errors.push(`Status must be one of: ${validStatus.join(", ")}`);
   }
 
-  const validDepartments = ["HR", "IT", "Finance", "Operations", "Marketing", "Sales", "Other"];
-  if (body.department && !validDepartments.includes(body.department)) {
-    errors.push(`Department must be one of: ${validDepartments.join(", ")}`);
+  if (body.department && !JOB_DEPARTMENTS.includes(body.department)) {
+    errors.push(`Department must be one of: ${JOB_DEPARTMENTS.join(", ")}`);
   }
 
-  const validJobTypes = ["Full-time", "Part-time", "Contract", "Freelance", "Internship"];
-  if (body.jobType && !validJobTypes.includes(body.jobType)) {
-    errors.push(`Job type must be one of: ${validJobTypes.join(", ")}`);
+  if (body.jobType && !JOB_TYPES.includes(body.jobType)) {
+    errors.push(`Job type must be one of: ${JOB_TYPES.join(", ")}`);
   }
 
-  const validExperience = ["Entry Level", "Mid Level", "Senior Level", "Executive"];
-  if (body.experience && !validExperience.includes(body.experience)) {
-    errors.push(`Experience must be one of: ${validExperience.join(", ")}`);
+  if (body.experience && !JOB_LEVELS.includes(body.experience)) {
+    errors.push(`Experience must be one of: ${JOB_LEVELS.join(", ")}`);
   }
 
   return errors;

@@ -30,15 +30,15 @@ export default function JobDetailsPage() {
   const params = useParams();
   const router = useRouter();
 
-  
+
   const fetchJob = async () => {
     try {
       setLoading(true);
-      const { id } =  params;
+      const { id } = params;
       const response = await fetch(`/api/jobs/${id}`);
-      
+
       if (!response.ok) throw new Error("Job not found");
-      
+
       const jobData = await response.json();
       setJob(jobData);
     } catch (error) {
@@ -48,11 +48,11 @@ export default function JobDetailsPage() {
       setLoading(false);
     }
   };
-  
+
   useEffect(() => {
     fetchJob();
   }, [params]);
-  
+
   if (loading) return <LoadingState />;
   if (!job) return <ErrorState router={router} />;
 
@@ -63,7 +63,7 @@ export default function JobDetailsPage() {
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
       <main className="flex-1">
-        <Breadcrumb 
+        <Breadcrumb
           items={[
             { label: "الرئيسية", href: "/" },
             { label: "الوظائف", href: "/jobs" },
@@ -77,19 +77,21 @@ export default function JobDetailsPage() {
             <div className="lg:col-span-2">
               <div className="bg-white rounded-xl shadow-md overflow-hidden">
                 <PublicJobHeader job={job} formatDate={formatArabicDate} />
-                
+
                 <div className="p-8">
                   <JobContentSection title="وصف الوظيفة" icon={FileText}>
-                    <div className="prose max-w-none text-gray-700 leading-relaxed whitespace-pre-line">
-                      {job.description}
-                    </div>
+                    <div
+                      className="prose max-w-none text-gray-700 leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: job.description }}
+                    />
                   </JobContentSection>
 
                   {job.requirements && (
                     <JobContentSection title="المتطلبات والمؤهلات" icon={Briefcase}>
-                      <div className="prose max-w-none text-gray-700 leading-relaxed whitespace-pre-line">
-                        {job.requirements}
-                      </div>
+                      <div
+                        className="prose max-w-none text-gray-700 leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: job.requirements }}
+                      />
                     </JobContentSection>
                   )}
 
@@ -100,9 +102,9 @@ export default function JobDetailsPage() {
             </div>
 
             {/* Application Form */}
-            <JobApplicationForm 
-              job={job} 
-            
+            <JobApplicationForm
+              job={job}
+
             />
           </div>
         </div>

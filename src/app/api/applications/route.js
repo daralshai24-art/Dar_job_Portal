@@ -1,5 +1,6 @@
 // src/app/api/applications/route.js (FIXED - Correct Import Path)
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { connectDB } from "@/lib/db";
@@ -7,19 +8,22 @@ import Application from "@/models/Application";
 import Timeline from "@/models/Timeline";
 import Job from "@/models/Job";
 
-// 🆕 FIXED: Import email service from new modular structure
-let emailService = null;
-try {
-  emailService = require("@/services/email").default; // ← Changed from emailService to email
-} catch (e) {
-  console.log("Email service not available yet - emails will be skipped");
-}
+// Email service import removed from top-level to avoid ESM require errors
 import Committee from "@/models/Committee";
 import applicationCommitteeService from "@/services/committee/ApplicationCommitteeService";
 
 export async function POST(request) {
   try {
     await connectDB();
+
+    // Dynamically import emailService to avoid ESM circular dependency issues
+    let emailService;
+    try {
+      const emailModule = await import("@/services/email");
+      emailService = emailModule.default;
+    } catch (e) {
+      console.error("Failed to load email service:", e);
+    }
 
     const formData = await request.formData();
 
@@ -297,7 +301,9 @@ export async function GET(request) {
 
   } catch (error) {
     console.error("Error fetching applications:", error);
-    return NextResponse.json({ error: "حدث خطأ في جلب الطلبات" }, { status: 500 });
+    return NextResponse.json({
+      error: "حدث خطأ في جلب الطلبات"
+    }, { status: 500 });
   }
 }
 

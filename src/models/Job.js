@@ -1,6 +1,8 @@
 // models/Job.js
 import mongoose from "mongoose";
 
+import { JOB_DEPARTMENTS, JOB_TYPES, JOB_LEVELS } from "@/lib/constants";
+
 const jobSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
@@ -14,7 +16,7 @@ const jobSchema = new mongoose.Schema(
     },
     department: {
       type: String,
-      enum: ["HR", "IT", "Finance", "Operations", "Marketing", "Sales", "Other"],
+      enum: JOB_DEPARTMENTS,
       required: true
     },
     category: {
@@ -24,12 +26,12 @@ const jobSchema = new mongoose.Schema(
     },
     jobType: {
       type: String,
-      enum: ["Full-time", "Part-time", "Contract", "Freelance", "Internship"],
+      enum: JOB_TYPES,
       default: "Full-time"
     },
     experience: {
       type: String,
-      enum: ["Entry Level", "Mid Level", "Senior Level", "Executive"],
+      enum: JOB_LEVELS,
       default: "Entry Level"
     },
     requirements: { type: String, default: "" },

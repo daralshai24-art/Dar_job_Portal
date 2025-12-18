@@ -5,11 +5,7 @@ export default function SettingsSidebar({ activeSection, onSectionChange, onSave
     { id: "tools", label: "أدوات النظام", type: "internal" },
     { id: "email", label: "البريد الإلكتروني", type: "link", href: "/admin/settings/email" },
     { id: "categories", label: "إدارة الفئات", type: "link", href: "/admin/settings/reference/categories" },
-    // Future sections can be added here:
-    // { id: "general", label: "عام", type: "internal" },
-    // { id: "jobs", label: "الوظائف", type: "internal" },
-    // { id: "titles", label: "إدارة المسميات الوظيفية", type: "link", href: "/admin/settings/reference/titles" },
-    // { id: "locations", label: "إدارة المواقع", type: "link", href: "/admin/settings/reference/locations" },
+    { id: "templates", label: "نماذج الوظائف", type: "internal" },
   ];
 
   return (

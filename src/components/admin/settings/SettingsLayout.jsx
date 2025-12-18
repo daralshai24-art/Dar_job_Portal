@@ -5,6 +5,7 @@ import { toast } from "react-hot-toast";
 import SettingsSidebar from "./SettingsSidebar";
 import SystemTools from "./sections/SystemTools";
 import EmailSettings from "./sections/EmailSettings";
+import JobTemplates from "./sections/JobTemplates";
 import { useConfirmationModal } from "@/components/shared/modals/ConfirmationModalContext";
 
 export default function SettingsLayout() {
@@ -110,6 +111,8 @@ export default function SettingsLayout() {
         return <SystemTools {...sectionProps} />;
       case "email":
         return <EmailSettings {...sectionProps} />;
+      case "templates":
+        return <JobTemplates />;
       // Future sections can be added here
       // case "general": return <GeneralSettings {...sectionProps} />;
       // case "jobs": return <JobSettings {...sectionProps} />;
