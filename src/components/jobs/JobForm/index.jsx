@@ -18,7 +18,7 @@ const Select = dynamic(() => import('react-select'), {
 
 // Shared UI Components
 import Button from "@/components/shared/ui/Button";
-import Textarea from "@/components/shared/ui/Textarea";
+import RichTextEditor from "@/components/shared/ui/RichTextEditor";
 
 // Custom Hooks and Components
 import { useJobForm } from "./hooks/useJobForm";
@@ -286,27 +286,25 @@ const JobForm = ({ initialData = null, mode = "create" }) => {
       </div>
 
       {/* Description Field */}
-      <Textarea
+      <RichTextEditor
         label={formFields.description.label}
         placeholder={formFields.description.placeholder}
-        icon={formFields.description.icon}
         value={formData.description}
-        onChange={(e) => handleChange("description", e.target.value)}
+        onChange={(content) => handleChange("description", content)}
         error={errors.description}
         required={formFields.description.required}
-        rows={4}
         className="text-sm md:text-base"
       />
 
       {/* Requirements Field */}
-      <Textarea
+      <RichTextEditor
         label={formFields.requirements.label}
         placeholder={formFields.requirements.placeholder}
-        icon={formFields.requirements.icon}
         value={formData.requirements}
-        onChange={(e) => handleChange("requirements", e.target.value)}
-        rows={3}
-        className="text-sm md:text-base"
+        onChange={(content) => handleChange("requirements", content)}
+        error={errors.requirements}
+        required={formFields.requirements.required}
+        className="text-sm md:text-base mt-6"
       />
 
       <FormActions

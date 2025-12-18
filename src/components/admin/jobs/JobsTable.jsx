@@ -33,13 +33,20 @@ const getCategoryName = (category) => {
   return category.name || "غير محدد";
 };
 
+const stripHtml = (html) => {
+  if (!html) return "";
+  const tmp = document.createElement("DIV");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+};
+
 const JobDetails = ({ job }) => (
   <div className="flex flex-col">
     <div className="text-xl font-medium text-gray-900 mb-1">
       {job.title}
     </div>
     <div className="text-xs text-gray-500 mb-2 line-clamp-2">
-      {job.description?.substring(0, 100)}...
+      {stripHtml(job.description).substring(0, 100)}...
     </div>
     <div className="flex flex-wrap gap-2">
       {job.location && (

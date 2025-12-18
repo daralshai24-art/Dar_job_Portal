@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Save, X } from "lucide-react";
 import { JOB_DEPARTMENTS, JOB_TYPES, JOB_LEVELS } from "@/lib/constants";
 import SelectRtl from "@/components/shared/ui/SelectRtl";
+import RichTextEditor from "@/components/shared/ui/RichTextEditor";
 
 export default function JobTemplateForm({ initialData, categories, onSubmit, onCancel }) {
     const defaultData = {
@@ -102,26 +103,22 @@ export default function JobTemplateForm({ initialData, categories, onSubmit, onC
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">الوصف الوظيفي (Description)</label>
-                <textarea
-                    required
-                    rows={4}
-                    value={formData.description}
-                    onChange={e => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-right"
+                <RichTextEditor
+                    label="الوصف الوظيفي (Description)"
                     placeholder="أدخل الوصف الوظيفي الكامل..."
+                    value={formData.description}
+                    onChange={val => setFormData(prev => ({ ...prev, description: val }))}
+                    required
                 />
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">المتطلبات (Requirements)</label>
-                <textarea
-                    required
-                    rows={4}
-                    value={formData.requirements}
-                    onChange={e => setFormData({ ...formData, requirements: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-right"
+                <RichTextEditor
+                    label="المتطلبات (Requirements)"
                     placeholder="أدخل قائمة المتطلبات..."
+                    value={formData.requirements}
+                    onChange={val => setFormData(prev => ({ ...prev, requirements: val }))}
+                    required
                 />
             </div>
 
