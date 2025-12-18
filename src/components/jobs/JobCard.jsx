@@ -12,9 +12,17 @@ const getCategoryName = (category) => {
   return category.name || "غير محدد";
 };
 
+// Helper to strip HTML tags
+const stripHtml = (html) => {
+  if (!html) return "";
+  const tmp = document.createElement("DIV");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+};
+
 export default function JobCard({ job }) {
   const router = useRouter();
-  
+
   // Get the category name using the helper function
   const categoryName = getCategoryName(job.category);
 
@@ -54,11 +62,10 @@ export default function JobCard({ job }) {
         </div>
 
         {job.status && (
-          <span className={`px-3 py-1 rounded-full text-xs font-semibold ml-4 ${
-            job.status === "active" 
-              ? "bg-green-100 text-green-800 border border-green-200" 
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold ml-4 ${job.status === "active"
+              ? "bg-green-100 text-green-800 border border-green-200"
               : "bg-gray-100 text-gray-600 border border-gray-200"
-          }`}>
+            }`}>
             {job.status === "active" ? "متاحة" : "غير متاحة"}
           </span>
         )}
@@ -66,7 +73,7 @@ export default function JobCard({ job }) {
 
       {/* Description */}
       <p className="text-gray-600 mb-6 leading-relaxed line-clamp-3 text-sm">
-        {job.description?.substring(0, 150)}{job.description?.length > 150 && "..."}
+        {stripHtml(job.description).substring(0, 150)}{stripHtml(job.description).length > 150 && "..."}
       </p>
 
       {/* Details Grid */}
@@ -83,7 +90,7 @@ export default function JobCard({ job }) {
           <span>عرض التفاصيل</span>
           <FiArrowLeft size={14} className="group-hover:translate-x-1 transition-transform" />
         </div>
-        
+
         <button
           onClick={(e) => {
             e.stopPropagation();
