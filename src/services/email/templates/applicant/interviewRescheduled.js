@@ -33,6 +33,15 @@ export function interviewRescheduledTemplate(application, { logoUrl } = {}) {
     value: application.interviewTime,
     icon: "🕒",
   })}
+  
+    ${application.meetingLink
+      ? `<div style="margin-top: 15px; text-align: center;">
+          <a href="${application.meetingLink}" style="background-color: #ed8936; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+            انضم إلى الاجتماع الجديد 📹
+          </a>
+         </div>`
+      : ""
+    }
   `.replace(/margin-bottom: 15px;/g, "margin-bottom: 15px; margin-top: 0;");
 
   const body = `

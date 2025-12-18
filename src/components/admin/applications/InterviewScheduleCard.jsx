@@ -3,7 +3,7 @@
 
 import { Calendar, Clock, MapPin, Video, Phone } from "lucide-react";
 import { Card, CardHeader, CardContent } from "@/components/shared/ui/Card";
-import SelectRtl from "@/components/shared/ui/SelectRtl"; 
+import SelectRtl from "@/components/shared/ui/SelectRtl";
 import Input from "@/components/shared/ui/Input";
 import Button from "@/components/shared/ui/Button";
 
@@ -21,7 +21,7 @@ export const InterviewScheduleCard = ({
   const interviewTypeOptions = [
     { value: "in_person", label: "مقابلة شخصية" },
     { value: "online", label: "مقابلة أونلاين" },
-   
+
   ];
 
   const getInterviewTypeIcon = (type) => {
@@ -88,6 +88,24 @@ export const InterviewScheduleCard = ({
                 </div>
               </div>
             )}
+
+            {/* Show Generated Meeting Link */}
+            {application.meetingLink && (
+              <div className="flex items-start text-gray-700 mt-2">
+                <Video size={18} className="ml-2 mt-1 text-green-600" />
+                <div>
+                  <span className="font-medium block mb-1">رابط الاجتماع (فيديو):</span>
+                  <a
+                    href={application.meetingLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-3 py-1.5 bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-colors text-sm font-bold border border-green-200"
+                  >
+                    نقر للانضمام
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -101,14 +119,14 @@ export const InterviewScheduleCard = ({
                 type="date"
                 value={formData.interviewDate}
                 onChange={(e) => onFormChange("interviewDate", e.target.value)}
-                // icon={Calendar}
+              // icon={Calendar}
               />
               <Input
                 label="وقت المقابلة"
                 type="time"
                 value={formData.interviewTime}
                 onChange={(e) => onFormChange("interviewTime", e.target.value)}
-                // icon={Clock}
+              // icon={Clock}
               />
             </div>
 
@@ -127,20 +145,23 @@ export const InterviewScheduleCard = ({
             </div>
 
             {/* Location / Link */}
-            <Input
-              label={
-                formData.interviewType === "online"
-                  ? "رابط المقابلة"
-                  : "موقع المقابلة"
-              }
-              value={formData.interviewLocation}
-              onChange={(e) => onFormChange("interviewLocation", e.target.value)}
-              placeholder={
-                formData.interviewType === "online"
-                  ? "https://meet.google.com/..."
-                  : "العنوان الكامل للمقابلة"
-              }
-            />
+            {/* Location / Link */}
+            <div dir="ltr">
+              <Input
+                label={
+                  formData.interviewType === "online"
+                    ? "رابط المقابلة (يمكنك لصق رابط خارجي هنا)"
+                    : "موقع المقابلة"
+                }
+                value={formData.interviewLocation}
+                onChange={(e) => onFormChange("interviewLocation", e.target.value)}
+                placeholder={
+                  formData.interviewType === "online"
+                    ? "https://..."
+                    : "العنوان الكامل للمقابلة"
+                }
+              />
+            </div>
 
             {/* Action Buttons */}
             <div className="flex gap-2">

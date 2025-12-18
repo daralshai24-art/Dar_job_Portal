@@ -5,6 +5,7 @@ import { getAuthUser } from "@/lib/apiAuth";
 import Application from "@/models/Application";
 import Timeline from "@/models/Timeline";
 import { updateApplicationServer } from "@/services/serverApplicationService";
+import { meetingService } from "@/services/meeting/MeetingService";
 // Ensure models are registered for population
 import "@/models/Category";
 import "@/models/Job";
@@ -102,6 +103,51 @@ export async function PUT(request, { params }) {
     }
 
     const updateData = await request.json();
+
+    // ==================== MEETING GENERATION (FLOW CHECK) ====================
+    // Logic: If user provided a link manually in 'interviewLocation', use it.
+    // Otherwise, generate one using Jitsi.
+
+    const isScheduling = updateData.status === "interview_scheduled";
+    const isRescheduling = updateData.action === "interview_rescheduled";
+
+    // We only care if meaningful status change happens OR it's an explicit reschedule action
+    if ((isScheduling || isRescheduling) && updateData.interviewType === "online") {
+
+      const manualLink = updateData.interviewLocation;
+      // Basic check to see if it looks like a URL
+      const hasManualLink = manualLink && (manualLink.includes("http") || manualLink.includes("www"));
+
+      if (hasManualLink) {
+        // CASE A: Manual Link Provided (User pasted a custom link)
+        console.log("Using manual meeting link:", manualLink);
+        updateData.meetingLink = manualLink;
+        updateData.meetingId = "manual-" + Date.now();
+        updateData.meetingProvider = "manual";
+      } else {
+        // CASE B: Auto-Generate Jitsi Link (No manual link provided)
+        const subject = isRescheduling
+          ? "مقابلة توظيف (معاد جدولتها) - Rescheduled Interview"
+          : "مقابلة توظيف - Job Interview";
+
+        const meetingDetails = {
+          subject: subject,
+          startTime: updateData.interviewDate + "T" + updateData.interviewTime,
+          description: "Online Interview via Job Portal"
+        };
+
+        const meetingResult = await meetingService.createMeeting(meetingDetails);
+        if (meetingResult) {
+          updateData.meetingLink = meetingResult.meetingLink;
+          updateData.meetingId = meetingResult.meetingId;
+          updateData.meetingProvider = meetingResult.provider;
+
+          // Sync location field so it appears in the form next time
+          updateData.interviewLocation = meetingResult.meetingLink;
+        }
+      }
+    }
+    // ==================== END MEETING GENERATION ====================
 
     let currentUser = null;
     try {

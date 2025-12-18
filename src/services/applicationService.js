@@ -85,6 +85,8 @@ export const updateApplication = async (applicationId, updateData) => {
   return await response.json();
 };
 
+// Re-reading logic. Aborting edit to verify target file.
+
 // ==================== ACTION BUILDERS (CLIENT) ====================
 // Each builder returns minimal update payload only (server will create timeline)
 
@@ -111,8 +113,8 @@ export const buildStatusChangeUpdate = (application, formData) => {
     formData.status === "rejected"
       ? ACTION_TYPES.REJECTED
       : formData.status === "hired"
-      ? ACTION_TYPES.HIRED
-      : ACTION_TYPES.STATUS_CHANGED;
+        ? ACTION_TYPES.HIRED
+        : ACTION_TYPES.STATUS_CHANGED;
 
   const notes = `تم تغيير الحالة من "${getStatusText(application.status)}" إلى "${getStatusText(
     formData.status

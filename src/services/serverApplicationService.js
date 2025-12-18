@@ -22,7 +22,7 @@ try {
 export async function updateApplicationServer({ applicationId, user, updateData }) {
   if (!applicationId) throw new Error("applicationId required");
 
-  const application = await Application.findById(applicationId);
+  let application = await Application.findById(applicationId);
   if (!application) throw new Error("Application not found");
 
   // defensive: remove client-sent timeline if present
@@ -71,11 +71,19 @@ export async function updateApplicationServer({ applicationId, user, updateData 
     );
 
   // apply updates
+  const fieldsToUpdate = {};
   Object.keys(updateData).forEach((key) => {
-    application[key] = updateData[key];
+    fieldsToUpdate[key] = updateData[key];
   });
 
-  await application.save();
+  // Use findByIdAndUpdate to bypass validation for legacy documents (e.g. missing phone)
+  application = await Application.findByIdAndUpdate(
+    applicationId,
+    { $set: fieldsToUpdate },
+    { new: true, runValidators: false }
+  );
+
+  // await application.save();
 
   // create timeline entry in Timeline collection
   const timelineEntry = await createTimelineEntry({
