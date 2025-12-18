@@ -4,7 +4,7 @@
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import dynamic from 'next/dynamic';
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 
 // Dynamically import React Select with SSR disabled
 const Select = dynamic(() => import('react-select'), {
@@ -83,6 +83,17 @@ const JobForm = ({ initialData = null, mode = "create" }) => {
   const router = useRouter();
   const formActionsRef = useRef(null);
 
+  const [templates, setTemplates] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/admin/job-templates")
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setTemplates(data);
+      })
+      .catch(err => console.error("Failed to load templates", err));
+  }, []);
+
   const {
     formData,
     loading,
@@ -103,6 +114,36 @@ const JobForm = ({ initialData = null, mode = "create" }) => {
       dir="rtl"
     >
       <FormHeader mode={mode} />
+
+      {/* Template Selection */}
+      <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-6">
+        <label className="block text-sm font-medium text-blue-900 mb-2">
+          اختيار من نموذج جاهز (Auto-fill)
+        </label>
+        <Select
+          options={templates.map(t => ({ value: t._id, label: t.title, template: t }))}
+          onChange={(selected) => {
+            if (selected?.template) {
+              const t = selected.template;
+              handleChange("title", t.title);
+              handleChange("department", t.department);
+              handleChange("category", t.category?._id || t.category);
+              handleChange("jobType", t.jobType);
+              handleChange("experience", t.experience);
+              handleChange("description", t.description);
+
+              const skillsStr = (t.skills && t.skills.length) ? `\n\nالمهارات المطلوبة:\n- ${t.skills.join("\n- ")}` : "";
+              handleChange("requirements", t.requirements + skillsStr);
+
+              toast.success("تم تعبئة البيانات من النموذج");
+            }
+          }}
+          placeholder="-- اختر نموذجاً لتعبئة البيانات تلقائياً --"
+          styles={selectStyles}
+          isSearchable={true}
+          className="text-right"
+        />
+      </div>
 
       {/* Loading Overlay */}
       {loading && (

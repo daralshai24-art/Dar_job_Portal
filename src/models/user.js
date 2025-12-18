@@ -2,6 +2,7 @@
 // ====================  ====================
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import { JOB_DEPARTMENTS } from "@/lib/constants";
 
 const userSchema = new mongoose.Schema(
   {
@@ -36,7 +37,7 @@ const userSchema = new mongoose.Schema(
     },
     department: {
       type: String,
-      enum: ["HR", "IT", "Finance", "Operations", "Marketing", "Sales", "Other"],
+      enum: JOB_DEPARTMENTS,
       default: "Other",
     },
 

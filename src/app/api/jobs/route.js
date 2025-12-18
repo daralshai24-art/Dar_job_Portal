@@ -2,7 +2,9 @@
 import { connectDB } from "@/lib/db";
 import { NextResponse } from "next/server";
 import Job from "../../../models/Job";
-import  "@/models/Category";
+import "@/models/Category";
+
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/jobs

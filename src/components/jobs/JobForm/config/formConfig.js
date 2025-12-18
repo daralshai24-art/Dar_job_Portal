@@ -12,6 +12,8 @@ import {
   Building // Added icon for Department
 } from "lucide-react";
 
+import { JOB_DEPARTMENTS } from "@/lib/constants";
+
 /**
  * Form fields configuration for the JobForm
  */
@@ -35,15 +37,7 @@ export const formFields = {
     placeholder: "اختر القسم",
     icon: Building,
     type: "select",
-    options: [
-      { value: "HR", label: "الموارد البشرية" },
-      { value: "IT", label: "تقنية المعلومات" },
-      { value: "Finance", label: "المالية" },
-      { value: "Operations", label: "العمليات" },
-      { value: "Marketing", label: "التسويق" },
-      { value: "Sales", label: "المبيعات" },
-      { value: "Other", label: "أخرى" },
-    ],
+    options: JOB_DEPARTMENTS.map(d => ({ value: d, label: d })),
     required: true
   },
   category: {

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { JOB_DEPARTMENTS } from "@/lib/constants";
 
 const committeeSchema = new mongoose.Schema(
     {
@@ -11,7 +12,7 @@ const committeeSchema = new mongoose.Schema(
         },
         department: {
             type: String,
-            enum: ["HR", "IT", "Finance", "Operations", "Marketing", "Sales", "Other"],
+            enum: JOB_DEPARTMENTS,
             index: true,
         },
 

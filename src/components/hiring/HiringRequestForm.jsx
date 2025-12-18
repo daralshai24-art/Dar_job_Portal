@@ -11,6 +11,7 @@ import Button from "@/components/shared/ui/Button";
 import Input from "@/components/shared/ui/Input";
 import Textarea from "@/components/shared/ui/Textarea";
 import SelectRtl from "@/components/shared/ui/SelectRtl";
+import { JOB_DEPARTMENTS } from "@/lib/constants";
 
 // Schema
 const formSchema = z.object({
@@ -26,15 +27,7 @@ const formSchema = z.object({
     requiredSkills: z.string().optional(),
 });
 
-const DEPARTMENTS = [
-    { value: "HR", label: "الموارد البشرية" },
-    { value: "IT", label: "تقنية المعلومات" },
-    { value: "Finance", label: "المالية" },
-    { value: "Operations", label: "العمليات" },
-    { value: "Marketing", label: "التسويق" },
-    { value: "Sales", label: "المبيعات" },
-    { value: "Other", label: "أخرى" }
-];
+const DEPARTMENTS = JOB_DEPARTMENTS.map(d => ({ value: d, label: d }));
 
 const URGENCY_OPTIONS = [
     { value: "low", label: "منخفض" },
@@ -58,35 +51,61 @@ const EXPERIENCE_OPTIONS = [
 
 export default function HiringRequestForm() {
     const router = useRouter();
-    const [categoryOptions, setCategoryOptions] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [templates, setTemplates] = useState([]);
+    const [selectedTemplate, setSelectedTemplate] = useState("");
+    const [categoryOptions, setCategoryOptions] = useState([]); // Restore categoryOptions
+    const [loading, setLoading] = useState(false); // Restore loading state
 
-    // Fetch Categories
+    // Fetch Categories and Templates
     useEffect(() => {
-        const fetchCategories = async () => {
+        const loadData = async () => {
             try {
-                const res = await fetch("/api/categories");
-                if (res.ok) {
-                    const data = await res.json();
-                    let rawCategories = [];
-                    if (data.success && Array.isArray(data.data)) {
-                        rawCategories = data.data;
-                    } else if (Array.isArray(data)) {
-                        rawCategories = data;
-                    }
+                const [catRes, tempRes] = await Promise.all([
+                    fetch("/api/categories"),
+                    fetch("/api/admin/job-templates")
+                ]);
 
-                    // Map to options
-                    setCategoryOptions(rawCategories.map(cat => ({
-                        value: cat._id,
-                        label: cat.name
-                    })));
+                if (catRes.ok) {
+                    const data = await catRes.json();
+                    const list = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+                    setCategoryOptions(list.map(c => ({ value: c._id, label: c.name })));
+                }
+
+                if (tempRes.ok) {
+                    const data = await tempRes.json();
+                    setTemplates(Array.isArray(data) ? data : []);
                 }
             } catch (error) {
-                console.error("Failed to fetch categories", error);
+                console.error("Failed to load initial data", error);
             }
         };
-        fetchCategories();
+        loadData();
     }, []);
+
+    const handleTemplateChange = (templateId) => {
+        setSelectedTemplate(templateId);
+        const template = templates.find(t => t._id === templateId);
+        if (!template) return;
+
+        // Auto-fill form
+        form.setValue("positionTitle", template.title);
+        form.setValue("department", template.department);
+        form.setValue("category", template.category?._id || template.category); // Handle populated vs id
+        form.setValue("employmentType", template.jobType);
+        form.setValue("experience", template.experience);
+
+        // Combine Description and Requirements for the robust "Position Description" field if needed
+        // Or just map description. Let's append requirements for clarity.
+        const combinedDesc = `${template.description}\n\n**المتطلبات:**\n${template.requirements}`;
+        form.setValue("positionDescription", combinedDesc);
+
+        // Skills array to string
+        if (template.skills && Array.isArray(template.skills)) {
+            form.setValue("requiredSkills", template.skills.join(", "));
+        }
+
+        toast.success("تم تعبئة البيانات من النموذج");
+    };
 
     const form = useForm({
         resolver: zodResolver(formSchema),
@@ -140,6 +159,17 @@ export default function HiringRequestForm() {
             </CardHeader>
             <CardContent>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+
+                    {/* Template Selection */}
+                    {templates.length > 0 && (
+                        <SelectRtl
+                            label="اختيار من نموذج جاهز (اختياري)"
+                            placeholder="-- اختر نموذجاً لتعبئة البيانات تلقائياً --"
+                            options={templates.map(t => ({ value: t._id, label: t.title }))}
+                            value={selectedTemplate}
+                            onChange={handleTemplateChange}
+                        />
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Position Title */}
