@@ -16,6 +16,15 @@ export async function POST(request) {
   try {
     await connectDB();
 
+    // Dynamically import emailService to avoid ESM circular dependency issues
+    let emailService;
+    try {
+      const emailModule = await import("@/services/email");
+      emailService = emailModule.default;
+    } catch (e) {
+      console.error("Failed to load email service:", e);
+    }
+
     const formData = await request.formData();
 
     const applicationData = {
