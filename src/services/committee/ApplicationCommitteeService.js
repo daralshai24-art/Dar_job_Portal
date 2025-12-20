@@ -56,7 +56,8 @@ class ApplicationCommitteeService {
         if (!updatedApp) console.error("Failed to link committee to application", applicationId);
 
         // 🚀 AUTOMATION: Send Feedback Requests to all members immediately
-        // We run this in background (no await) or await if we want to ensure it works
+        // [MODIFIED] Automation moved to "interview_completed" status change in serverApplicationService
+        /*
         try {
             console.log(`[Automation] Sending feedback requests for app ${applicationId}`);
             // Note: assignedBy is passed as 3rd arg now
@@ -65,6 +66,7 @@ class ApplicationCommitteeService {
             console.error("[Automation] Failed to send initial feedback requests:", error);
             // We don't throw here to avoid rolling back the assignment, but we should log it
         }
+        */
 
         return appCommittee.populate("members.userId", "name email role");
     }
