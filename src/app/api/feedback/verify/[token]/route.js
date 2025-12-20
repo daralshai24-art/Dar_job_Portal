@@ -25,7 +25,7 @@ export async function GET(request, { params }) {
 
     if (!result.valid) {
       let errorMessage = "رابط غير صالح أو منتهي الصلاحية";
-      
+
       if (result.reason === "invalid_or_expired") {
         errorMessage = "هذا الرابط غير صالح أو منتهي الصلاحية";
       }
@@ -62,8 +62,10 @@ export async function GET(request, { params }) {
         email: feedbackToken.applicationId.email,
         phone: feedbackToken.applicationId.phone,
         city: feedbackToken.applicationId.city,
+        nationality: feedbackToken.applicationId.nationality,
         status: feedbackToken.applicationId.status,
         cv: feedbackToken.applicationId.cv,
+        experience: feedbackToken.applicationId.experience,
         jobId: {
           _id: feedbackToken.applicationId.jobId._id,
           title: feedbackToken.applicationId.jobId.title,
