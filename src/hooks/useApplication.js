@@ -23,7 +23,8 @@ export const useApplication = (applicationId) => {
     interviewScore: "",
     strengths: "",
     weaknesses: "",
-    rejectionReason: ""
+    rejectionReason: "",
+    isSilverMedalist: false
   });
 
   // ==================== DATA OPERATIONS ====================
@@ -60,7 +61,8 @@ export const useApplication = (applicationId) => {
       interviewScore: data.interviewScore || "",
       strengths: data.strengths?.join(', ') || "",
       weaknesses: data.weaknesses?.join(', ') || "",
-      rejectionReason: data.rejectionReason || ""
+      rejectionReason: data.rejectionReason || "",
+      isSilverMedalist: data.isSilverMedalist || false
     });
   };
 

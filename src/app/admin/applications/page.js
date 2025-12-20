@@ -42,7 +42,12 @@ export default function ApplicationsPage() {
       application.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       application.jobId?.title.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === "all" || application.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all"
+        ? true
+        : statusFilter === "silver_medalist"
+          ? application.isSilverMedalist === true
+          : application.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });

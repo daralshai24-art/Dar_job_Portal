@@ -70,9 +70,30 @@ export async function POST(request) {
     if (normalizedEmail) duplicateQuery.$or.push({ email: normalizedEmail });
     if (normalizedPhone) duplicateQuery.$or.push({ phone: normalizedPhone });
 
+    // ✅ Check 1: Prevent application if user has ANY active application (pending, reviewed, interviewing)
+    const activeQuery = {
+      $or: [],
+      status: { $nin: ["rejected", "hired"] } // Status is NOT rejected or hired (implies active)
+    };
+    if (normalizedEmail) activeQuery.$or.push({ email: normalizedEmail });
+    if (normalizedPhone) activeQuery.$or.push({ phone: normalizedPhone });
+
+    if (activeQuery.$or.length > 0) {
+      const activeApplication = await Application.findOne(activeQuery);
+      if (activeApplication) {
+        return NextResponse.json(
+          { error: "عذراً، لديك طلب توظيف قيد المعالجة حالياً. لا يمكنك التقديم على وظيفة أخرى حتى يتم البت في طلبك الحالي." },
+          { status: 400 }
+        );
+      }
+    }
+
+    // ✅ Check 2: Prevent duplicate email/phone for same job (redundant but safe for closed/rejected same-job apps)
     if (duplicateQuery.$or.length > 0) {
       const existingApplication = await Application.findOne(duplicateQuery);
       if (existingApplication) {
+        // If rejected, allow re-apply? NO, Requirement 3 says "Prevent apply on the same job that has been rejected"
+        // So we strictly block duplicates regardless of status
         return NextResponse.json(
           { error: "لقد تقدمت لهذه الوظيفة مسبقاً" },
           { status: 400 }

@@ -123,7 +123,10 @@ export const buildStatusChangeUpdate = (application, formData) => {
   return {
     // minimal fields to update
     status: formData.status,
-    ...(formData.status === "rejected" && { rejectionReason: formData.rejectionReason }),
+    ...(formData.status === "rejected" && {
+      rejectionReason: formData.rejectionReason,
+      isSilverMedalist: formData.isSilverMedalist
+    }),
     // helper metadata for server timeline creation
     action: actionType,
     notes,

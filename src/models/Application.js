@@ -37,6 +37,7 @@ const applicationSchema = new mongoose.Schema(
       default: "pending"
     },
     rejectionReason: { type: String, trim: true },
+    isSilverMedalist: { type: Boolean, default: false }, // "Silver Medalist" - Good candidate for future
 
     // feedback & notes
     // feedback & notes
