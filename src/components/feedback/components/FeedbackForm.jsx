@@ -29,37 +29,7 @@ export default function FeedbackForm({ formData, setFormData, submitting }) {
                 />
             </div>
 
-            {/* Strengths */}
-            <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                    نقاط القوة
-                </label>
-                <textarea
-                    value={formData.strengths}
-                    onChange={(e) =>
-                        setFormData({ ...formData, strengths: e.target.value })
-                    }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    rows={3}
-                    placeholder="ما هي نقاط القوة الرئيسية للمرشح؟"
-                />
-            </div>
 
-            {/* Weaknesses */}
-            <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                    نقاط التحسين
-                </label>
-                <textarea
-                    value={formData.weaknesses}
-                    onChange={(e) =>
-                        setFormData({ ...formData, weaknesses: e.target.value })
-                    }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    rows={3}
-                    placeholder="ما هي المجالات التي يمكن للمرشح تحسينها؟"
-                />
-            </div>
 
             {/* Overall Score */}
             <ScoreInput
@@ -118,8 +88,8 @@ function ScoreInput({ value, onChange }) {
                     >
                         <Star
                             className={`w-8 h-8 ${star <= (hoveredStar || value)
-                                    ? "fill-yellow-400 text-yellow-400"
-                                    : "fill-gray-100 text-gray-300"
+                                ? "fill-yellow-400 text-yellow-400"
+                                : "fill-gray-100 text-gray-300"
                                 }`}
                         />
                     </button>

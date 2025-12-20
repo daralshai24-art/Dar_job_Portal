@@ -12,8 +12,7 @@ export default function useFeedbackApi(tokenParam) {
 
   const [formData, setFormData] = useState({
     technicalNotes: "",
-    strengths: "",
-    weaknesses: "",
+
     recommendation: "pending", // pending, recommend, not_recommend
     overallScore: 5,
   });
@@ -85,4 +84,3 @@ export default function useFeedbackApi(tokenParam) {
     handleSubmit,
   };
 }
-    
