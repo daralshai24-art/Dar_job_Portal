@@ -48,6 +48,9 @@ export default function FeedbackHeader({ application, job, token }) {
           <p className="text-sm sm:text-base text-gray-600">
             {application.city}
           </p>
+          <p className="text-sm sm:text-base text-gray-600">
+            {application.nationality || "غير محدد"}
+          </p>
         </div>
 
         <div>
@@ -64,19 +67,33 @@ export default function FeedbackHeader({ application, job, token }) {
         </div>
       </div>
 
-      {/* CV Download */}
-      {application.cv && (
-        <div className="mt-4">
+      <div className="flex gap-3 mt-4">
+        {/* CV Download */}
+        {application.cv?.path && (
           <a
-            href={`/api/cv/${application._id}`}
+            href={application.cv.path}
             target="_blank"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium bg-blue-50 px-4 py-2 rounded-lg transition-colors border border-blue-100"
           >
             <FileText className="w-5 h-5" />
             تحميل السيرة الذاتية
           </a>
-        </div>
-      )}
+        )}
+
+        {/* Experience Download */}
+        {application.experience?.path && (
+          <a
+            href={application.experience.path}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium bg-purple-50 px-4 py-2 rounded-lg transition-colors border border-purple-100"
+          >
+            <FileText className="w-5 h-5" />
+            تحميل ملف الخبرات
+          </a>
+        )}
+      </div>
     </div>
   );
 }
