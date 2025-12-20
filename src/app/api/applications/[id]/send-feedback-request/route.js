@@ -42,7 +42,7 @@ export async function POST(request, { params }) {
       managerName,
       managerRole = "technical_reviewer",
       message = "",
-      expiresInDays = 7,
+      expiresInDays = 1,
       resend = false // New flag
     } = body;
 
