@@ -124,7 +124,7 @@ feedbackTokenSchema.statics.createToken = async function ({
   managerEmail,
   managerName,
   managerRole = "technical_reviewer",
-  expiresInDays = 7,
+  expiresInDays = 1,
   createdBy
 }) {
   const token = this.generateToken();
