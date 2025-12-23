@@ -4,6 +4,7 @@ import StatsGrid from "./StatsGrid";
 import QuickActions from "./QuickActions";
 import RecentApplications from "./RecentApplications";
 import SystemSummary from "./SystemSummary";
+import AnalyticsStats from "../analytics/AnalyticsStats";
 import DashboardLoading from "./DashboardLoading";
 
 export default function DashboardOverview({ data, loading }) {
@@ -32,18 +33,20 @@ export default function DashboardOverview({ data, loading }) {
   return (
     <div className="space-y-6">
       <DashboardHeader />
-      
+
       <StatsGrid stats={stats} />
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <QuickActions className="lg:col-span-1" />
-        <RecentApplications 
+        <RecentApplications
           applications={stats.recentApplications}
           className="lg:col-span-2"
         />
       </div>
 
       <SystemSummary stats={stats} />
+
+      <AnalyticsStats />
     </div>
   );
 }

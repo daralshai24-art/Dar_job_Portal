@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth.config";
 import SessionProvider from "@/components/providers/SessionProvider";
 import ToastProvider from "@/components/providers/ToastProvider";
 import { ConfirmationModalProvider } from "@/components/shared/modals/ConfirmationModalContext";
+import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
 
 const cairo = Cairo({
   variable: "--font-cairo",
@@ -21,6 +22,7 @@ export default async function RootLayout({ children }) {
       <body className={`${cairo.variable} antialiased`}>
         <SessionProvider session={session}>
           <ConfirmationModalProvider>
+            <AnalyticsTracker />
             {children}
           </ConfirmationModalProvider>
         </SessionProvider>
@@ -30,4 +32,3 @@ export default async function RootLayout({ children }) {
     </html>
   );
 }
-    
