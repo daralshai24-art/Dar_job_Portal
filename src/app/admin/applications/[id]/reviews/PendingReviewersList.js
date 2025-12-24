@@ -1,40 +1,15 @@
 
-import { useState, useEffect } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { useState } from "react";
 
 // Sub-component for listing pending reviewers
-function PendingReviewersList({ applicationId }) {
-    const [members, setMembers] = useState([]);
-    const [loading, setLoading] = useState(true);
+// Modified to accept 'committee' prop instead of fetching
+function PendingReviewersList({ applicationId, committee, onUpdate }) {
     const [resendingId, setResendingId] = useState(null);
 
-    const fetchCommittee = async () => {
-        try {
-            const res = await fetch(`/api/applications/${applicationId}/committee`);
-
-            if (!res.ok) {
-                console.warn("Failed to fetch committee:", res.status);
-                setMembers([]);
-                return;
-            }
-
-            const data = await res.json();
-            if (data.committee && data.committee.members) {
-                setMembers(data.committee.members.filter(m => m.status === 'pending'));
-            } else {
-                setMembers([]);
-            }
-        } catch (e) {
-            console.error("Error fetching committee:", e);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchCommittee();
-    }, [applicationId]);
+    // Filter pending members from passed committee prop
+    const members = committee?.members?.filter(m => m.status === 'pending') || [];
 
     const handleResend = async (member) => {
         if (!member.userId?.email) return;
@@ -58,6 +33,7 @@ function PendingReviewersList({ applicationId }) {
 
             if (response.ok) {
                 toast.success(`تم إعادة إرسال الطلب إلى ${member.userId.name}`);
+                if (onUpdate) onUpdate(); // Refresh parent
             } else {
                 const errData = await response.json();
                 console.error("Resend error:", errData);
@@ -70,8 +46,8 @@ function PendingReviewersList({ applicationId }) {
         }
     };
 
-    if (loading) return <div className="p-4 text-center text-sm text-gray-400">جاري تحميل القائمة...</div>;
-    if (members.length === 0) return null;
+    if (!committee) return <div className="p-4 text-center text-sm text-gray-400">جاري تحميل القائمة...</div>;
+    if (members.length === 0) return <div className="p-4 text-center text-sm text-gray-400">لا يوجد مراجعين بانتظار الرد</div>;
 
     return (
         <div className="space-y-3">
