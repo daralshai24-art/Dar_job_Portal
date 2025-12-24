@@ -6,36 +6,54 @@ import { useApplication } from "@/hooks/useApplication";
 import {
   ArrowLeft,
   Send,
-  Mail,
   CheckCircle,
   Copy,
-  Eye,
   Loader2,
 } from "lucide-react";
 import Button from "@/components/shared/ui/Button";
 import SelectRtl from "@/components/shared/ui/SelectRtl";
 import { toast } from "react-hot-toast";
-import { COMMITTEE_ROLES } from "@/lib/constants";
 import PendingReviewersList from "./PendingReviewersList";
+import VotingResultsCard from "@/components/admin/applications/VotingResultsCard";
 
 export default function ApplicationReviewsPage() {
   const params = useParams();
   const router = useRouter();
   const { application, loading, fetchApplication } = useApplication(params.id);
 
+  // New State for Committee Data
+  const [committee, setCommittee] = useState(null);
+  const [committeeLoading, setCommitteeLoading] = useState(true);
+
   const [users, setUsers] = useState([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+
+  // Fetch committee details separately
+  const fetchCommittee = async () => {
+    try {
+      const res = await fetch(`/api/applications/${params.id}/committee`);
+      if (res.ok) {
+        const data = await res.json();
+        setCommittee(data.committee);
+      }
+    } catch (e) {
+      console.error("Failed to fetch committee", e);
+    } finally {
+      setCommitteeLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (params.id) fetchCommittee();
+  }, [params.id]);
 
   useEffect(() => {
     const fetchUsers = async () => {
       setIsLoadingUsers(true);
       try {
-        // Fetch users (assuming /api/users returns { data: [...] } or just [...])
-        // We'll try to fetch all active users
-        const res = await fetch("/api/users?limit=100"); // Adjust limit as needed
+        const res = await fetch("/api/users?limit=100");
         const data = await res.json();
         if (res.ok) {
-          // API returns direct array [{}, {}]
           if (Array.isArray(data)) {
             setUsers(data);
           } else {
@@ -88,9 +106,13 @@ export default function ApplicationReviewsPage() {
       if (!response.ok) throw new Error(data.error || "Failed to send request");
 
       setSentLink(data.feedbackUrl);
-      setFormData((prev) => ({ ...prev, managerEmail: "", managerName: "" })); // Clear fields
+      setFormData((prev) => ({ ...prev, managerEmail: "", managerName: "" }));
       toast.success("تم إرسال طلب التقييم بنجاح");
-      fetchApplication(); // Refresh to potentially show new pending status if we tracked it
+
+      // Refresh both application (for feedback count) and committee (for pending list)
+      fetchApplication();
+      fetchCommittee();
+
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -123,6 +145,9 @@ export default function ApplicationReviewsPage() {
         </div>
       </div>
 
+      {/* NEW: Voting Results Card */}
+      {committee && <VotingResultsCard committee={committee} />}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Send Request Form */}
         <div className="lg:col-span-1 space-y-6">
@@ -141,7 +166,7 @@ export default function ApplicationReviewsPage() {
                   placeholder="ابحث عن المدير..."
                   options={users.map((u) => ({
                     value: u.email,
-                    label: u.name, // Display name only as requested
+                    label: u.name,
                     user: u,
                   }))}
                   value={formData.managerEmail}
@@ -152,7 +177,6 @@ export default function ApplicationReviewsPage() {
                         ...prev,
                         managerEmail: selectedUser.email,
                         managerName: selectedUser.name,
-                        // Intelligent role selection based on user role
                         managerRole:
                           selectedUser.role === "hr_manager"
                             ? "hr_reviewer"
@@ -186,8 +210,6 @@ export default function ApplicationReviewsPage() {
                   placeholder="سيتم تعبئته تلقائياً عند اختيار المدير"
                 />
               </div>
-
-              {/* Role selection hidden as requested - auto-assigned based on user type */}
 
               <div>
                 <label className="block text-sm font-medium mb-1">
@@ -237,7 +259,7 @@ export default function ApplicationReviewsPage() {
 
         {/* Right Column: Reviews List & Pending */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Pending Reviewers Section (NEW) */}
+          {/* Pending Reviewers Section (Updated to use props) */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-orange-100">
             <h3 className="font-bold flex items-center gap-2 mb-4 text-gray-800 border-b pb-2">
               <div className="w-2 h-2 rounded-full bg-orange-500"></div>
@@ -247,10 +269,11 @@ export default function ApplicationReviewsPage() {
               </span>
             </h3>
 
-            {/* We need to fetch committee members to show this list. 
-                            Since application object might not have full committee members, 
-                            we will fetch them on mount. */}
-            <PendingReviewersList applicationId={application._id} />
+            <PendingReviewersList
+              applicationId={application._id}
+              committee={committee}
+              onUpdate={fetchCommittee}
+            />
           </div>
 
           <div className="bg-white p-6 rounded-xl shadow-sm border">
@@ -303,8 +326,10 @@ export default function ApplicationReviewsPage() {
                     <div className="pl-13 space-y-3">
                       {feedback.recommendation && (
                         <div
-                          className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-2 
-                                                    ${feedback.recommendation === 'recommend' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}"
+                          className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-2 ${feedback.recommendation === 'recommend'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                            }`}
                         >
                           {feedback.recommendation === "recommend"
                             ? "🟢 يوصي بالتوظيف"

@@ -174,40 +174,55 @@ applicationCommitteeSchema.methods.calculateVotingResults = async function () {
     await this.populate("applicationId");
 
     const feedbacks = this.applicationId.managerFeedbacks || [];
-    // We need to match feedbacks to members. Ideally feedback records store userId or we check email/name
-    // Assuming feedbacks have managerEmail matching User email
-    // This part requires Application to be populated with ManagerFeedbacks
 
-    // NOTE: Application model `managerFeedbacks` has `managerEmail`. We should match that with member User email.
-    // This requires populating members.userId to get emails.
+    // Populate members to access emails
     await this.populate("members.userId");
 
-    const memberEmails = this.members.map(m => m.userId.email.toLowerCase());
+    const memberEmails = this.members.map(m => m.userId?.email?.toLowerCase()).filter(Boolean);
 
-    const committeeFeedbacks = feedbacks.filter(f => memberEmails.includes(f.managerEmail.toLowerCase()));
+    // 1. Filter relevant feedbacks (only from committee members)
+    const allCommitteeFeedbacks = feedbacks.filter(f =>
+        f.managerEmail && memberEmails.includes(f.managerEmail.toLowerCase())
+    );
 
-    // Calculate Stats
-    const scores = committeeFeedbacks
+    // 2. Deduplicate: Take the LATEST feedback for each unique email
+    const uniqueFeedbacksMap = new Map();
+    // Assuming feedbacks are pushed in order, the last one is the latest.
+    allCommitteeFeedbacks.forEach(f => {
+        const email = f.managerEmail.toLowerCase();
+        uniqueFeedbacksMap.set(email, f);
+    });
+
+    const uniqueFeedbacks = Array.from(uniqueFeedbacksMap.values());
+
+    console.log(`[VotingCalculation] Total Feedbacks: ${allCommitteeFeedbacks.length}, Unique/Valid: ${uniqueFeedbacks.length}`);
+
+    // Calculate Stats based on UNIQUE valid feedbacks
+    const scores = uniqueFeedbacks
         .map(f => f.overallScore)
-        .filter(s => s != null);
+        .filter(s => s != null && !isNaN(s));
 
     const avg = scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
     const recs = {
-        recommend: committeeFeedbacks.filter(f => f.recommendation === "recommend").length,
-        not_recommend: committeeFeedbacks.filter(f => f.recommendation === "not_recommend").length,
-        pending: this.members.filter(m => m.status === "pending").length
+        recommend: uniqueFeedbacks.filter(f => f.recommendation === "recommend").length,
+        not_recommend: uniqueFeedbacks.filter(f => f.recommendation === "not_recommend").length,
+        pending: this.members.length - uniqueFeedbacks.length
     };
+    if (recs.pending < 0) recs.pending = 0;
 
-    this.votingResults.submittedCount = this.members.filter(m => m.status === "submitted").length;
-    // totalMembers is already set
+    this.votingResults.submittedCount = uniqueFeedbacks.length;
+    // update totalMembers to match actual members array length to be safe
+    this.votingResults.totalMembers = this.members.length;
+
     this.votingResults.averageScore = parseFloat(avg.toFixed(1));
     this.votingResults.recommendations = recs;
     this.votingResults.lastCalculatedAt = new Date();
 
     // Determine Overall Recommendation
     if (this.settings.votingMechanism === "average") {
-        this.votingResults.recommendation = avg >= 6 ? "hire" : "reject";
+        // Fix: Changed threshold from 6 (impossible) to 3.5 for 5-start scale
+        this.votingResults.recommendation = avg >= 3.5 ? "hire" : (avg > 0 ? "reject" : "pending");
     } else if (this.settings.votingMechanism === "majority") {
         if (recs.recommend > recs.not_recommend) this.votingResults.recommendation = "hire";
         else if (recs.not_recommend > recs.recommend) this.votingResults.recommendation = "reject";
@@ -216,8 +231,14 @@ applicationCommitteeSchema.methods.calculateVotingResults = async function () {
         const hasRejects = recs.not_recommend > 0;
         const allRecommend = recs.recommend > 0 && recs.not_recommend === 0 && recs.pending === 0;
         if (allRecommend) this.votingResults.recommendation = "hire";
-        else if (hasRejects && recs.pending === 0) this.votingResults.recommendation = "reject";
+        else if (hasRejects) this.votingResults.recommendation = "reject";
         else this.votingResults.recommendation = "pending";
+    }
+
+    // Manual override if 0 votes to ensure pending
+    if (this.votingResults.submittedCount === 0) {
+        this.votingResults.recommendation = "pending";
+        this.votingResults.averageScore = 0;
     }
 };
 
