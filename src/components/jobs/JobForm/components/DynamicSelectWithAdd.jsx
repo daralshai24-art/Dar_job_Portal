@@ -87,7 +87,13 @@ const DynamicSelectWithAdd = ({
   });
 
   // Find the current value's label for display
-  const currentValue = selectOptions.find(opt => opt.value === value);
+  let currentValue = selectOptions.find(opt => opt.value === value);
+
+  // If value exists but not in options (e.g. from template auto-fill), create a temporary option for display
+  // This is safe for text-based fields like Title and Location
+  if (!currentValue && value && type !== 'category') {
+    currentValue = { value: value, label: value };
+  }
 
   // Determine which field to update in newOptions
   const getFieldName = () => {
@@ -104,7 +110,7 @@ const DynamicSelectWithAdd = ({
       <label className="block text-sm font-medium text-gray-700">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
-      
+
       {/* Main input area */}
       <div className="flex flex-col sm:flex-row gap-3 items-start">
         {/* React Select - Full width on mobile */}
@@ -121,7 +127,7 @@ const DynamicSelectWithAdd = ({
             loadingMessage={() => "جاري التحميل..."}
             className="text-right"
           />
-          
+
           {error && (
             <p className="text-red-500 text-sm mt-1">{error}</p>
           )}
