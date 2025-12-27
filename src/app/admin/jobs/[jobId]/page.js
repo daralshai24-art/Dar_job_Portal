@@ -21,7 +21,7 @@ export default function JobDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const jobId = params.jobId;
-  
+
   const [loading, setLoading] = useState(true);
   const [job, setJob] = useState(null);
   const [error, setError] = useState(null);
@@ -32,17 +32,17 @@ export default function JobDetailsPage() {
       try {
         setLoading(true);
         setError(null);
-        
+
         const response = await fetch(`/api/jobs/${jobId}`);
-        
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || 'فشل في تحميل بيانات الوظيفة');
         }
-        
+
         const jobData = await response.json();
         setJob(jobData);
-        
+
       } catch (error) {
         console.error('Error fetching job:', error);
         setError(error.message);
@@ -78,7 +78,7 @@ export default function JobDetailsPage() {
     const texts = {
       draft: "مسودة",
       active: "نشط",
-      inactive: "غير نشط", 
+      inactive: "غير نشط",
       closed: "مغلق"
     };
     return texts[status] || texts.draft;
@@ -132,7 +132,7 @@ export default function JobDetailsPage() {
           <ArrowRight className="ml-1 h-4 w-4" />
           العودة للوظائف
         </Button>
-        
+
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
@@ -142,12 +142,12 @@ export default function JobDetailsPage() {
               عرض تفاصيل الوظيفة
             </p>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(job?.status)}`}>
               {getStatusText(job?.status)}
             </span>
-            
+
             <Button
               onClick={() => router.push(`/admin/jobs/${jobId}/edit`)}
               variant="primary"
@@ -168,9 +168,10 @@ export default function JobDetailsPage() {
               <FileText className="ml-2 h-5 w-5 text-[#B38025]" />
               الوصف الوظيفي
             </h2>
-            <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-              {job?.description}
-            </p>
+            <div
+              className="prose prose-sm md:prose-base max-w-none w-full text-gray-700 leading-relaxed break-words overflow-hidden"
+              dangerouslySetInnerHTML={{ __html: job?.description }}
+            />
           </div>
 
           {/* Requirements */}
@@ -180,9 +181,10 @@ export default function JobDetailsPage() {
                 <Award className="ml-2 h-5 w-5 text-[#B38025]" />
                 المتطلبات والمهارات
               </h2>
-              <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                {job?.requirements}
-              </p>
+              <div
+                className="prose prose-sm md:prose-base max-w-none w-full text-gray-700 leading-relaxed break-words overflow-hidden"
+                dangerouslySetInnerHTML={{ __html: job?.requirements }}
+              />
             </div>
           )}
         </div>
@@ -194,7 +196,7 @@ export default function JobDetailsPage() {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               معلومات الوظيفة
             </h3>
-            
+
             <div className="space-y-4">
               {/* Location */}
               <div className="flex items-center text-gray-700">
@@ -270,7 +272,7 @@ export default function JobDetailsPage() {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               الإجراءات
             </h3>
-            
+
             <div className="space-y-3">
               <Button
                 onClick={() => router.push(`/admin/jobs/${jobId}/edit`)}
@@ -279,7 +281,7 @@ export default function JobDetailsPage() {
               >
                 تعديل الوظيفة
               </Button>
-              
+
               <Button
                 onClick={() => router.push(`/admin/jobs/${jobId}/applications`)}
                 variant="outline"
@@ -287,7 +289,7 @@ export default function JobDetailsPage() {
               >
                 عرض الطلبات
               </Button>
-              
+
               <Button
                 onClick={() => router.push('/admin/jobs')}
                 variant="outline"
