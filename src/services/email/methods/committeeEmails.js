@@ -2,7 +2,6 @@ import { sendEmail } from "../emailSender.js";
 import committeeCompletedTemplate from "../templates/committee/committeeCompleted.js";
 import feedbackReceivedTemplate from "../templates/committee/feedbackReceived.js";
 import Settings from "../../../models/settings.js";
-import EMAIL_CONFIG from "../config/emailConfig.js";
 
 /**
  * Fetch settings helper
@@ -10,7 +9,7 @@ import EMAIL_CONFIG from "../config/emailConfig.js";
 async function getSettings() {
     const settings = await Settings.findOne();
     return {
-        appUrl: EMAIL_CONFIG.app.url,
+        appUrl: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
         ...settings?.toObject()?.general,
         logoUrl: settings?.email?.logoUrl,
         companyName: settings?.general?.name || "Company"
