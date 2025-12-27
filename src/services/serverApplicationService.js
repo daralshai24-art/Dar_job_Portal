@@ -2,6 +2,7 @@
 import Application from "@/models/Application";
 import { createTimelineEntry } from "@/services/timelineService";
 import emailRoutingService from "@/services/email/EmailRoutingService";
+import feedbackOrchestratorService from "@/services/committee/FeedbackOrchestratorService";
 
 // 🆕 ONLY import if emailService exists, otherwise skip
 let emailService = null;
@@ -174,6 +175,25 @@ export async function updateApplicationServer({ applicationId, user, updateData 
           application: appData,
           triggeredBy: userId
         }));
+      }
+
+      // [NEW] Committee Feedback Request (Triggered on Interview Completed)
+      else if (action === "interview_completed" && previousStatus !== "interview_completed") {
+        // Check if there is a committee assigned
+        if (application.applicationCommitteeId) {
+          console.log(`[EmailTrigger] Interview Completed for App ${application._id}. Triggering Committee Feedback...`);
+          // We don't await this to keep response fast, but using Promise.allSettled below handles it
+          emailPromises.push(
+            feedbackOrchestratorService.sendFeedbackRequests(application.applicationCommitteeId, userId)
+              .then(res => ({ success: true, ...res }))
+              .catch(err => {
+                console.error("[EmailTrigger] Failed to trigger committee feedback:", err);
+                throw err;
+              })
+          );
+        } else {
+          console.log(`[EmailTrigger] Interview Completed for App ${application._id} but no committee assigned. Skipping feedback request.`);
+        }
       }
 
       // Send email asynchronously (don't wait for it)
