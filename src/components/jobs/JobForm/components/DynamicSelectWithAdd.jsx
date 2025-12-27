@@ -74,7 +74,8 @@ const DynamicSelectWithAdd = ({
   required,
   placeholder = "اختر...",
   addPlaceholder = "إضافة جديد",
-  type = "text"
+  type = "text",
+  allowAdd = true
 }) => {
   // Handle different option types (strings for titles/locations, objects for categories)
   const selectOptions = options.map(option => {
@@ -87,7 +88,13 @@ const DynamicSelectWithAdd = ({
   });
 
   // Find the current value's label for display
-  const currentValue = selectOptions.find(opt => opt.value === value);
+  let currentValue = selectOptions.find(opt => opt.value === value);
+
+  // If value exists but not in options (e.g. from template auto-fill), create a temporary option for display
+  // This is safe for text-based fields like Title and Location
+  if (!currentValue && value && type !== 'category') {
+    currentValue = { value: value, label: value };
+  }
 
   // Determine which field to update in newOptions
   const getFieldName = () => {
@@ -104,7 +111,7 @@ const DynamicSelectWithAdd = ({
       <label className="block text-sm font-medium text-gray-700">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
-      
+
       {/* Main input area */}
       <div className="flex flex-col sm:flex-row gap-3 items-start">
         {/* React Select - Full width on mobile */}
@@ -121,37 +128,39 @@ const DynamicSelectWithAdd = ({
             loadingMessage={() => "جاري التحميل..."}
             className="text-right"
           />
-          
+
           {error && (
             <p className="text-red-500 text-sm mt-1">{error}</p>
           )}
         </div>
 
         {/* Add New Section */}
-        <div className="flex gap-2 w-full sm:w-auto sm:mt-1">
-          <input
-            placeholder={addPlaceholder}
-            value={newValue}
-            onChange={(e) => onNewValueChange(fieldName, e.target.value)}
-            className="w-full sm:min-w-[140px] text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#D6B666] focus:border-transparent"
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                onAddNew();
-              }
-            }}
-            dir="rtl"
-          />
-          <button
-            type="button"
-            onClick={onAddNew}
-            disabled={!newValue?.trim()}
-            className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center min-w-[44px]"
-            title="إضافة جديد"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
+        {allowAdd && (
+          <div className="flex gap-2 w-full sm:w-auto sm:mt-1">
+            <input
+              placeholder={addPlaceholder}
+              value={newValue}
+              onChange={(e) => onNewValueChange(fieldName, e.target.value)}
+              className="w-full sm:min-w-[140px] text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#D6B666] focus:border-transparent"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  onAddNew();
+                }
+              }}
+              dir="rtl"
+            />
+            <button
+              type="button"
+              onClick={onAddNew}
+              disabled={!newValue?.trim()}
+              className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center min-w-[44px]"
+              title="إضافة جديد"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -176,6 +176,7 @@ const JobForm = ({ initialData = null, mode = "create" }) => {
         placeholder="اختر المسمى الوظيفي"
         addPlaceholder="مسمى وظيفي جديد"
         type="text"
+        allowAdd={false}
       />
 
       {/* Grid Layout for Multiple Fields */}
@@ -227,6 +228,7 @@ const JobForm = ({ initialData = null, mode = "create" }) => {
           placeholder="اختر التصنيف"
           addPlaceholder="تصنيف جديد"
           type="category"
+          allowAdd={false}
         />
 
         {/* Job Type */}
