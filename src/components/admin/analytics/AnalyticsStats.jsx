@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Users, Eye, Monitor, ArrowUpRight } from 'lucide-react';
+import { Loader2, Users, Eye, Monitor, ArrowUpRight, Trash2 } from 'lucide-react';
+import { useConfirmationModal } from '@/components/shared/modals/ConfirmationModalContext';
 
 export default function AnalyticsStats() {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const { showConfirmation } = useConfirmationModal();
 
     useEffect(() => {
         async function fetchStats() {
@@ -24,6 +26,26 @@ export default function AnalyticsStats() {
         }
         fetchStats();
     }, []);
+
+    const handleDeleteLogs = () => {
+        showConfirmation({
+            title: "حذف السجلات",
+            message: "هل أنت متأكد من حذف جميع سجلات الزيارات؟ لا يمكن التراجع عن هذا الإجراء.",
+            variant: "danger",
+            confirmText: "حذف نهائي",
+            onConfirm: async () => {
+                try {
+                    await fetch('/api/analytics/stats', { method: 'DELETE' });
+                    // Refresh stats
+                    const res = await fetch('/api/analytics/stats');
+                    const json = await res.json();
+                    if (json.success) setStats(json.data);
+                } catch (err) {
+                    console.error("Failed to delete logs", err);
+                }
+            }
+        });
+    };
 
     if (loading) {
         return <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
@@ -102,8 +124,15 @@ export default function AnalyticsStats() {
 
             {/* Recent Activity Log */}
             <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-lg">آخر الزيارات المسجلة</CardTitle>
+                    <button
+                        onClick={handleDeleteLogs}
+                        className="text-xs text-red-600 hover:text-red-700 font-medium px-3 py-1 border border-red-200 rounded-md hover:bg-red-50 transition-colors flex items-center gap-1"
+                    >
+                        <Trash2 className="w-3 h-3" />
+                        حذف السجل
+                    </button>
                 </CardHeader>
                 <CardContent>
                     <div className="overflow-x-auto" dir="rtl">

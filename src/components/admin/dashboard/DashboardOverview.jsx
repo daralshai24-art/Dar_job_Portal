@@ -1,4 +1,5 @@
 // src/components/admin/dashboard/DashboardOverview.jsx
+import { useState } from "react";
 import DashboardHeader from "./DashboardHeader";
 import StatsGrid from "./StatsGrid";
 import QuickActions from "./QuickActions";
@@ -8,6 +9,8 @@ import AnalyticsStats from "../analytics/AnalyticsStats";
 import DashboardLoading from "./DashboardLoading";
 
 export default function DashboardOverview({ data, loading }) {
+  const [showAnalytics, setShowAnalytics] = useState(false);
+
   if (loading || !data) {
     return <DashboardLoading />;
   }
@@ -46,7 +49,20 @@ export default function DashboardOverview({ data, loading }) {
 
       <SystemSummary stats={stats} />
 
-      <AnalyticsStats />
+      <div className="flex justify-center border-t pt-6">
+        <button
+          onClick={() => setShowAnalytics((prev) => !prev)}
+          className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#B38025] transition-all shadow-sm flex items-center gap-2"
+        >
+          {showAnalytics ? "إخفاء التحليلات التفصيلية" : "عرض سجل الزوار والتحليلات"}
+        </button>
+      </div>
+
+      {showAnalytics && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <AnalyticsStats />
+        </div>
+      )}
     </div>
   );
 }
