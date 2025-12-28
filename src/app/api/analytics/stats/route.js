@@ -110,3 +110,19 @@ export async function GET(req) {
         return NextResponse.json({ success: false, error: 'Failed to fetch stats' }, { status: 500 });
     }
 }
+
+export async function DELETE(req) {
+    try {
+        await connectDB();
+
+        // Optional: Check for admin session/permissions here if needed
+        // For now, assuming protected via middleware or UI checks
+
+        await VisitorLog.deleteMany({});
+
+        return NextResponse.json({ success: true, message: 'All visitor logs cleared' });
+    } catch (error) {
+        console.error('Clear Analytics Error:', error);
+        return NextResponse.json({ success: false, error: 'Failed to clear logs' }, { status: 500 });
+    }
+}
