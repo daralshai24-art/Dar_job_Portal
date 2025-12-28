@@ -78,10 +78,10 @@ export default function JobDetailsPage() {
               <div className="bg-white rounded-xl shadow-md overflow-hidden">
                 <PublicJobHeader job={job} formatDate={formatArabicDate} />
 
-                <div className="p-8">
+                <div className="p-4 md:p-8">
                   <JobContentSection title="وصف الوظيفة" icon={FileText}>
                     <div
-                      className="prose max-w-none text-gray-700 leading-relaxed"
+                      className="prose prose-sm md:prose-base max-w-none w-full text-gray-700 leading-relaxed [&_*]:break-words [&_a]:break-all [&_img]:max-w-full [&_table]:block [&_table]:overflow-x-auto"
                       dangerouslySetInnerHTML={{ __html: job.description }}
                     />
                   </JobContentSection>
@@ -89,7 +89,7 @@ export default function JobDetailsPage() {
                   {job.requirements && (
                     <JobContentSection title="المتطلبات والمؤهلات" icon={Briefcase}>
                       <div
-                        className="prose max-w-none text-gray-700 leading-relaxed"
+                        className="prose prose-sm md:prose-base max-w-none w-full text-gray-700 leading-relaxed [&_*]:break-words [&_a]:break-all [&_img]:max-w-full [&_table]:block [&_table]:overflow-x-auto"
                         dangerouslySetInnerHTML={{ __html: job.requirements }}
                       />
                     </JobContentSection>

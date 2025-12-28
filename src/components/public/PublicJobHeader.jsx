@@ -11,27 +11,26 @@ const getCategoryName = (category) => {
 const PublicJobHeader = ({ job, formatDate }) => {
   // Get category name using helper function
   const categoryName = getCategoryName(job.category);
-  
+
   return (
-    <div className="bg-gradient-to-r from-[#1D3D1E] to-[#2A5A2C] text-white p-8">
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold mb-2 text-[#F1DD8C]">
+    <div className="bg-gradient-to-r from-[#1D3D1E] to-[#2A5A2C] text-white p-6 md:p-8 rounded-t-xl">
+      <div className="flex flex-col-reverse md:flex-row justify-between items-start mb-6 gap-4">
+        <div className="flex-1 w-full">
+          <h1 className="text-2xl md:text-3xl font-bold mb-3 text-[#F1DD8C] leading-tight">
             {job.title}
           </h1>
           {categoryName && categoryName !== "غير محدد" && (
-            <span className="inline-block bg-white/20 text-white px-3 py-1 rounded-full text-sm">
+            <span className="inline-block bg-white/20 text-white px-3 py-1 rounded-full text-sm backdrop-blur-sm">
               {categoryName}
             </span>
           )}
         </div>
-        <div className="text-right">
+        <div className="w-full md:w-auto flex md:block justify-end">
           <span
-            className={`px-3 py-1 rounded-full text-sm font-medium ${
-              job.status === "active"
+            className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap ${job.status === "active"
                 ? "bg-green-400 text-green-900"
                 : "bg-gray-400 text-gray-900"
-            }`}
+              }`}
           >
             {job.status === "active" ? "متاحة للتقديم" : "غير متاحة"}
           </span>
