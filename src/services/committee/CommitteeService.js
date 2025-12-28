@@ -18,8 +18,21 @@ class CommitteeService {
             createdBy
         } = data;
 
+
         // 1. Resolve members (Use provided members OR find defaults)
         let membersList = members;
+
+        // Validation: Prevent Duplicate Department Committee
+        if (type === 'department' && department) {
+            const existingInternal = await Committee.findOne({
+                department,
+                isActive: true,
+                type: 'department'
+            });
+            if (existingInternal) {
+                throw new Error(`يوجد بالفعل لجنة نشطة لقسم ${department}`);
+            }
+        }
 
         // If no members provided, try to find default members from Users
         if (!membersList || membersList.length === 0) {
@@ -43,7 +56,11 @@ class CommitteeService {
         const committee = await Committee.create({
             name,
             type,
-            category: type === 'category' ? category : undefined,
+            name,
+            type,
+            // Support both single and multiple categories
+            category: type === 'category' ? (data.category || (data.categories?.[0])) : undefined,
+            categories: type === 'category' ? (data.categories || (data.category ? [data.category] : [])) : [],
             department: type === 'department' ? department : undefined,
             members: (membersList || []).map((m, index) => ({
                 userId: m.userId._id || m.userId, // Handle populated or ID
@@ -75,13 +92,36 @@ class CommitteeService {
         const committee = await Committee.findById(id);
         if (!committee) throw new Error("Committee not found");
 
-        const allowedFields = ["name", "type", "department", "category", "description", "settings", "isActive"];
+        const allowedFields = ["name", "type", "department", "category", "categories", "description", "settings", "isActive"];
 
         allowedFields.forEach(field => {
             if (updates[field] !== undefined) {
                 committee[field] = updates[field];
             }
         });
+
+        // [FIX] Ensure legacy 'category' field is synced with 'categories' array
+        // This prevents "reverting" issues where the old single category persists after being removed from the list.
+        if (updates.categories !== undefined) {
+            // If categories is updated, set 'category' to the first item (or undefined if empty)
+            committee.category = (updates.categories && updates.categories.length > 0)
+                ? updates.categories[0]
+                : undefined;
+        }
+
+        // Validation: Prevent Duplicate Department Committee on Update
+        if ((committee.type === 'department' || updates.type === 'department') && (committee.department || updates.department)) {
+            const targetDept = updates.department || committee.department;
+            const existingInternal = await Committee.findOne({
+                department: targetDept,
+                isActive: true,
+                type: 'department',
+                _id: { $ne: id }
+            });
+            if (existingInternal) {
+                throw new Error(`يوجد بالفعل لجنة نشطة لقسم ${targetDept}`);
+            }
+        }
 
         committee.updatedBy = updatedBy;
         await committee.save();
@@ -164,6 +204,7 @@ class CommitteeService {
         await connectDB();
         return Committee.find({ isActive: true })
             .populate("category", "name")
+            .populate("categories", "name") // [FIX] Populate categories
             .populate("members.userId", "name email role")
             .sort({ createdAt: -1 });
     }
@@ -175,6 +216,7 @@ class CommitteeService {
         await connectDB();
         return Committee.findById(id)
             .populate("category", "name")
+            .populate("categories", "name") // [FIX] Populate categories
             .populate("members.userId", "name email role department")
             .populate("createdBy", "name")
             .populate("updatedBy", "name");

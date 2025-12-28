@@ -172,13 +172,18 @@ export async function POST(request) {
 
       // 2. Fallback: Try to find a committee for the Category
       if (!matchedCommittee) {
-        matchedCommittee = await Committee.findOne({
-          category: job.category,
-          isActive: true,
-          "settings.autoAssignToApplications": true
-        });
+        // [UPDATED] Multi-Category Logic: Valid if committee.category == job.category OR job.category is in committee.categories
+        if (job.category) {
+          matchedCommittee = await Committee.findOne({
+            $or: [
+              { category: job.category },
+              { categories: { $in: [job.category] } }
+            ],
+            isActive: true,
+            "settings.autoAssignToApplications": true
+          });
+        }
       }
-
       // 3. Assign if found
       if (matchedCommittee) {
         console.log(`[AutoAssign] Assigning committee "${matchedCommittee.name}" to application ${application._id}`);
