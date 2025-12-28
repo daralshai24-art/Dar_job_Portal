@@ -10,6 +10,11 @@ const committeeSchema = new mongoose.Schema(
             ref: "Category",
             index: true,
         },
+        // [NEW] Multi-Category Support
+        categories: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Category"
+        }],
         department: {
             type: String,
             enum: JOB_DEPARTMENTS,

@@ -23,7 +23,7 @@ export default function CommitteesPage() {
         name: "",
         type: "department",
         department: "",
-        category: ""
+        categories: [] // [UPDATED] Changed from single 'category' to array 'categories'
     });
 
     const [searchTerm, setSearchTerm] = useState("");
@@ -55,18 +55,27 @@ export default function CommitteesPage() {
     // Open Modal for Create
     const handleCreateClick = () => {
         setEditingCommittee(null);
-        setFormData({ name: "", type: "department", department: "", category: "" });
+        setFormData({ name: "", type: "department", department: "", categories: [] });
         setIsFormattedOpen(true);
     };
 
     // Open Modal for Edit
     const handleEditClick = (committee) => {
         setEditingCommittee(committee);
+
+        // [UPDATED] Handle both new 'categories' array and legacy 'category' field
+        let initialCategories = [];
+        if (committee.categories && committee.categories.length > 0) {
+            initialCategories = committee.categories.map(c => c._id || c);
+        } else if (committee.category) {
+            initialCategories = [committee.category._id || committee.category];
+        }
+
         setFormData({
             name: committee.name,
-            type: committee.type || "department", // Fallback for old data
+            type: committee.type || "department",
             department: committee.department || "",
-            category: committee.category?._id || committee.category || ""
+            categories: initialCategories
         });
         setIsFormattedOpen(true);
     };
@@ -80,8 +89,8 @@ export default function CommitteesPage() {
             toast.error("يرجى اختيار القسم");
             return;
         }
-        if (formData.type === 'category' && !formData.category) {
-            toast.error("يرجى اختيار التصنيف");
+        if (formData.type === 'category' && (!formData.categories || formData.categories.length === 0)) {
+            toast.error("يرجى اختيار تصنيف واحد على الأقل");
             return;
         }
 
@@ -92,7 +101,7 @@ export default function CommitteesPage() {
                 name: formData.name,
                 type: formData.type,
                 department: formData.type === 'department' ? formData.department : undefined,
-                category: formData.type === 'category' ? formData.category : undefined
+                categories: formData.type === 'category' ? formData.categories : []
             };
 
             let res;
@@ -255,13 +264,14 @@ export default function CommitteesPage() {
 
                         {formData.type === 'category' && (
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">التصنيف الوظيفي</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">التصنيفات الوظيفية</label>
                                 <FilterSelect
-                                    value={formData.category}
-                                    onChange={(val) => setFormData({ ...formData, category: val })}
+                                    value={formData.categories}
+                                    onChange={(val) => setFormData({ ...formData, categories: val })}
                                     options={categories.map(c => ({ value: c._id, label: c.name }))}
-                                    placeholder="اختر التصنيف"
+                                    placeholder="اختر التصنيفات (يمكن اختيار أكثر من واحد)"
                                     isSearchable={true}
+                                    isMulti={true} // [UPDATED] Enabled Multi-Select
                                 />
                             </div>
                         )}
@@ -297,7 +307,12 @@ export default function CommitteesPage() {
                                         {committee.type === 'general' && 'لجنة عامة'}
                                         {' '}• {committee.members.length} أعضاء
                                         {committee.department && ` • ${committee.department}`}
-                                        {committee.category?.name && ` • ${committee.category.name}`}
+                                        {
+                                            /* [UPDATED] Display multiple categories */
+                                            (committee.categories && committee.categories.length > 0)
+                                                ? ` • ${committee.categories.map(c => c.name).join('، ')}`
+                                                : (committee.category?.name && ` • ${committee.category.name}`)
+                                        }
                                     </p>
                                 </div>
                             </div>

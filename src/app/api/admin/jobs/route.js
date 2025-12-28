@@ -24,7 +24,10 @@ async function validateCommitteeForJob(department, categoryId) {
 
   // 2. Try Category Match
   committee = await Committee.findOne({
-    category: categoryId,
+    $or: [
+      { category: categoryId },
+      { categories: { $in: [categoryId] } }
+    ],
     isActive: true,
     "settings.autoAssignToApplications": true
   });
