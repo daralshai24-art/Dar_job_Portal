@@ -43,7 +43,7 @@ export default function JobCard({ job }) {
   return (
     <div
       onClick={handleClick}
-      className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer border border-gray-200 group relative overflow-hidden"
+      className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer border border-gray-200 group relative overflow-hidden flex flex-col h-full"
     >
       {/* Top Accent */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#B38025] to-[#D6B666]"></div>
@@ -51,20 +51,20 @@ export default function JobCard({ job }) {
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
-          <h2 className="text-xl font-bold text-gray-900 group-hover:text-[#B38025] transition-colors line-clamp-2">
+          <h2 className="text-xl font-bold text-gray-900 group-hover:text-[#B38025] transition-colors line-clamp-2 min-h-[3.5rem]">
             {job.title}
           </h2>
           {categoryName && categoryName !== "غير محدد" && (
-            <span className="inline-block mt-2 bg-[#B38025]/10 text-[#B38025] text-sm font-medium px-3 py-1 rounded-full">
+            <span className="inline-block mt-2 bg-[#B38025]/10 text-[#B38025] text-sm font-medium px-3 py-1 rounded-full whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
               {categoryName}
             </span>
           )}
         </div>
 
         {job.status && (
-          <span className={`px-3 py-1 rounded-full text-xs font-semibold ml-4 ${job.status === "active"
-              ? "bg-green-100 text-green-800 border border-green-200"
-              : "bg-gray-100 text-gray-600 border border-gray-200"
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold ml-4 shrink-0 ${job.status === "active"
+            ? "bg-green-100 text-green-800 border border-green-200"
+            : "bg-gray-100 text-gray-600 border border-gray-200"
             }`}>
             {job.status === "active" ? "متاحة" : "غير متاحة"}
           </span>
@@ -72,12 +72,14 @@ export default function JobCard({ job }) {
       </div>
 
       {/* Description */}
-      <p className="text-gray-600 mb-6 leading-relaxed line-clamp-3 text-sm">
-        {stripHtml(job.description).substring(0, 150)}{stripHtml(job.description).length > 150 && "..."}
-      </p>
+      <div className="flex-grow">
+        <p className="text-gray-600 mb-6 leading-relaxed line-clamp-3 text-sm h-[4.5em]">
+          {stripHtml(job.description).substring(0, 150)}{stripHtml(job.description).length > 150 && "..."}
+        </p>
+      </div>
 
       {/* Details Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 mt-auto">
         {job.location && <DetailItem icon={FiMapPin} label="الموقع" value={job.location} color="red" />}
         {job.jobType && <DetailItem icon={FiBriefcase} label="نوع الوظيفة" value={job.jobType} color="blue" />}
         <DetailItem icon={FiClock} label="تاريخ النشر" value={formatArabicDate(job.createdAt)} color="purple" />
@@ -85,7 +87,7 @@ export default function JobCard({ job }) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+      <div className="flex items-center justify-between pt-4 border-t border-gray-200 mt-auto">
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <span>عرض التفاصيل</span>
           <FiArrowLeft size={14} className="group-hover:translate-x-1 transition-transform" />
