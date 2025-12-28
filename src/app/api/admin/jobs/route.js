@@ -7,6 +7,33 @@ import Application from "@/models/Application";
 import { JOB_DEPARTMENTS, JOB_TYPES, JOB_LEVELS } from "@/lib/constants";
 
 
+import Committee from "@/models/Committee";
+
+/**
+ * Helper to validate if a committee exists for the job
+ */
+async function validateCommitteeForJob(department, categoryId) {
+  // 1. Try Department Match
+  let committee = await Committee.findOne({
+    department,
+    isActive: true,
+    "settings.autoAssignToApplications": true
+  });
+
+  if (committee) return true;
+
+  // 2. Try Category Match
+  committee = await Committee.findOne({
+    category: categoryId,
+    isActive: true,
+    "settings.autoAssignToApplications": true
+  });
+
+  if (committee) return true;
+
+  return false;
+}
+
 /**
  * POST /api/jobs
  * Creates a new job posting
@@ -91,6 +118,21 @@ export async function POST(request) {
     }
 
     const jobData = prepareJobData(body);
+
+    // 🔴 Validation: Ensure Committee Exists if Active
+    if (jobData.status === 'active') {
+      const hasCommittee = await validateCommitteeForJob(jobData.department, jobData.category);
+      if (!hasCommittee) {
+        return NextResponse.json(
+          {
+            error: "لا يمكن نشر الوظيفة",
+            details: `لا توجد لجنة توظيف نشطة (مفعل بها التعيين التلقائي) لهذا القسم (${jobData.department}) أو التصنيف. يرجى إنشاء لجنة أولاً.`
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const job = await Job.create(jobData);
 
     const populatedJob = await Job.findById(job._id)

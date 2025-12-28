@@ -191,7 +191,25 @@ export const useJobForm = (initialData, mode, formActionsRef) => {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشل في حفظ الوظيفة");
+
+      if (!res.ok) {
+        // Handle Validation Errors with Details (Better UX)
+        if (data.details) {
+          toast.error(
+            <div className="flex flex-col gap-1">
+              <span className="font-bold">{data.error}</span>
+              <span className="text-sm opacity-90">{data.details}</span>
+              {/* Optional: Add a link to create committee if relevant? For now just text is good */}
+            </div>
+            , { duration: 6000 }
+          );
+          setLoading(false);
+          isSubmittingRef.current = false;
+          return;
+        }
+
+        throw new Error(data.error || "فشل في حفظ الوظيفة");
+      }
 
       setLoading(false);
       isSubmittingRef.current = false;
