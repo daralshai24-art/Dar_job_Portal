@@ -18,8 +18,21 @@ class CommitteeService {
             createdBy
         } = data;
 
+
         // 1. Resolve members (Use provided members OR find defaults)
         let membersList = members;
+
+        // Validation: Prevent Duplicate Department Committee
+        if (type === 'department' && department) {
+            const existingInternal = await Committee.findOne({
+                department,
+                isActive: true,
+                type: 'department'
+            });
+            if (existingInternal) {
+                throw new Error(`يوجد بالفعل لجنة نشطة لقسم ${department}`);
+            }
+        }
 
         // If no members provided, try to find default members from Users
         if (!membersList || membersList.length === 0) {
@@ -82,6 +95,20 @@ class CommitteeService {
                 committee[field] = updates[field];
             }
         });
+
+        // Validation: Prevent Duplicate Department Committee on Update
+        if ((committee.type === 'department' || updates.type === 'department') && (committee.department || updates.department)) {
+            const targetDept = updates.department || committee.department;
+            const existingInternal = await Committee.findOne({
+                department: targetDept,
+                isActive: true,
+                type: 'department',
+                _id: { $ne: id }
+            });
+            if (existingInternal) {
+                throw new Error(`يوجد بالفعل لجنة نشطة لقسم ${targetDept}`);
+            }
+        }
 
         committee.updatedBy = updatedBy;
         await committee.save();
