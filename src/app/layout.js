@@ -14,6 +14,20 @@ const cairo = Cairo({
   weight: ["300", "400", "500", "600", "700", "800"],
 });
 
+export const metadata = {
+  title: {
+    default: "دار الشاي العربي | بوابة التوظيف",
+    template: "%s | دار الشاي العربي",
+  },
+  description: "الموقع الرسمي لشركة دار الشاي العربي للتوظيف. اكتشف فرص العمل المتاحة وانضم إلى فريقنا المتميز في المملكة العربية السعودية.",
+  keywords: ["موقع شركة دار الشاي العربي للتوظيف", "وظائف دار الشاي العربي", "توظيف", "فرص عمل", "دار الشاي العربي", "السعودية"],
+  openGraph: {
+    type: "website",
+    locale: "ar_SA",
+    siteName: "دار الشاي العربي",
+  },
+};
+
 export default async function RootLayout({ children }) {
   const session = await getServerSession(authOptions);
 
