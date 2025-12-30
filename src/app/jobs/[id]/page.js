@@ -1,10 +1,10 @@
-// app/jobs/[id]/page.jsx
-"use client";
-
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { connectDB } from "@/lib/db";
+import Job from "@/models/Job";
+import "@/models/Category"; // Register Category model
+import { notFound } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
 import { FileText, Briefcase, Award, CheckCircle, Users, Calendar } from "lucide-react";
-import { toast } from "react-hot-toast";
 
 // Components
 import Header from "@/components/shared/Header";
@@ -17,47 +17,141 @@ import Breadcrumb from "@/components/shared/Breadcrumb";
 // Utils
 import { formatArabicDate } from "@/utils/dateFormatter";
 
-// Helper function to get category name
-const getCategoryName = (category) => {
-  if (!category) return "غير محدد";
-  if (typeof category === 'string') return category;
-  return category.name || "غير محدد";
-};
+// Internal Components (rendered here for simplicity in Server Component)
+const JobBenefits = ({ benefits }) => (
+  <JobContentSection title="المميزات والتقديرات" icon={Award}>
+    <div className="grid gap-3">
+      {benefits.map((benefit, index) => (
+        <div key={index} className="flex items-center text-gray-700">
+          <CheckCircle size={18} className="ml-2 text-green-500 flex-shrink-0" />
+          <span>{benefit}</span>
+        </div>
+      ))}
+    </div>
+  </JobContentSection>
+);
 
-export default function JobDetailsPage() {
-  const [job, setJob] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const params = useParams();
-  const router = useRouter();
+const InfoItem = ({ icon: Icon, label, value }) =>
+  value && (
+    <div className="flex items-center">
+      <Icon size={16} className="ml-2 text-[#B38025]" />
+      <div>
+        <span className="font-medium text-gray-700">{label}: </span>
+        <span className="text-gray-600">{value}</span>
+      </div>
+    </div>
+  );
 
+const AdditionalInfo = ({ job, categoryName }) => (
+  <section className="bg-gray-50 rounded-lg p-6">
+    <h3 className="text-lg font-semibold text-gray-800 mb-4">معلومات إضافية</h3>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <InfoItem icon={Users} label="مستوى الخبرة" value={job.experience} />
+      <InfoItem icon={Calendar} label="تاريخ النشر" value={formatArabicDate(job.createdAt)} />
+      <InfoItem icon={Briefcase} label="نوع الوظيفة" value={job.jobType} />
+      <InfoItem icon={Users} label="التصنيف" value={categoryName} />
+    </div>
+  </section>
+);
 
-  const fetchJob = async () => {
-    try {
-      setLoading(true);
-      const { id } = params;
-      const response = await fetch(`/api/jobs/${id}`);
+// Helper to get raw job data
+async function getJob(id) {
+  try {
+    await connectDB();
+    const job = await Job.findById(id).populate('category', 'name _id').lean();
+    if (!job) return null;
 
-      if (!response.ok) throw new Error("Job not found");
+    // Serialize for client components (ObjectId -> string, Date -> string)
+    return JSON.parse(JSON.stringify(job));
+  } catch (error) {
+    console.error("Error fetching job:", error);
+    return null;
+  }
+}
 
-      const jobData = await response.json();
-      setJob(jobData);
-    } catch (error) {
-      console.error("Error fetching job:", error);
-      toast.error("الوظيفة غير موجودة أو حدث خطأ في التحميل");
-    } finally {
-      setLoading(false);
-    }
+// 1. Dynamic Metadata
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  const job = await getJob(id);
+
+  if (!job) {
+    return {
+      title: "الوظيفة غير موجودة",
+    };
+  }
+
+  return {
+    title: job.title,
+    description: `فرصة عمل: ${job.title} في ${job.location || 'دار الشاي العربي'}. قدم الآن!`,
+    openGraph: {
+      title: job.title,
+      description: job.description.substring(0, 150).replace(/<[^>]*>/g, '') + '...',
+      type: "article",
+    },
   };
+}
 
-  useEffect(() => {
-    fetchJob();
-  }, [params]);
+// 2. Server Component
+export default async function JobDetailsPage({ params }) {
+  const { id } = await params;
+  const job = await getJob(id);
 
-  if (loading) return <LoadingState />;
-  if (!job) return <ErrorState router={router} />;
+  if (!job) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gray-50">
+        <Header />
+        <main className="flex-1 flex justify-center items-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-800 mb-4">الوظيفة غير موجودة</h1>
+            <p className="text-gray-600 mb-6">الوظيفة التي تبحث عنها غير متاحة أو تم حذفها</p>
+            <Link
+              href="/jobs"
+              className="bg-[#B38025] text-white px-6 py-3 rounded-lg hover:bg-[#D6B666] hover:text-[#1D3D1E] transition-all duration-300 inline-block"
+            >
+              العودة إلى صفحة الوظائف
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
-  // Get category name using helper function
-  const categoryName = getCategoryName(job.category);
+  const categoryName = job.category?.name || (typeof job.category === 'string' ? job.category : "غير محدد");
+
+  // Schema.org JobPosting
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    "title": job.title,
+    "description": job.description,
+    "datePosted": job.createdAt,
+    "validThrough": job.deadline || undefined, // Add deadline to Job model if it doesn't exist, else omit
+    "employmentType": job.jobType === "دوام كامل" ? "FULL_TIME" : "PART_TIME", // Simple mapping
+    "hiringOrganization": {
+      "@type": "Organization",
+      "name": "دار الشاي العربي",
+      "sameAs": "https://jobs.daralshai.com", // TODO: Update domain
+      "logo": "https://jobs.daralshai.com/images/logo-darelshai.svg"
+    },
+    "jobLocation": {
+      "@type": "Place",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": job.location || "Riyadh",
+        "addressCountry": "SA"
+      }
+    },
+    "baseSalary": job.salary ? {
+      "@type": "MonetaryAmount",
+      "currency": "SAR",
+      "value": {
+        "@type": "QuantitativeValue",
+        "value": job.salary, // Ensure this is a number or clean string
+        "unitText": "MONTH"
+      }
+    } : undefined
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -69,6 +163,12 @@ export default function JobDetailsPage() {
             { label: "الوظائف", href: "/jobs" },
             { label: job.title, href: null }
           ]}
+        />
+
+        {/* Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
 
         <div className="container mx-auto px-4 py-8">
@@ -95,17 +195,14 @@ export default function JobDetailsPage() {
                     </JobContentSection>
                   )}
 
-                  {job.benefits && <JobBenefits benefits={job.benefits} />}
+                  {job.benefits && job.benefits.length > 0 && <JobBenefits benefits={job.benefits} />}
                   <AdditionalInfo job={job} categoryName={categoryName} />
                 </div>
               </div>
             </div>
 
-            {/* Application Form */}
-            <JobApplicationForm
-              job={job}
-
-            />
+            {/* Application Form (Interactive Client Component) */}
+            <JobApplicationForm job={job} />
           </div>
         </div>
       </main>
@@ -113,74 +210,3 @@ export default function JobDetailsPage() {
     </div>
   );
 }
-
-// Sub-components
-const JobBenefits = ({ benefits }) => (
-  <JobContentSection title="المميزات والتقديرات" icon={Award}>
-    <div className="grid gap-3">
-      {benefits.map((benefit, index) => (
-        <div key={index} className="flex items-center text-gray-700">
-          <CheckCircle size={18} className="ml-2 text-green-500 flex-shrink-0" />
-          <span>{benefit}</span>
-        </div>
-      ))}
-    </div>
-  </JobContentSection>
-);
-
-// Updated AdditionalInfo to accept categoryName prop
-const AdditionalInfo = ({ job, categoryName }) => (
-  <section className="bg-gray-50 rounded-lg p-6">
-    <h3 className="text-lg font-semibold text-gray-800 mb-4">معلومات إضافية</h3>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-      <InfoItem icon={Users} label="مستوى الخبرة" value={job.experience} />
-      <InfoItem icon={Calendar} label="تاريخ النشر" value={formatArabicDate(job.createdAt)} />
-      <InfoItem icon={Briefcase} label="نوع الوظيفة" value={job.jobType} />
-      {/* Add category info */}
-      <InfoItem icon={Users} label="التصنيف" value={categoryName} />
-    </div>
-  </section>
-);
-
-const InfoItem = ({ icon: Icon, label, value }) =>
-  value && (
-    <div className="flex items-center">
-      <Icon size={16} className="ml-2 text-[#B38025]" />
-      <div>
-        <span className="font-medium text-gray-700">{label}: </span>
-        <span className="text-gray-600">{value}</span>
-      </div>
-    </div>
-  );
-
-const LoadingState = () => (
-  <div className="flex flex-col min-h-screen bg-gray-50">
-    <Header />
-    <main className="flex-1 flex justify-center items-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B38025] mx-auto mb-4"></div>
-        <p className="text-gray-600">جاري تحميل تفاصيل الوظيفة...</p>
-      </div>
-    </main>
-    <Footer />
-  </div>
-);
-
-const ErrorState = ({ router }) => (
-  <div className="flex flex-col min-h-screen bg-gray-50">
-    <Header />
-    <main className="flex-1 flex justify-center items-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">الوظيفة غير موجودة</h1>
-        <p className="text-gray-600 mb-6">الوظيفة التي تبحث عنها غير متاحة أو تم حذفها</p>
-        <button
-          onClick={() => router.push("/jobs")}
-          className="bg-[#B38025] text-white px-6 py-3 rounded-lg hover:bg-[#D6B666] hover:text-[#1D3D1E] transition-all duration-300 cursor-pointer"
-        >
-          العودة إلى صفحة الوظائف
-        </button>
-      </div>
-    </main>
-    <Footer />
-  </div>
-);

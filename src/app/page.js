@@ -104,6 +104,25 @@ export default function HomePage() {
       )}
 
       <Footer />
+
+      {/* Organization Schema for Brand SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "دار الشاي العربي",
+            "alternateName": ["شركة دار الشاي العربي للتوظيف", "Dar Al-Shai Recruitment"],
+            "url": "https://jobs.daralshai.com", // TODO: Update with actual domain
+            "logo": "https://jobs.daralshai.com/images/logo-darelshai.svg",
+            "sameAs": [
+              // "https://twitter.com/darelshai",
+              // "https://linkedin.com/company/darelshai"
+            ]
+          })
+        }}
+      />
     </div>
   );
 }
