@@ -21,7 +21,7 @@ export async function getEmailSettings() {
     await connectDB();
     const settings = await Settings.findOne();
 
-    const appUrl =
+    const appUrl = (process.env.NODE_ENV === "development" ? "http://localhost:3000" : null) ||
       process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "http://localhost:3000";
 
     if (settings && settings.email) {

@@ -148,6 +148,14 @@ const sendStatusAlert = async ({ application, triggeredBy, alertType, emailType,
 
 export const sendInterviewScheduledAlert = async ({ application, triggeredBy }) => {
     const dateStr = new Date(application.interviewDate).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    let locationInfo = "";
+    if (application.interviewLocation) {
+        locationInfo = application.interviewType === 'online'
+            ? `<br/>رابط المقابلة: ${application.interviewLocation}`
+            : `<br/>موقع المقابلة: ${application.interviewLocation}`;
+    }
+
     return sendStatusAlert({
         application,
         triggeredBy,
@@ -155,12 +163,20 @@ export const sendInterviewScheduledAlert = async ({ application, triggeredBy }) 
         emailType: EMAIL_CONFIG.types.INTERVIEW_SCHEDULED_ALERT,
         subject: EMAIL_CONFIG.subjects.ar.INTERVIEW_SCHEDULED_ALERT,
         title: "تم جدولة مقابلة",
-        message: `تم تحديد موعد لمقابلة المرشح ${application.name} بتاريخ ${dateStr} الساعة ${application.interviewTime}.`
+        message: `تم تحديد موعد لمقابلة المرشح ${application.name} بتاريخ ${dateStr} الساعة ${application.interviewTime}.${locationInfo}`
     });
 };
 
 export const sendInterviewRescheduledAlert = async ({ application, triggeredBy }) => {
     const dateStr = new Date(application.interviewDate).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    let locationInfo = "";
+    if (application.interviewLocation) {
+        locationInfo = application.interviewType === 'online'
+            ? `<br/>رابط المقابلة الجديد: ${application.interviewLocation}`
+            : `<br/>موقع المقابلة الجديد: ${application.interviewLocation}`;
+    }
+
     return sendStatusAlert({
         application,
         triggeredBy,
@@ -168,7 +184,7 @@ export const sendInterviewRescheduledAlert = async ({ application, triggeredBy }
         emailType: EMAIL_CONFIG.types.INTERVIEW_RESCHEDULED_ALERT,
         subject: EMAIL_CONFIG.subjects.ar.INTERVIEW_RESCHEDULED_ALERT,
         title: "تحديث موعد المقابلة",
-        message: `تم تغيير موعد مقابلة المرشح ${application.name} إلى ${dateStr} الساعة ${application.interviewTime}.`
+        message: `تم تغيير موعد مقابلة المرشح ${application.name} إلى ${dateStr} الساعة ${application.interviewTime}.${locationInfo}`
     });
 };
 

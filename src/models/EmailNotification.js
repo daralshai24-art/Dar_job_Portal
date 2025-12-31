@@ -29,7 +29,7 @@ const emailNotificationSchema = new mongoose.Schema(
     },
     recipientType: {
       type: String,
-      enum: ["applicant", "manager", "admin", "user", "super_admin", "hr_manager"], // Added 'user' fallback
+      enum: ["applicant", "manager", "admin", "user", "super_admin", "hr_manager", "hr"], // Added 'hr'
       required: true
     },
 
@@ -49,6 +49,10 @@ const emailNotificationSchema = new mongoose.Schema(
         // Manager notifications
         "manager_feedback_request",
         "manager_feedback_reminder",
+
+        // Committee notifications
+        "committee_completed",
+        "feedback_received_alert",
 
         // Internal notifications
         "new_application_alert",
@@ -160,6 +164,11 @@ emailNotificationSchema.statics.getFailedEmails = async function (limit = 100) {
     .limit(limit)
     .sort({ createdAt: -1 });
 };
+
+// Force recompilation of model in dev mode to pick up enum changes
+if (process.env.NODE_ENV === "development") {
+  delete mongoose.models.EmailNotification;
+}
 
 export default mongoose.models.EmailNotification ||
   mongoose.model("EmailNotification", emailNotificationSchema);
