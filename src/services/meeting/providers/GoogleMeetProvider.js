@@ -89,10 +89,44 @@ ${details.description || ""}
     }
 
     async updateMeeting(meetingId, details) {
-        // Implement if needed for rescheduling sync
-        // For now, simpler to just treat as new assignment or ignore sync
-        console.log("[GoogleMeetProvider] Update not fully implemented, returning existing link logic.");
-        return null;
+        try {
+            console.log("[GoogleMeetProvider] Updating meeting:", meetingId, details.subject);
+
+            // Calculate new end time
+            const endTime = this._calculateEndTime(details.startTime);
+
+            const eventPatch = {
+                summary: details.subject,
+                description: details.description, // Updates the description (including link if passed in details, though usually link stays same)
+                start: {
+                    dateTime: new Date(details.startTime).toISOString(),
+                    timeZone: "Asia/Riyadh",
+                },
+                end: {
+                    dateTime: endTime,
+                    timeZone: "Asia/Riyadh",
+                },
+            };
+
+            const res = await this.calendar.events.patch({
+                calendarId: this.calendarId,
+                eventId: meetingId,
+                resource: eventPatch,
+            });
+
+            console.log("[GoogleMeetProvider] Update successful. HTML Link:", res.data.htmlLink);
+
+            return {
+                meetingId: res.data.id,
+                meetingLink: res.data.location, // Usually location contains the link we set
+                provider: "google_calendar_jitsi",
+                meta: { calendarLink: res.data.htmlLink }
+            };
+
+        } catch (error) {
+            console.error("[GoogleMeetProvider] Update Error:", error);
+            return null; // Return null to signal failure (caller might decide to create new)
+        }
     }
 
     async deleteMeeting(meetingId) {

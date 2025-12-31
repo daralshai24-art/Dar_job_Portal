@@ -102,9 +102,17 @@ export async function PUT(request, { params }) {
       );
     }
 
+
     const updateData = await request.json();
 
-    // ==================== MEETING GENERATION (FLOW CHECK) ====================
+    // Fetch existing application to get name for Calendar Event
+    const existingApp = await Application.findById(id).select("name meetingId meetingProvider meetingLink").lean();
+    if (!existingApp) {
+      return NextResponse.json({ error: "Application not found" }, { status: 404 });
+    }
+    const applicantName = existingApp.name;
+    const { meetingId: existingMeetingId, meetingProvider: existingProvider } = existingApp;
+
     // Logic: If user provided a link manually in 'interviewLocation', use it.
     // Otherwise, generate one using Jitsi.
 
@@ -124,11 +132,10 @@ export async function PUT(request, { params }) {
         updateData.meetingLink = manualLink;
         updateData.meetingId = "manual-" + Date.now();
         updateData.meetingProvider = "manual";
-      } else {
-        // CASE B: Auto-Generate Jitsi Link (No manual link provided)
+        // CASE B: Auto-Generate/Update Jitsi Link (No manual link provided)
         const subject = isRescheduling
-          ? "مقابلة توظيف (معاد جدولتها) - Rescheduled Interview"
-          : "مقابلة توظيف - Job Interview";
+          ? `مقابلة توظيف: ${applicantName} (معاد جدولتها)`
+          : `مقابلة توظيف: ${applicantName}`;
 
         const meetingDetails = {
           subject: subject,
@@ -136,14 +143,24 @@ export async function PUT(request, { params }) {
           description: "Online Interview via Job Portal"
         };
 
-        const meetingResult = await meetingService.createMeeting(meetingDetails);
+        let meetingResult = null;
+
+        // 1. If Rescheduling, DELETE the old meeting first (as requested)
+        if (isRescheduling && existingMeetingId) {
+          console.log("Rescheduling: Deleting old meeting first:", existingMeetingId);
+          await meetingService.deleteMeeting(existingMeetingId);
+        }
+
+        // 2. Always CREATE a new meeting (clean slate)
+        meetingResult = await meetingService.createMeeting(meetingDetails);
+
         if (meetingResult) {
-          updateData.meetingLink = meetingResult.meetingLink;
+          updateData.meetingLink = meetingResult.meetingLink || existingApp.meetingLink; // Keep old link if update didn't return one (though provider usually does)
           updateData.meetingId = meetingResult.meetingId;
           updateData.meetingProvider = meetingResult.provider;
 
           // Sync location field so it appears in the form next time
-          updateData.interviewLocation = meetingResult.meetingLink;
+          updateData.interviewLocation = updateData.meetingLink;
         }
       }
     }
