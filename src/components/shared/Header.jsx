@@ -31,60 +31,18 @@ export default function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6">
+        <nav className="hidden md:flex flex-row items-center gap-5 ml-10">
           <Link
             href="/"
-            className="text-[#1D3D1E] hover:text-[#D6B666] transition"
+            className="relative inline-flex items-center justify-center whitespace-nowrap font-bold text-[#1D3D1E] transition-colors duration-300 hover:text-[#B38025] after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-[#B38025] after:transition-all after:duration-300 hover:after:w-full"
           >
             الرئيسيه
           </Link>
           <Link
             href="/jobs"
-            className="text-[#1D3D1E] hover:text-[#D6B666] transition"
+            className="relative inline-flex items-center justify-center whitespace-nowrap font-bold text-[#1D3D1E] transition-colors duration-300 hover:text-[#B38025] after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-[#B38025] after:transition-all after:duration-300 hover:after:w-full"
           >
             الوظائف
-          </Link>
-
-          <Link
-            href="/login"
-            className="
-              relative
-              px-10 py-3
-              bg-[#1D3D1E] 
-              text-white 
-              rounded-lg 
-              font-medium
-              overflow-hidden
-              transform
-              transition-all 
-              duration-300 
-              ease-in-out
-              hover:bg-[#B38025]
-              hover:scale-105
-              hover:shadow-lg
-              hover:shadow-[#B38025]/20
-              active:scale-95
-              group
-              focus:outline-none
-              focus:ring-2
-              focus:ring-[#B38025]/50
-              focus:ring-offset-2
-              before:absolute
-              before:inset-0
-              before:bg-gradient-to-r
-              before:from-transparent
-              before:via-white/10
-              before:to-transparent
-              before:translate-x-[-100%]
-              before:hover:translate-x-[100%]
-              before:transition-transform
-              before:duration-700
-              before:ease-in-out
-            "
-          >
-            <span className="relative z-10 transition-transform duration-300 group-hover:translate-x-1">
-              دخول
-            </span>
           </Link>
         </nav>
 
@@ -114,13 +72,7 @@ export default function Header() {
           >
             الوظائف
           </Link>
-          <Link
-            href="/login"
-            className="bg-[#1D3D1E] text-white py-3 rounded-lg text-center hover:bg-[#B38025] transition mt-2"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            دخول
-          </Link>
+
         </div>
       )}
     </header>
