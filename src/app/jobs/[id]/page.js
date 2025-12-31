@@ -130,7 +130,7 @@ export default async function JobDetailsPage({ params }) {
     "employmentType": job.jobType === "دوام كامل" ? "FULL_TIME" : "PART_TIME", // Simple mapping
     "hiringOrganization": {
       "@type": "Organization",
-      "name": "دار الشاي العربي",
+      "name": "دار الشاي العربي للتجاره",
       "sameAs": "https://jobs.daralshai.com", // TODO: Update domain
       "logo": "https://jobs.daralshai.com/images/logo-darelshai.svg"
     },
@@ -154,7 +154,7 @@ export default async function JobDetailsPage({ params }) {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-50 pt-20 md:pt-24">
       <Header />
       <main className="flex-1">
         <Breadcrumb
@@ -171,7 +171,7 @@ export default async function JobDetailsPage({ params }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
 
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-6 lg:px-12 py-10 md:py-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2">
