@@ -50,6 +50,7 @@ export async function sendCommitteeCompleted({
  */
 export async function sendFeedbackReceivedNotification({
     recipientEmail,
+    recipientName, // [ADDED]
     application,
     managerName,
     role
@@ -66,6 +67,7 @@ export async function sendFeedbackReceivedNotification({
 
     return sendEmail({
         to: recipientEmail,
+        toName: recipientName, // [ADDED]
         subject: `تقييم جديد مستلم - ${application.name}`,
         html,
         applicationId: application._id,

@@ -101,6 +101,12 @@ export async function POST(request, { params }) {
       );
     }
 
+    // Debugging assistance
+    console.log("\n==================================================================");
+    console.log(`[FeedbackDebug] Generated Token URL for ${managerEmail}:`);
+    console.log(result.feedbackUrl);
+    console.log("==================================================================\n");
+
     return NextResponse.json({
       message: "تم إرسال طلب التقييم بنجاح",
       feedbackUrl: result.feedbackUrl,

@@ -137,10 +137,13 @@ class EmailRoutingService {
             "interview_scheduled",
             "interview_rescheduled",
             "application_accepted",
-            "application_rejected"
+            "application_rejected",
+            "feedback_received_alert"
         ];
 
-        if (!shouldSend && !preference.adminEmails && newTypes.includes(emailType)) {
+        if (newTypes.includes(emailType)) {
+            // If it's a new type not in schema, allow it unless specifically disabled via global switch (already checked)
+            // or if we have a specific negative override (which we don't for new types)
             shouldSend = true;
         }
 
@@ -163,8 +166,10 @@ class EmailRoutingService {
         const users = await User.find({ role, status: "active" }).select("_id email name role");
 
         const validRecipients = [];
+
         for (const user of users) {
             const check = await this.shouldSendEmail(user._id, emailType, context);
+
             if (check.shouldSend) {
                 validRecipients.push(user);
             }

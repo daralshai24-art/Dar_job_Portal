@@ -154,29 +154,49 @@ class FeedbackOrchestratorService {
      */
     async processFeedbackSubmission(tokenId, feedbackData) {
         await connectDB();
-        const token = await FeedbackToken.findById(tokenId).populate("applicationCommitteeId");
+        // [MODIFIED] Populate applicationId to support standalone notifications
+        const token = await FeedbackToken.findById(tokenId)
+            .populate("applicationCommitteeId")
+            .populate("applicationId");
 
         if (!token) throw new Error("Token not found");
 
         // Find User by email (since token is email-based)
         const user = await User.findOne({ email: token.managerEmail });
-        if (!user) throw new Error("Reviewer user account not found");
 
+        // Fallback user object if not found in DB (for external managers)
+        const feedbackUser = user || {
+            _id: null,
+            email: token.managerEmail,
+            name: token.managerName,
+            role: token.managerRole
+        };
+
+        // 1. Committee Specific Logic
         if (token.applicationCommitteeId) {
-            await applicationCommitteeService.recordFeedback(
-                token.applicationCommitteeId._id,
-                user._id,
-                feedbackData
-            );
+            if (user) { // Only record in committee if it's a real user system
+                await applicationCommitteeService.recordFeedback(
+                    token.applicationCommitteeId._id,
+                    user._id,
+                    feedbackData
+                );
+            }
 
-            const committee = await ApplicationCommittee.findById(token.applicationCommitteeId._id)
-                .populate("applicationId"); // Ensure app is available
+            // Check for completion
+            const committee = await ApplicationCommittee.findById(token.applicationCommitteeId._id);
+            if (committee && committee.isComplete) {
+                await this.handleCommitteeCompletion(committee._id);
+            }
+        }
 
+        // 2. Notification Logic (Runs for ALL feedback, Committee OR Standalone)
+        try {
             // Notify HR about this specific feedback
             // Broaden scope to HR Managers, Admins, and Super Admins
-            const hrRecipients = await emailRoutingService.getRecipientsByRole("hr_manager", "feedback_received");
-            const adminRecipients = await emailRoutingService.getRecipientsByRole("admin", "feedback_received");
-            const superAdminRecipients = await emailRoutingService.getRecipientsByRole("super_admin", "feedback_received");
+            const ALERT_TYPE = "feedback_received_alert";
+            const hrRecipients = await emailRoutingService.getRecipientsByRole("hr_manager", ALERT_TYPE);
+            const adminRecipients = await emailRoutingService.getRecipientsByRole("admin", ALERT_TYPE);
+            const superAdminRecipients = await emailRoutingService.getRecipientsByRole("super_admin", ALERT_TYPE);
 
             // Merge and deduplicate by email
             const allRecipients = [...hrRecipients, ...adminRecipients, ...superAdminRecipients];
@@ -192,9 +212,10 @@ class FeedbackOrchestratorService {
                 try {
                     const emailResult = await emailService.sendFeedbackReceivedNotification({
                         recipientEmail: recipient.email,
-                        application: committee.applicationId,
-                        managerName: user.name,
-                        role: token.committeeRole || "reviewer"
+                        recipientName: recipient.name, // [ADDED]
+                        application: token.applicationId, // Use populated app from token
+                        managerName: token.managerName,
+                        role: token.committeeRole || token.managerRole || "reviewer"
                     });
                     console.log(`[FeedbackOrchestrator] Notification sent to ${recipient.email}:`, emailResult.success);
                 } catch (error) {
@@ -202,11 +223,8 @@ class FeedbackOrchestratorService {
                 }
             }
 
-            if (committee.isComplete) {
-                await this.handleCommitteeCompletion(committee._id);
-            }
-
-            return { success: true, isComplete: committee.isComplete, votingResults: committee.votingResults };
+        } catch (error) {
+            console.error("[FeedbackOrchestrator] Notification Error:", error);
         }
 
         return { success: true };

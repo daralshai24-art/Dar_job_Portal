@@ -20,7 +20,8 @@ export const EMAIL_CONFIG = {
   // Application settings
   app: {
     // Try multiple sources for the URL to be robust in production
-    url: process.env.NEXT_PUBLIC_BASE_URL ||
+    url: (process.env.NODE_ENV === "development" ? "http://localhost:3000" : null) ||
+      process.env.NEXT_PUBLIC_BASE_URL ||
       process.env.NEXT_PUBLIC_APP_URL ||
       process.env.NEXTAUTH_URL ||
       process.env.BASE_URL ||
@@ -51,6 +52,7 @@ export const EMAIL_CONFIG = {
     INTERVIEW_RESCHEDULED_ALERT: "interview_rescheduled_alert",
     APPLICATION_ACCEPTED_ALERT: "application_accepted_alert",
     APPLICATION_REJECTED_ALERT: "application_rejected_alert",
+    FEEDBACK_RECEIVED_ALERT: "feedback_received_alert",
   },
 
   // Recipient types
@@ -75,6 +77,7 @@ export const EMAIL_CONFIG = {
       INTERVIEW_RESCHEDULED_ALERT: "تنبيه: تحديث موعد مقابلة",
       APPLICATION_ACCEPTED_ALERT: "تنبيه: تم قبول مرشح",
       APPLICATION_REJECTED_ALERT: "تنبيه: تم رفض طلب",
+      FEEDBACK_RECEIVED_ALERT: "تنبيه: استلام تقييم جديد في اللجنة",
     },
     en: {
       APPLICATION_RECEIVED: "Application Received",
@@ -89,6 +92,7 @@ export const EMAIL_CONFIG = {
       INTERVIEW_RESCHEDULED_ALERT: "Interview Updated Alert",
       APPLICATION_ACCEPTED_ALERT: "Candidate Hired Alert",
       APPLICATION_REJECTED_ALERT: "Application Rejected Alert",
+      FEEDBACK_RECEIVED_ALERT: "New Committee Feedback Received",
     },
   },
 

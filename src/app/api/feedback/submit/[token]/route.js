@@ -102,22 +102,20 @@ export async function POST(request, { params }) {
     // Mark token as used
     await feedbackToken.markAsUsed();
 
-    // 🆕 Trigger Committee Logic if this feedback is part of a committee
-    if (feedbackToken.applicationCommitteeId) {
-      try {
-        console.log(`[FeedbackSubmit] Triggering Committee Logic for ${feedbackToken.applicationCommitteeId}`);
-        await feedbackOrchestratorService.processFeedbackSubmission(
-          feedbackToken._id,
-          {
-            recommendation,
-            score: overallScore,
-            notes: technicalNotes
-          }
-        );
-      } catch (err) {
-        console.error("Failed to process committee feedback:", err);
-        // Don't fail the request, just log
-      }
+    // 🆕 Trigger Feedback Orchestrator (Handles notifications for ALL feedback)
+    try {
+      console.log(`[FeedbackSubmit] Triggering Orchestrator for Token: ${feedbackToken._id}`);
+      await feedbackOrchestratorService.processFeedbackSubmission(
+        feedbackToken._id,
+        {
+          recommendation,
+          score: overallScore,
+          notes: technicalNotes
+        }
+      );
+    } catch (err) {
+      console.error("Failed to process feedback orchestration:", err);
+      // Don't fail the request, just log
     }
 
     // Create timeline entry
