@@ -28,7 +28,7 @@ export const FORM_CONFIG = {
   PHONE: {
     PATTERN: /^[0-9]*$/, // Only numbers allowed
     MIN_LENGTH: 10,
-    MAX_LENGTH: 15
+    MAX_LENGTH: 10
   }
 };
 
