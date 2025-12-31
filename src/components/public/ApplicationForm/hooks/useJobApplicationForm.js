@@ -175,6 +175,12 @@ export const useJobApplication = (job) => {
       } else if (name === "phone") {
         // For phone field, only allow numbers and format immediately
         const numericValue = value.replace(/\D/g, "");
+
+        // Strict length check - do not update if longer than allowed
+        if (numericValue.length > FORM_CONFIG.PHONE.MAX_LENGTH) {
+          return;
+        }
+
         updateFormField(name, numericValue);
 
         // Validate phone in real-time if user has entered something
