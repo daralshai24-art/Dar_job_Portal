@@ -102,9 +102,16 @@ export async function PUT(request, { params }) {
       );
     }
 
+
     const updateData = await request.json();
 
-    // ==================== MEETING GENERATION (FLOW CHECK) ====================
+    // Fetch existing application to get name for Calendar Event
+    const existingApp = await Application.findById(id).select("name").lean();
+    if (!existingApp) {
+      return NextResponse.json({ error: "Application not found" }, { status: 404 });
+    }
+    const applicantName = existingApp.name;
+
     // Logic: If user provided a link manually in 'interviewLocation', use it.
     // Otherwise, generate one using Jitsi.
 
@@ -127,8 +134,8 @@ export async function PUT(request, { params }) {
       } else {
         // CASE B: Auto-Generate Jitsi Link (No manual link provided)
         const subject = isRescheduling
-          ? "مقابلة توظيف (معاد جدولتها) - Rescheduled Interview"
-          : "مقابلة توظيف - Job Interview";
+          ? `مقابلة توظيف: ${applicantName} (معاد جدولتها)`
+          : `مقابلة توظيف: ${applicantName}`;
 
         const meetingDetails = {
           subject: subject,
