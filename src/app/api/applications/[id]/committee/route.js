@@ -111,6 +111,25 @@ export async function GET(req, props) {
         // Actually, let's use the model directly to be sure or check logic.
         // But better practice: Use the service. 
 
+        // [SELF-HEALING] Force recalculation of stats to ensure they match Application feedbacks
+        // This fixes cases where feedback was submitted but stats weren't updated (e.g. unlinked tokens)
+        if (appCommittee) {
+            // We need to call the method on the document. getByApplicationId returns a Query, so we trigger it properly.
+            // But wait, getByApplicationId uses findOne... does it return a POJO or Doc? 
+            // Default Mongoose queries return Hydrated Documents (unless .lean() is used).
+            // ApplicationCommitteeService.getByApplicationId does NOT use .lean().
+
+            try {
+                // Check if it has the method (is a Mongoose Doc)
+                if (typeof appCommittee.calculateVotingResults === 'function') {
+                    await appCommittee.calculateVotingResults();
+                    await appCommittee.save();
+                }
+            } catch (calcError) {
+                console.error("Auto-calc stats failed:", calcError);
+            }
+        }
+
         return NextResponse.json({ committee: appCommittee });
     } catch (error) {
         return NextResponse.json({ message: error.message }, { status: 500 });

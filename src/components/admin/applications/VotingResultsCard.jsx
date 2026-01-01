@@ -77,10 +77,10 @@ export default function VotingResultsCard({ committee }) {
                             <Star
                                 key={star}
                                 className={`w-5 h-5 ${averageScore >= star
-                                        ? "text-yellow-400 fill-yellow-400"
-                                        : averageScore >= star - 0.5
-                                            ? "text-yellow-400 fill-yellow-400 opacity-50" // Half star visual approx
-                                            : "text-gray-300"
+                                    ? "text-yellow-400 fill-yellow-400"
+                                    : averageScore >= star - 0.5
+                                        ? "text-yellow-400 fill-yellow-400 opacity-50" // Half star visual approx
+                                        : "text-gray-300"
                                     }`}
                             />
                         ))}
@@ -112,7 +112,7 @@ export default function VotingResultsCard({ committee }) {
                     {/* Breakdown Bars */}
                     <div className="space-y-2">
                         <VoteBar
-                            label="يوصي بشدة"
+                            label="يوصي"
                             count={recommendations?.recommend || 0}
                             total={submittedCount} // % of submitted, or total? Usually total looks better for progress
                             color="bg-green-500"

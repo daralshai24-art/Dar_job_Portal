@@ -125,7 +125,8 @@ feedbackTokenSchema.statics.createToken = async function ({
   managerName,
   managerRole = "technical_reviewer",
   expiresInDays = 1,
-  createdBy
+  createdBy,
+  applicationCommitteeId // [ADDED]
 }) {
   const token = this.generateToken();
   const expiresAt = new Date();
@@ -138,7 +139,8 @@ feedbackTokenSchema.statics.createToken = async function ({
     managerName,
     managerRole,
     expiresAt,
-    createdBy
+    createdBy,
+    applicationCommitteeId // [ADDED]
   });
 };
 

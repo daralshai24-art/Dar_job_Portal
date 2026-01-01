@@ -126,8 +126,8 @@ applicationCommitteeSchema.methods.recordFeedback = async function (userId, feed
 
     const member = this.members[memberIndex];
     if (member.status === "submitted") {
-        console.warn(`[ApplicationCommittee] Feedback already submitted for user ${userId}`);
-        // throw new Error("Feedback already submitted");
+        console.warn(`[ApplicationCommittee] Feedback already submitted for user ${userId}. Proceeding to re-calc stats.`);
+        // Allow proceeding to update calculations even if status is already submitted
     }
 
     // 2. Atomic Update to persist status safely
@@ -185,12 +185,17 @@ applicationCommitteeSchema.methods.calculateVotingResults = async function () {
         f.managerEmail && memberEmails.includes(f.managerEmail.toLowerCase())
     );
 
-    // 2. Deduplicate: Take the LATEST feedback for each unique email
+    // 2. Deduplicate: Take the LATEST feedback for each unique email + role combination
+    // This allows one user to have multiple roles (e.g. HR Manager AND Reviewer) and vote for each
     const uniqueFeedbacksMap = new Map();
-    // Assuming feedbacks are pushed in order, the last one is the latest.
+
     allCommitteeFeedbacks.forEach(f => {
+        // Fallback to 'reviewer' if role is missing, though it should be there
         const email = f.managerEmail.toLowerCase();
-        uniqueFeedbacksMap.set(email, f);
+        const role = f.managerRole || 'reviewer';
+        const key = `${email}-${role}`;
+
+        uniqueFeedbacksMap.set(key, f);
     });
 
     const uniqueFeedbacks = Array.from(uniqueFeedbacksMap.values());
