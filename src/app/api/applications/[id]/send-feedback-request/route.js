@@ -79,6 +79,16 @@ export async function POST(request, { params }) {
       );
     }
 
+    // [MODIFIED] Check for active committee to link token
+    let applicationCommitteeId = undefined;
+    if (application.applicationCommitteeId) {
+      // Since we did not populate full committee details in the findById above (only ID ref exists if not populated)
+      // application.applicationCommitteeId is likely just an ID or object with ID depending on schema definition
+      // We'll trust the ID is enough for the token creation logic
+      applicationCommitteeId = application.applicationCommitteeId;
+      console.log(`[FeedbackRequest] Linking to Committee: ${applicationCommitteeId}`);
+    }
+
     // Send feedback request email
     const result = await emailService.sendManagerFeedbackRequest({
       application: {
@@ -91,7 +101,8 @@ export async function POST(request, { params }) {
       message,
       expiresInDays,
       triggeredBy: currentUser.id || currentUser._id,
-      metadata: { forceSend: resend } // Pass forceSend flag via metadata logic added to emailSender
+      metadata: { forceSend: resend }, // Pass forceSend flag via metadata logic added to emailSender
+      applicationCommitteeId // [ADDED] Pass linked committee
     });
 
     if (!result.success) {

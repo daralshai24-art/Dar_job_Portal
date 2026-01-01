@@ -173,17 +173,31 @@ class FeedbackOrchestratorService {
         };
 
         // 1. Committee Specific Logic
-        if (token.applicationCommitteeId) {
+        let targetCommitteeId = token.applicationCommitteeId?._id;
+
+        // [RECOVERY] If token wasn't linked to committee (legacy/manual), try to find active committee
+        if (!targetCommitteeId) {
+            const activeCommittee = await ApplicationCommittee.findOne({
+                applicationId: token.applicationId._id || token.applicationId,
+                status: 'active'
+            });
+            if (activeCommittee) {
+                console.log(`[FeedbackOrchestrator] Found orphaned committee ${activeCommittee._id} for token, linking...`);
+                targetCommitteeId = activeCommittee._id;
+            }
+        }
+
+        if (targetCommitteeId) {
             if (user) { // Only record in committee if it's a real user system
                 await applicationCommitteeService.recordFeedback(
-                    token.applicationCommitteeId._id,
+                    targetCommitteeId,
                     user._id,
                     feedbackData
                 );
             }
 
             // Check for completion
-            const committee = await ApplicationCommittee.findById(token.applicationCommitteeId._id);
+            const committee = await ApplicationCommittee.findById(targetCommitteeId);
             if (committee && committee.isComplete) {
                 await this.handleCommitteeCompletion(committee._id);
             }

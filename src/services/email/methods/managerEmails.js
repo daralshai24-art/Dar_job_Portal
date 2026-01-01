@@ -21,7 +21,8 @@ export async function sendManagerFeedbackRequest({
   message = "",
   expiresInDays = 7,
   triggeredBy,
-  metadata = {}
+  metadata = {},
+  applicationCommitteeId // [ADDED]
 }) {
   try {
     await connectDB();
@@ -34,6 +35,7 @@ export async function sendManagerFeedbackRequest({
       managerRole,
       expiresInDays,
       createdBy: triggeredBy,
+      applicationCommitteeId // [ADDED]
     });
 
     // Generate feedback URL
