@@ -119,8 +119,11 @@ export async function PUT(request, { params }) {
     const isScheduling = updateData.status === "interview_scheduled";
     const isRescheduling = updateData.action === "interview_rescheduled";
 
+    const isOnline = updateData.interviewType === "online";
+    const isInPerson = updateData.interviewType === "in_person";
+
     // We only care if meaningful status change happens OR it's an explicit reschedule action
-    if ((isScheduling || isRescheduling) && updateData.interviewType === "online") {
+    if ((isScheduling || isRescheduling) && (isOnline || isInPerson)) {
       console.log("--- MEETING GENERATION START ---");
       console.log("Action:", updateData.action);
       console.log("Type:", updateData.interviewType);
@@ -144,7 +147,9 @@ export async function PUT(request, { params }) {
         const meetingDetails = {
           subject: subject,
           startTime: updateData.interviewDate + "T" + updateData.interviewTime,
-          description: "Online Interview via Job Portal"
+          description: isOnline ? "Online Interview via Job Portal" : `In-Person Interview at ${updateData.interviewLocation || "Location TBD"}`,
+          location: updateData.interviewLocation, // Pass location directly
+          isOnline: isOnline // Pass explicit flag
         };
 
         console.log("Meeting Details:", meetingDetails);
