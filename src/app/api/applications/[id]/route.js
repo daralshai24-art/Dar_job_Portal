@@ -121,18 +121,19 @@ export async function PUT(request, { params }) {
 
     // We only care if meaningful status change happens OR it's an explicit reschedule action
     if ((isScheduling || isRescheduling) && updateData.interviewType === "online") {
+      console.log("--- MEETING GENERATION START ---");
+      console.log("Action:", updateData.action);
+      console.log("Type:", updateData.interviewType);
 
       const manualLink = updateData.interviewLocation;
-      // Basic check to see if it looks like a URL
       const hasManualLink = manualLink && (manualLink.includes("http") || manualLink.includes("www"));
 
       if (hasManualLink) {
-        // CASE A: Manual Link Provided (User pasted a custom link)
         console.log("Using manual meeting link:", manualLink);
         updateData.meetingLink = manualLink;
         updateData.meetingId = "manual-" + Date.now();
         updateData.meetingProvider = "manual";
-        // CASE B: Auto-Generate/Update Jitsi Link (No manual link provided)
+      } else {
         const subject = isRescheduling
           ? `مقابلة توظيف: ${applicantName} (معاد جدولتها)`
           : `مقابلة توظيف: ${applicantName}`;
@@ -143,26 +144,36 @@ export async function PUT(request, { params }) {
           description: "Online Interview via Job Portal"
         };
 
+        console.log("Meeting Details:", meetingDetails);
+
         let meetingResult = null;
 
-        // 1. If Rescheduling, DELETE the old meeting first (as requested)
+        // 1. If Rescheduling, DELETE the old meeting first
         if (isRescheduling && existingMeetingId) {
           console.log("Rescheduling: Deleting old meeting first:", existingMeetingId);
           await meetingService.deleteMeeting(existingMeetingId);
         }
 
-        // 2. Always CREATE a new meeting (clean slate)
+        // 2. CREATE new meeting
+        console.log("Calling meetingService.createMeeting...");
         meetingResult = await meetingService.createMeeting(meetingDetails);
+        console.log("Meeting Result:", JSON.stringify(meetingResult, null, 2));
 
         if (meetingResult) {
-          updateData.meetingLink = meetingResult.meetingLink || existingApp.meetingLink; // Keep old link if update didn't return one (though provider usually does)
+          updateData.meetingLink = meetingResult.meetingLink || existingApp.meetingLink;
           updateData.meetingId = meetingResult.meetingId;
           updateData.meetingProvider = meetingResult.provider;
-
-          // Sync location field so it appears in the form next time
           updateData.interviewLocation = updateData.meetingLink;
+          console.log("Meeting Link Assigned:", updateData.meetingLink);
+        } else {
+          console.error("❌ CRITICAL: createMeeting returned null/false!");
         }
       }
+    } else {
+      console.log("--- SKIPPING MEETING GENERATION ---");
+      console.log("isScheduling:", isScheduling);
+      console.log("isRescheduling:", isRescheduling);
+      console.log("interviewType:", updateData.interviewType);
     }
     // ==================== END MEETING GENERATION ====================
 

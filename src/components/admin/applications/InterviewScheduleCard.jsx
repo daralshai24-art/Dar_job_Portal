@@ -101,7 +101,7 @@ export const InterviewScheduleCard = ({
                     rel="noopener noreferrer"
                     className="inline-flex items-center px-3 py-1.5 bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-colors text-sm font-bold border border-green-200"
                   >
-                    نقر للانضمام
+                    انضم للاجتماع
                   </a>
                 </div>
               </div>

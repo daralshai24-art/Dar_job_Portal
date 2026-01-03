@@ -1,4 +1,4 @@
-import { AbstractMeetingProvider } from "./AbstractMeetingProvider";
+import { AbstractMeetingProvider } from "./AbstractMeetingProvider.js";
 
 /**
  * MockMeetingProvider

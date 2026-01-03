@@ -1,5 +1,5 @@
 import { google } from "googleapis";
-import { AbstractMeetingProvider } from "./AbstractMeetingProvider";
+import { AbstractMeetingProvider } from "./AbstractMeetingProvider.js";
 
 /**
  * GoogleMeetProvider
