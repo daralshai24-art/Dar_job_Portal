@@ -82,8 +82,13 @@ export const useApplication = (applicationId) => {
       toast.success(successMessage);
       setEditing(false);
 
-      // refresh local data
-      await fetchApplication();
+      // Update local data directly from response to ensure immediate UI feedback (specifically for generated links)
+      if (result.application) {
+        setApplication(result.application);
+        initializeFormData(result.application);
+      } else {
+        await fetchApplication();
+      }
       return result;
     } catch (error) {
       console.error("Error:", error);

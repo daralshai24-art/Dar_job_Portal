@@ -1,6 +1,6 @@
-import { MockMeetingProvider } from "./providers/MockMeetingProvider";
-import { JitsiMeetingProvider } from "./providers/JitsiMeetingProvider";
-import { GoogleMeetProvider } from "./providers/GoogleMeetProvider";
+import { MockMeetingProvider } from "./providers/MockMeetingProvider.js";
+import { JitsiMeetingProvider } from "./providers/JitsiMeetingProvider.js";
+import { GoogleMeetProvider } from "./providers/GoogleMeetProvider.js";
 
 /**
  * Factory to get the active provider instance
@@ -32,8 +32,20 @@ export const createMeeting = async (details) => {
     try {
         return await provider.createMeeting(details);
     } catch (error) {
-        console.error("[MeetingService] Failed to create meeting:", error);
-        return null; // Graceful degradation
+        console.error("[MeetingService] Failed to create meeting with primary provider:", error);
+
+        // Fallback to Jitsi if not already using it
+        if (!(provider instanceof JitsiMeetingProvider)) {
+            console.warn("[MeetingService] ⚠️ Falling back to JitsiMeetingProvider...");
+            try {
+                const jitsiProvider = new JitsiMeetingProvider();
+                return await jitsiProvider.createMeeting(details);
+            } catch (fallbackError) {
+                console.error("[MeetingService] Fallback provider also failed:", fallbackError);
+            }
+        }
+
+        return null; // Graceful degradation if both fail
     }
 };
 

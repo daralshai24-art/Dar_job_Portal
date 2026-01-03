@@ -1,5 +1,5 @@
 import { google } from "googleapis";
-import { AbstractMeetingProvider } from "./AbstractMeetingProvider";
+import { AbstractMeetingProvider } from "./AbstractMeetingProvider.js";
 
 /**
  * GoogleMeetProvider
@@ -36,24 +36,32 @@ export class GoogleMeetProvider extends AbstractMeetingProvider {
             console.log("[GoogleMeetProvider] Creating meeting for:", details.subject);
             console.log("[GoogleMeetProvider] Using Calendar ID:", this.calendarId);
 
-            // FALLBACK: Since Service Accounts cannot create native Google Meet links on personal Gmail
-            // without DWD, we generate a Jitsi link and put it in the Google Calendar Event.
-            // This ensures the user gets a Calendar Event AND a Video Link.
-            const uniqueId = "JobPortal-" + Date.now() + "-" + Math.random().toString(36).substring(7);
-            const meetingLink = `https://meet.jit.si/${uniqueId}`;
+            // FALLBACK / LOGIC:
+            // 1. If Online: Since Service Accounts cannot create native Google Meet links easily, we generate a Jitsi link.
+            // 2. If In-Person: We just use the provided location address.
 
-            const extendedDescription = `
+            let meetingLink = "";
+            let location = details.location || "";
+            let description = details.description || "";
+
+            if (details.isOnline) {
+                const uniqueId = "JobPortal-" + Date.now() + "-" + Math.random().toString(36).substring(7);
+                meetingLink = `https://meet.jit.si/${uniqueId}`;
+                location = meetingLink; // For online, setting location to link is helpful
+
+                description = `
 JOIN INTERVIEW: 
 ${meetingLink}
 
 ------------------------------------------------
 ${details.description || ""}
-            `.trim();
+                `.trim();
+            }
 
             const event = {
                 summary: details.subject,
-                location: meetingLink, // Put link in location for easy clicking
-                description: extendedDescription,
+                location: location,
+                description: description,
                 start: {
                     dateTime: new Date(details.startTime).toISOString(),
                     timeZone: "Asia/Riyadh",
@@ -62,7 +70,6 @@ ${details.description || ""}
                     dateTime: this._calculateEndTime(details.startTime),
                     timeZone: "Asia/Riyadh",
                 },
-                // Removed native conferenceData/attendees to avoid 400/403 errors
             };
 
             console.log("[GoogleMeetProvider] PAYLOAD:", JSON.stringify(event, null, 2));
@@ -83,7 +90,11 @@ ${details.description || ""}
             };
 
         } catch (error) {
-            console.error("[GoogleMeetProvider] Error:", error);
+            console.error("[GoogleMeetProvider] Create Error Details:", {
+                message: error.message,
+                code: error.code,
+                errors: error.errors
+            });
             throw error;
         }
     }
@@ -138,8 +149,12 @@ ${details.description || ""}
             });
             return true;
         } catch (error) {
-            console.error("[GoogleMeetProvider] Delete Error:", error);
-            return false;
+            console.error("[GoogleMeetProvider] Delete Error Details:", {
+                message: error.message,
+                code: error.code,
+                errors: error.errors
+            });
+            throw error; // Rethrow to allow MeetingService to handle/log
         }
     }
 
