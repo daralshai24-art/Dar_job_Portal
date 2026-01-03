@@ -127,8 +127,11 @@ export async function PUT(request, { params }) {
 
       const manualLink = updateData.interviewLocation;
       const hasManualLink = manualLink && (manualLink.includes("http") || manualLink.includes("www"));
+      const isSameAsExisting = manualLink === existingApp.meetingLink;
 
-      if (hasManualLink) {
+      // Only treat as manual override if the user actually CHANGED the link.
+      // If it's the same link we pre-filled, we should regenerate the meeting (to update Calendar).
+      if (hasManualLink && !isSameAsExisting) {
         console.log("Using manual meeting link:", manualLink);
         updateData.meetingLink = manualLink;
         updateData.meetingId = "manual-" + Date.now();

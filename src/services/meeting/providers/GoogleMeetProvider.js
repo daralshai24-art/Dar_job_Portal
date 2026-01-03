@@ -83,7 +83,11 @@ ${details.description || ""}
             };
 
         } catch (error) {
-            console.error("[GoogleMeetProvider] Error:", error);
+            console.error("[GoogleMeetProvider] Create Error Details:", {
+                message: error.message,
+                code: error.code,
+                errors: error.errors
+            });
             throw error;
         }
     }
@@ -138,8 +142,12 @@ ${details.description || ""}
             });
             return true;
         } catch (error) {
-            console.error("[GoogleMeetProvider] Delete Error:", error);
-            return false;
+            console.error("[GoogleMeetProvider] Delete Error Details:", {
+                message: error.message,
+                code: error.code,
+                errors: error.errors
+            });
+            throw error; // Rethrow to allow MeetingService to handle/log
         }
     }
 
