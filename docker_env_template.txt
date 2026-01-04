@@ -1,0 +1,21 @@
+# --- Database (Overridden by docker-compose) ---
+# MONGODB_URI=...
+
+# --- Auth ---
+NEXTAUTH_SECRET=0169e5bd6885899b4a172a503093bd880a5b1baabda56b6562f281d92d510c1c
+# Important: For local Docker testing, use http://localhost:3000
+NEXTAUTH_URL=http://localhost:3000
+
+# --- Public URL ---
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+
+# --- Email Service (From your .env.local) ---
+RESEND_API_KEY=PLACEHOLDER_REPLACE_WITH_REAL_KEY_FROM_ENV_LOCAL
+FROM_EMAIL=onboarding@resend.dev
+COMPANY_LOGO_URL=
+
+# --- Google Integration (From your .env.local) ---
+GOOGLE_CLIENT_EMAIL=daralshai-job@learned-digit-473712-n6.iam.gserviceaccount.com
+GOOGLE_CALENDAR_ID=daralshai24@gmail.com
+# Keep the newlines in the key exactly as they are here
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC/EaUPS8UY+VbdmxLPisZI0deFWJKE2e7TlxDkuqa3X6eW0IqVGjELbQw7IEoaH0SRy4KNfsNu16Oe+L55mbghgZUkYDIkaoIanCYQOLZ25xxaUWUvBhY+Kb4jPVcBNa+T8eVUYzhtboNpoM9GXMeVG/KV0fN88kVorqDYk724om2eCkOAt4lMw3GnEEhuUnzXsH1wv19PAHAoHB4okf0qne2UUQDjDTjA8f8Wslxpz/7JyzVjhseFU0co0RQoAkpOvtJtIpSxI0WSQzI6QU+VjjlcpHQU5Zs1pP3mE38U2D6pudopLusXvGRh2HRyuYdwXMN1BOs2PACAVmhbxJHfAgMBAAECggEAMAuATWXYpGyCTswhQUXckVAO2S2J/lUMrHEGovVaWa74ZcB/sHl7Dqv3kOCQMZxeMikR5YGUJAmeT6mtv8cLGYXLmm+D/Es59vX/zkFshF6d7wobnuTxb+UwNg1FFP1KbrG7YGpotH+/FK8Gn+NRnml+KPU3vFnxYR7UPFF+OfBS0sBUm6iPEYzJFbcuDsZ9bE4vQSYapzBdC7mfYCOqqIAH1d0+edfs3EOEuovP5keEfCfCFBtlWoTqd3n7zHyHVB0+cJaaDkZgQ8br8CdpSYp5vN+SW1Ol7LFRKwKi8FjkiILm4O6jUu54yb0AcWHUbijaq6O3Og+C/706nS/wBQKBgQDf/H1r5oeap19Dm4+1+MGHaq5xw7RmcqAbpGkloATm71J2u+sBIcdb4S9PnwB28ySsNBjwtnzW/HClSJldkhqm2IJ23hCctutnulbaBAyXLpQVox/83Kjv+9JL02DRlCMUeMlTutdfadidTWfKY2oNdLAxAeu6aZcVwmcVK2vlLQKBgQDaYLrzXM7amN9xkru5GhVHL9LpxE7SaJUM6DJWE+r0+EK8htdhNYDSFRuQ3xdyJl94thzslwTmNqBM6W4qO3VK0+xE2aCMpN99jvxvV2POYGDvOHfLNVEB3ysA29NW9+X70oOvSAyedZabWthyeLkXIzZvaWgbkzWqgsawaZMSuwKBgGjqsi0anKY6hAr9EQHh9XTi6bdsPlJGmuyXxJDVNbaen3fyag/rrKBDCJA5IFSXa7Ql6xDFyhBBytoA+aW0zDse622Wcx2VKQs7Y3dXsjYWoVLJSDB/g7p1sHnIF2/T/eKW+Wb4++07fTWhjl5k1sZaxDUQe0SkNRsCJprp7e45AoGBAKFKsqpO0QWJxfdnrjlgN3kVrI02jhVAY15eHdeP7Ik02G3QlkHZN6VzK6IL9JA+IWPR9nkUbezvSeSkwNZ2hgJXlnmf18IpgFyHgJFoFXJ3owDtTyWK4qMkRunicy0X+gjOCq8q4w8iwLNMHPQnkGWzf2A4lUlQqGGhJ8lioNtDAoGAdyWVg3RZNXKYus7kZJWUFbURMCzR7yvw/aIk/s052bT6sLY95hfOXncJX6P8MMYz1vTbBYsJoqxe9cNxmMb7yRCnELZ9N7GqicO4l/ZrDwekHtLDt4IPFVpQPD9K845PbD4blTRrvgp4A+jHGWNCzq7BxLJI6JoSEJilaikbyZM=\n-----END PRIVATE KEY-----\n"

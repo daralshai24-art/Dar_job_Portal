@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # 1. Your Next.js App
+  web:
+    container_name: jop-portal
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://root:examplepassword@mongo:27017/jobportal?authSource=admin
+      - NEXTAUTH_SECRET=0169e5bd6885899b4a172a503093bd880a5b1baabda56b6562f281d92d510c1c
+      - NEXTAUTH_URL=http://localhost:3000
+    env_file:
+      # Use the special docker env file we will create
+      - .env.docker
+    volumes:
+      - ./uploads:/app/public/uploads # Persist CVs
+    depends_on:
+      - mongo
+
+  # 2. Self-Hosted Database
+  mongo:
+    image: mongo:6.0
+    container_name: jop-portal-db
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: examplepassword
+    volumes:
+      - ./mongo-data:/data/db # Persist Database Data

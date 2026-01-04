@@ -40,4 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# App Data (Uploaded files)
 /public/uploads/*
+/uploads/*
+
+# Docker Data (Self-Hosted DB)
+mongo-data
