@@ -179,13 +179,18 @@ export async function updateApplicationServer({ applicationId, user, updateData 
 
       // [NEW] Committee Feedback Request (Triggered on Interview Completed)
       else if (action === "interview_completed" && previousStatus !== "interview_completed") {
+        console.log(`[EmailTrigger] Application ${application._id} moved to interview_completed. Checking committee...`);
+
         // Check if there is a committee assigned
         if (application.applicationCommitteeId) {
           console.log(`[EmailTrigger] Interview Completed for App ${application._id}. Triggering Committee Feedback...`);
           // We don't await this to keep response fast, but using Promise.allSettled below handles it
           emailPromises.push(
-            feedbackOrchestratorService.sendFeedbackRequests(application.applicationCommitteeId, userId)
-              .then(res => ({ success: true, ...res }))
+            feedbackOrchestratorService.sendFeedbackRequests(application.applicationCommitteeId, userId, true) // Force resend enabled
+              .then(res => {
+                console.log(`[EmailTrigger] Feedback requests sent successfully:`, res);
+                return { success: true, ...res };
+              })
               .catch(err => {
                 console.error("[EmailTrigger] Failed to trigger committee feedback:", err);
                 throw err;

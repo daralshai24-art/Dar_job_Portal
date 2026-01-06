@@ -91,7 +91,7 @@ const feedbackTokenSchema = new mongoose.Schema(
     applicationCommitteeId: { type: mongoose.Schema.Types.ObjectId, ref: "ApplicationCommittee" },
     committeeRole: {
       type: String,
-      enum: ["supervisor", "manager", "head_department", "hr_manager"]
+      enum: ["supervisor", "manager", "head_department", "department_manager", "interviewer", "technical_reviewer", "hr_reviewer", "decision_maker", "hr_manager", "hr_specialist"]
     },
     reminderSentAt: Date,
     reminderCount: { type: Number, default: 0 }
