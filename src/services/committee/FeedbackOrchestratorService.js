@@ -11,8 +11,8 @@ class FeedbackOrchestratorService {
     /**
      * Send Feedback Requests to all pending committee members
      */
-    async sendFeedbackRequests(applicationCommitteeId, triggeredBy) {
-        console.log(`[FeedbackOrchestrator] Starting feedback requests for Committee: ${applicationCommitteeId}`);
+    async sendFeedbackRequests(applicationCommitteeId, triggeredBy, forceResend = false) {
+        console.log(`[FeedbackOrchestrator] Starting feedback requests for Committee: ${applicationCommitteeId} (Force: ${forceResend})`);
         await connectDB();
         const committee = await ApplicationCommittee.findById(applicationCommitteeId)
             .populate("members.userId")
@@ -41,7 +41,8 @@ class FeedbackOrchestratorService {
                 console.log(`[FeedbackOrchestrator] Skipping member ${member.userId?.email} - Status is ${member.status}`);
                 continue;
             }
-            if (member.feedbackTokenId) {
+            // [MODIFIED] Allow resend if forced, even if token exists
+            if (member.feedbackTokenId && !forceResend) {
                 console.log(`[FeedbackOrchestrator] Skipping member ${member.userId?.email} - Already has token`);
                 continue;
             }
@@ -81,7 +82,7 @@ class FeedbackOrchestratorService {
                     managerEmail: user.email,
                     managerName: user.name,
                     managerRole: tokenRole,
-                    expiresInDays: 7, // or committee settings
+                    expiresInDays: 1, // [MODIFIED] Default to 1 day per requirement
                     createdBy: triggeredBy
                 });
 
@@ -97,7 +98,7 @@ class FeedbackOrchestratorService {
                     managerName: user.name,
                     managerRole: tokenRole,
                     message: "You have been assigned to evaluate this candidate as part of the hiring committee.",
-                    expiresInDays: 7,
+                    expiresInDays: 1,
                     triggeredBy
                 });
 
