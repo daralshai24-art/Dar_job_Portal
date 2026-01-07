@@ -19,7 +19,7 @@ export async function sendManagerFeedbackRequest({
   managerName,
   managerRole = "technical_reviewer",
   message = "",
-  expiresInDays = 7,
+  expiresInDays = 1,
   triggeredBy,
   metadata = {},
   applicationCommitteeId // [ADDED]
