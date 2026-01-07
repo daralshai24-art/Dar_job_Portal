@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    command: sh -c "npm run seed:admin && npm start" # Auto-seed on startup
     restart: unless-stopped
     # ports:
     #   - "3000:3000" # Exposed via Nginx now
@@ -15,6 +16,8 @@ services:
       - MONGODB_URI=mongodb://root:examplepassword@mongo:27017/jobportal?authSource=admin
       - NEXTAUTH_SECRET=0169e5bd6885899b4a172a503093bd880a5b1baabda56b6562f281d92d510c1c
       - NEXTAUTH_URL=http://localhost:3000
+      - ADMIN_EMAIL=admin@example.com # Change in production!
+      - ADMIN_PASSWORD=admin123 # Change in production!
     env_file:
       # Use the special docker env file we will create
       - .env.docker

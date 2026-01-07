@@ -6,6 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "seed:admin": "node scripts/ensure-admin.js",
     "lint": "eslint"
   },
   "dependencies": {
