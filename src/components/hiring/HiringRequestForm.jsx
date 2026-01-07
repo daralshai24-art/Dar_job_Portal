@@ -11,6 +11,7 @@ import Button from "@/components/shared/ui/Button";
 import Input from "@/components/shared/ui/Input";
 import Textarea from "@/components/shared/ui/Textarea";
 import SelectRtl from "@/components/shared/ui/SelectRtl";
+import RichTextEditor from "@/components/shared/ui/RichTextEditor";
 import { JOB_DEPARTMENTS } from "@/lib/constants";
 
 // Schema
@@ -96,7 +97,7 @@ export default function HiringRequestForm() {
 
         // Combine Description and Requirements for the robust "Position Description" field if needed
         // Or just map description. Let's append requirements for clarity.
-        const combinedDesc = `${template.description}\n\n**المتطلبات:**\n${template.requirements}`;
+        const combinedDesc = `${template.description}<p><strong>المتطلبات:</strong></p>${template.requirements}`;
         form.setValue("positionDescription", combinedDesc);
 
         // Skills array to string
@@ -226,13 +227,20 @@ export default function HiringRequestForm() {
                     </div>
 
                     {/* Position Description */}
-                    <Textarea
-                        label="الوصف الوظيفي"
-                        placeholder="ادخل الوصف الوظيفي والمسؤوليات..."
-                        error={form.formState.errors.positionDescription?.message}
-                        rows={5}
-                        {...form.register("positionDescription")}
-                        className="min-h-[120px]"
+                    {/* Position Description */}
+                    <Controller
+                        control={form.control}
+                        name="positionDescription"
+                        render={({ field }) => (
+                            <RichTextEditor
+                                label="الوصف الوظيفي"
+                                placeholder="ادخل الوصف الوظيفي والمسؤوليات..."
+                                value={field.value}
+                                onChange={field.onChange}
+                                error={form.formState.errors.positionDescription?.message}
+                                required
+                            />
+                        )}
                     />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
