@@ -5,9 +5,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    restart: always
-    ports:
-      - "3000:3000"
+    restart: unless-stopped
+    # ports:
+    #   - "3000:3000" # Exposed via Nginx now
+    expose:
+      - "3000"
     environment:
       - NODE_ENV=production
       - MONGODB_URI=mongodb://root:examplepassword@mongo:27017/jobportal?authSource=admin
@@ -17,9 +19,21 @@ services:
       # Use the special docker env file we will create
       - .env.docker
     volumes:
-      - ./uploads:/app/public/uploads # Persist CVs
+      - uploads_data:/app/public/uploads # Persist CVs
     depends_on:
       - mongo
+
+  # 1.5 Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: jop-portal-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web
 
   # 2. Self-Hosted Database
   mongo:
@@ -30,4 +44,9 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: examplepassword
     volumes:
-      - ./mongo-data:/data/db # Persist Database Data
+      - mongo_data:/data/db # Persist Database Data
+
+# Define the Named Volumes (Docker manages these storage areas)
+volumes:
+  mongo_data:
+  uploads_data:
