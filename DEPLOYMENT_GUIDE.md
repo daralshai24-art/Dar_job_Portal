@@ -1,98 +1,98 @@
 # Deployment Masterclass: Hosting Next.js with Docker on Hostinger
 
-This document is designed for beginners. We now cover **Self-Hosted Database** and **File Storage**.
+This document is designed for beginners. We now cover **Self-Hosted Database**, **File Storage**, and **Domain Setup**.
 
 ---
 
-## 🏗️ The New Architecture (Self-Hosted)
+## 🌐 Part 1: Domain & SSL Setup (Making it Real)
 
-We are now putting everything on one server.
+You asked: *"so when I will set the doamin for real production how it will be ?"*
+
+Here is the exact process to go from `localhost:8080` to `jobportal.com`.
+
+### 1. The Concept
+In production, your users trigger this flow:
+`User` -> `Internet (DNS)` -> `Hostinger VPS` -> `Nginx (Port 80/443)` -> `Next.js App (Port 3000)`
+
+### 2. DNS Configuration (At your Domain Registrar)
+Go to where you bought your domain (GoDaddy, Namecheap, Hostinger) and set an **A Record**:
+*   **Type**: `A`
+*   **Name**: `@` (or `www`)
+*   **Value**: `YOUR_VPS_IP_ADDRESS` (e.g., `123.45.67.89`)
+
+### 3. Nginx Configuration
+We verify the request is for *your* domain.
+Modify `nginx/default.conf` on the server:
+
+```nginx
+server {
+    listen 80;
+    server_name example.com www.example.com; # <--- CHANGE THIS
+
+    location / {
+        proxy_pass http://web:3000;
+        # ... (rest of the proxy settings)
+    }
+}
+```
+
+### 4. Enable HTTPS (The Lock Icon)
+You don't want an "Unsecure" warning. We use **Certbot** (free).
+
+**Steps:**
+1.  SSH into your VPS.
+2.  Install Certbot: `apt-get install certbot python3-certbot-nginx`
+3.  Run it: `certbot --nginx -d example.com -d www.example.com`
+4.  Certbot will automatically edit your Nginx config to turn on SSL (Port 443).
+
+---
+
+## 🏗️ Part 2: The Architecture (Self-Hosted)
 
 1.  **The Box**: Your Hostinger VPS.
-2.  **Container 1 (App)**: The Job Portal website.
-3.  **Container 2 (DB)**: MongoDB (Running inside the same VPS).
-4.  **Storage (Volumes)**:
-    *   `./uploads` -> Holds the CV PDF files.
-    *   `./mongo-data` -> Holds the User/Job database records.
+2.  **Container 1 (App)**: The Job Portal website (`web`).
+3.  **Container 2 (DB)**: MongoDB (`mongo`).
+4.  **Container 3 (Nginx)**: The Gatekeeper (`nginx`).
+5.  **Storage**:
+    *   `./uploads` -> Holds CVs.
+    *   `./mongo-data` -> Holds Database.
 
 ---
 
-## 📂 Part 1: File Storage (Where do files go?)
+## 📂 Part 3: Database & Storage Strategy
 
-You asked: *"Where should the files storage be?"*
+### File Storage (CVs)
+*   **Location**: `./uploads` folder on the VPS.
+*   **Pros**: Free, fast.
+*   **Risk**: If you delete the VPS, files are gone. **BACKUP REQUIRED**.
+*   **Config**: Mapped via `docker-compose.yml` volumes.
 
-### Option A: Local Disk (What we are doing now)
-*   **How it works**: We map a folder on the server (`/var/www/app/uploads`) to the container.
-*   **Pros**: Free, Fast, Easiest to set up.
-*   **Cons**: If you delete the VPS without a backup, **you lose all CVs**.
-*   **Verdict**: Perfect for starting out.
-*   **Configuration**:
-    ```yaml
-    volumes:
-      - ./uploads:/app/public/uploads
+### Database (MongoDB)
+*   **Location**: `./mongo-data` folder on the VPS.
+*   **Credentials**: Defined in `docker-compose.yml`.
+*   **Connection String**: `mongodb://root:examplepassword@mongo:27017/jobportal?authSource=admin`
+
+---
+
+## 🛠️ Step-by-Step Deployment Checklist
+
+1.  [ ] **Buy VPS & Domain**.
+2.  [ ] **Point DNS**: Set A Record to VPS IP.
+3.  [ ] **SSH into VPS**: Install Docker & Docker Compose.
+4.  [ ] **Clone Repo**: Get your code on the server.
+5.  [ ] **Configure Env**:
+    *   Rename `.env.production.local` to `.env`.
+    *   Update `NEXTAUTH_URL` to `https://example.com`.
+6.  [ ] **Secure Database**: Edit `docker-compose.yml` and change `examplepassword`.
+7.  [ ] **Start Containers**:
+    ```bash
+    docker compose up -d --build
     ```
-
-### Option B: Cloud Storage (AWS S3 / R2) - *Advanced*
-*   **How it works**: The app sends files to Amazon S3 or Cloudflare R2.
-*   **Pros**: Infinite space, files can't be lost if server dies.
-*   **Cons**: Costs money ($$), requires complex code changes.
-*   **Verdict**: Upgrade to this later if you have >10,000 users.
+8.  [ ] **Setup SSL**: Run `certbot` for HTTPS.
 
 ---
 
-## 🗄️ Part 2: Database (Cloud vs. Self-Hosted)
+## ⚠️ Important Production Warnings
 
-You asked: *"What if the DB is hosted in that VPS as well?"*
-
-### The Trade-off
-| | Cloud (Atlas) | Self-Hosted (VPS) |
-| :--- | :--- | :--- |
-| **Cost** | Free tier (Small) -> Expensive | **Free** (Included in VPS RAM) |
-| **Speed** | Good | **Fastest** (Zero latency) |
-| **Backups** | Automatic | **MANUAL** (You must do it) |
-| **Risk** | Low | **Medium** (If VPS disk fails, DB is lost) |
-
----
-
-## 🛠️ Updated Deployment Steps (Self-Hosted DB)
-
-Since you chose **Self-Hosted**, here is how the setup changes.
-
-### 1. `docker-compose.yml` (Updated)
-I have updated this file for you. It now starts **two** containers:
-1.  `web`: Your site.
-2.  `mongo`: Your database.
-
-### 2. Update Environment Variables
-On your server (in `.env.production.local`), you **DO NOT** need the `MONGODB_URI` anymore, because `docker-compose.yml` sets it automatically to:
-`mongodb://root:examplepassword@mongo:27017/jobportal?authSource=admin`
-
-*(Note: Change `examplepassword` in docker-compose.yml to something stronger before deploying!)*
-
-### 3. Start the Server
-Run the same command as before:
-```bash
-docker compose up -d --build
-```
-This time, you will see it pull `mongo` and start it alongside your app.
-
-### 4. ⚠️ CRITICAL: How to Backup
-Since you are the host, you must backup your data.
-**To backup your database:**
-```bash
-# Creates a backup folder inside your VPS
-docker exec jop-portal-db mongodump --username root --password examplepassword --out /data/db/backup
-```
-Actual data files are safely stored in the `./mongo-data` folder on your VPS. **Copy this folder to your computer occasionally** to be safe.
-
----
-
-## ✅ Summary Checklist
-
-1.  [ ] Buy VPS & Domain.
-2.  [ ] SSH into VPS & Install Docker.
-3.  [ ] Clone Repo.
-4.  [ ] **Edit `docker-compose.yml`**: Change `examplepassword` to a real password.
-5.  [ ] `docker compose up`.
-6.  [ ] Configure Nginx & SSL.
-7.  [ ] **Scheduled Task**: Backup `./uploads` and `./mongo-data` regularly.
+1.  **Change Passwords**: Never leave `admin123` or `examplepassword` in production files.
+2.  **Backups**: You are your own cloud provider now. You MUST copy the `mongo-data` and `uploads` folders to your laptop or Google Drive once a week.

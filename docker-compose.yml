@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: sh -c "npm run seed:admin && npm start" # Auto-seed on startup
+    command: sh -c "npm run seed:admin && node server.js" # Auto-seed on startup
     restart: unless-stopped
     # ports:
     #   - "3000:3000" # Exposed via Nginx now
@@ -32,7 +32,7 @@ services:
     container_name: jop-portal-nginx
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8080:80"
       # - "443:443" # [FUTURE] Enable for HTTPS
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro

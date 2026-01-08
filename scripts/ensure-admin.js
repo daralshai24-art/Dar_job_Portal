@@ -1,8 +1,13 @@
 const mongoose = require("mongoose");
 const path = require("path");
 // Load environment variables from .env.local or .env.production.local
-require("dotenv").config({ path: path.join(__dirname, "../.env.docker") });
-require("dotenv").config({ path: path.join(__dirname, "../.env.local") });
+try {
+    require("dotenv").config({ path: path.join(__dirname, "../.env.docker") });
+    require("dotenv").config({ path: path.join(__dirname, "../.env.local") });
+} catch (e) {
+    // dotenv might not be available in production/docker (variables are injected via env)
+    console.log("ℹ️  dotenv not found or failed to load. Assuming variables are in process.env");
+}
 
 // User Model Config (Simplified)
 const userSchema = new mongoose.Schema({
