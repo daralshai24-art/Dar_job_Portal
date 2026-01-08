@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { FileText, Briefcase, Award, CheckCircle, Users, Calendar } from "lucide-react";
+import DOMPurify from "isomorphic-dompurify";
 
 // Components
 import Header from "@/components/shared/Header";
@@ -182,7 +183,7 @@ export default async function JobDetailsPage({ params }) {
                   <JobContentSection title="وصف الوظيفة" icon={FileText}>
                     <div
                       className="prose prose-sm md:prose-base max-w-none w-full text-gray-700 leading-relaxed [&_*]:break-words [&_a]:break-all [&_img]:max-w-full [&_table]:block [&_table]:overflow-x-auto"
-                      dangerouslySetInnerHTML={{ __html: job.description }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.description) }}
                     />
                   </JobContentSection>
 
@@ -190,7 +191,7 @@ export default async function JobDetailsPage({ params }) {
                     <JobContentSection title="المتطلبات والمؤهلات" icon={Briefcase}>
                       <div
                         className="prose prose-sm md:prose-base max-w-none w-full text-gray-700 leading-relaxed [&_*]:break-words [&_a]:break-all [&_img]:max-w-full [&_table]:block [&_table]:overflow-x-auto"
-                        dangerouslySetInnerHTML={{ __html: job.requirements }}
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.requirements) }}
                       />
                     </JobContentSection>
                   )}

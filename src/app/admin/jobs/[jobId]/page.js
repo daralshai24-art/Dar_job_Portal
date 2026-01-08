@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowRight, Calendar, MapPin, DollarSign, Users, Briefcase, Award, FileText } from 'lucide-react';
+import DOMPurify from "isomorphic-dompurify";
 
 // Shared Components
 import LoadingSpinner from '@/components/shared/ui/LoadingSpinner';
@@ -170,7 +171,7 @@ export default function JobDetailsPage() {
             </h2>
             <div
               className="prose prose-sm md:prose-base max-w-none w-full text-gray-700 leading-relaxed break-words overflow-hidden"
-              dangerouslySetInnerHTML={{ __html: job?.description }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job?.description) }}
             />
           </div>
 
@@ -183,7 +184,7 @@ export default function JobDetailsPage() {
               </h2>
               <div
                 className="prose prose-sm md:prose-base max-w-none w-full text-gray-700 leading-relaxed break-words overflow-hidden"
-                dangerouslySetInnerHTML={{ __html: job?.requirements }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job?.requirements) }}
               />
             </div>
           )}

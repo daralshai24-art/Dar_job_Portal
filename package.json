@@ -25,6 +25,7 @@
     "googleapis": "^169.0.0",
     "jose": "^6.1.0",
     "jsonwebtoken": "^9.0.2",
+    "isomorphic-dompurify": "^2.19.0",
     "lucide-react": "^0.542.0",
     "mongodb": "^6.20.0",
     "mongoose": "^8.19.1",
